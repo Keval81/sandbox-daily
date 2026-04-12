@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Source_Serif_4, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { Nav } from "@/components/nav";
+import { Footer } from "@/components/footer";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -39,7 +41,11 @@ export default function RootLayout({
       lang="en"
       className={`${playfair.variable} ${sourceSerif.variable} ${ibmPlexMono.variable}`}
     >
-      <body className="bg-cream text-ink antialiased">{children}</body>
+      <body className="bg-cream text-ink antialiased">
+          <Nav />
+          <main className="pt-16">{children}</main>
+          <Footer />
+        </body>
     </html>
   );
 }
