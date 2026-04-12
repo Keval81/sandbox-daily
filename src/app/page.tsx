@@ -24,30 +24,21 @@ export default function Home() {
 
   return (
     <>
-      {/* Hero — video background with brain illustration and wordmark overlaid */}
-      <section className="relative bg-orange min-h-[80vh] flex items-center justify-center px-6 overflow-hidden">
-        {/* Looping video background */}
+      {/* Hero — video contains the brain animation on orange background */}
+      <section className="relative min-h-[80vh] flex items-center justify-center px-6 overflow-hidden bg-orange">
         <video
           autoPlay
           muted
           loop
           playsInline
           preload="metadata"
-          className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-multiply"
           poster="/images/brain-orange.png"
+          className="absolute inset-0 w-full h-full object-cover"
         >
           <source src="/video/hero-orange.mp4" type="video/mp4" />
         </video>
-        {/* Brain illustration — prominent, matching logo lockup */}
-        <img
-          src="/images/brain-orange.png"
-          alt=""
-          aria-hidden="true"
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[45%] h-[60vh] max-h-[500px] w-auto object-contain opacity-85 mix-blend-multiply"
-        />
-        {/* Wordmark */}
         <div className="relative text-center z-10">
-          <h1 className="font-display text-7xl font-black uppercase tracking-tight text-cream md:text-9xl leading-display [text-shadow:0_2px_12px_rgba(0,0,0,0.15)]">
+          <h1 className="font-display text-7xl font-black uppercase tracking-tight text-cream md:text-9xl leading-display [text-shadow:0_2px_12px_rgba(0,0,0,0.2)]">
             Sandbox Daily
           </h1>
           <p className="font-mono text-meta uppercase tracking-mono-wide text-cream/80 mt-4">
