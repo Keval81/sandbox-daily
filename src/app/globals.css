@@ -71,3 +71,17 @@
     color: var(--color-cream);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none !important;
+  }
+
+  .animate-ping {
+    animation: none !important;
+  }
+
+  video {
+    display: none;
+  }
+}

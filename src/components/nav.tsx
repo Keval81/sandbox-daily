@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,14 +12,21 @@ const navLinks = [
 
 export function Nav() {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-30 bg-ink">
       <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-4">
-        <Link href="/" className="font-display text-2xl font-black uppercase tracking-tight text-cream">
+        <Link
+          href="/"
+          className="font-display text-2xl font-black uppercase tracking-tight text-cream"
+          onClick={() => setOpen(false)}
+        >
           Sandbox Daily
         </Link>
-        <div className="flex items-center gap-8">
+
+        {/* Desktop nav */}
+        <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => {
             const isActive = pathname.startsWith(link.href);
             return (
@@ -36,7 +44,44 @@ export function Nav() {
             );
           })}
         </div>
+
+        {/* Mobile hamburger */}
+        <button
+          type="button"
+          className="md:hidden text-cream cursor-pointer p-2"
+          onClick={() => setOpen(!open)}
+          aria-label={open ? "Close menu" : "Open menu"}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            {open ? (
+              <path d="M6 6l12 12M6 18L18 6" />
+            ) : (
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile menu */}
+      {open && (
+        <div className="md:hidden bg-ink border-t border-grey/20 px-6 py-4">
+          {navLinks.map((link) => {
+            const isActive = pathname.startsWith(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className={`block py-3 font-mono text-meta uppercase tracking-mono-wide cursor-pointer ${
+                  isActive ? "text-cream" : "text-grey"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </nav>
   );
 }
