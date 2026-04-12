@@ -18,10 +18,10 @@
   --color-grey: #7A7169;
   --color-accent: #3D7A57;
 
-  /* Font families */
-  --font-display: var(--font-display), "Playfair Display", serif;
-  --font-body: var(--font-body), "Source Serif 4", serif;
-  --font-mono: var(--font-mono), "IBM Plex Mono", monospace;
+  /* Font families — use dedicated theme vars to avoid circular ref with next/font */
+  --font-family-display: var(--font-display), "Playfair Display", serif;
+  --font-family-body: var(--font-body), "Source Serif 4", serif;
+  --font-family-mono: var(--font-mono), "IBM Plex Mono", monospace;
 
   /* Border radius */
   --radius-sharp: 4px;

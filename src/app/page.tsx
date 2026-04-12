@@ -24,21 +24,15 @@ export default function Home() {
 
   return (
     <>
-      {/* Hero */}
+      {/* Hero — matches the primary logo lockup: brain illustration with wordmark overlaid */}
       <section className="relative bg-orange min-h-[80vh] flex items-center justify-center px-6 overflow-hidden">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-multiply"
-          poster="/images/brain-orange.png"
-        >
-          <source src="/video/hero-orange.mp4" type="video/mp4" />
-        </video>
+        <img
+          src="/images/brain-orange.png"
+          alt="Sandbox Daily — anatomical brain illustration"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[45%] h-[70vh] w-auto max-h-[600px] object-contain"
+        />
         <div className="relative text-center z-10">
-          <h1 className="font-display text-7xl font-black uppercase tracking-tight text-cream md:text-9xl leading-display">
+          <h1 className="font-display text-7xl font-black uppercase tracking-tight text-cream md:text-9xl leading-display [text-shadow:0_2px_12px_rgba(0,0,0,0.12)]">
             Sandbox Daily
           </h1>
           <p className="font-mono text-meta uppercase tracking-mono-wide text-cream/80 mt-4">
