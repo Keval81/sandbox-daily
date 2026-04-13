@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --color-orange: #EC592B;
+  --color-orange: #E75D31;
   --color-green: #1A3A2A;
   --color-cream: #F5EED8;
   --color-ink: #111111;
@@ -11,7 +11,7 @@
 
 @theme {
   /* Colors */
-  --color-orange: #EC592B;
+  --color-orange: #E75D31;
   --color-green: #1A3A2A;
   --color-cream: #F5EED8;
   --color-ink: #111111;
@@ -54,10 +54,22 @@
 
   /* Animations */
   --animate-marquee: marquee 30s linear infinite;
+  --animate-hero-title: hero-title 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-hero-eyebrow: hero-eyebrow 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
 
   @keyframes marquee {
     0% { transform: translateX(0%); }
     100% { transform: translateX(-50%); }
+  }
+
+  @keyframes hero-title {
+    0%   { opacity: 0; transform: translateY(14px); letter-spacing: 0.02em; }
+    100% { opacity: 1; transform: translateY(0);    letter-spacing: -0.02em; }
+  }
+
+  @keyframes hero-eyebrow {
+    0%   { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
 }
 
@@ -77,7 +89,9 @@
     animation: none !important;
   }
 
-  .animate-ping {
+  .animate-ping,
+  .animate-hero-title,
+  .animate-hero-eyebrow {
     animation: none !important;
   }
 
