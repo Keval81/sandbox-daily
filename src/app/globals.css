@@ -1,12 +1,56 @@
 @import "tailwindcss";
 
 :root {
-  --color-orange: #E75D31;
-  --color-green: #1A3A2A;
-  --color-cream: #F5EED8;
-  --color-ink: #111111;
-  --color-grey: #7A7169;
-  --color-accent: #3D7A57;
+  /* Brand palette — single source of truth */
+  --color-orange: #E75D31;   /* Cortex Orange — News, primary brand */
+  --color-green:  #1A3A2A;   /* Deep Tissue Green — Sport */
+  --color-cream:  #F5EED8;   /* Vellum Cream — Tech / body bg */
+  --color-ink:    #111111;   /* Press Ink — Global nav, footer */
+  --color-grey:   #7A7169;   /* Grey Matter — meta / bylines only */
+  --color-accent: #3D7A57;   /* Synaptic Green — live, interactive */
+
+  /* Semantic foreground / background */
+  --bg-page:        var(--color-cream);
+  --bg-canvas-dark: var(--color-ink);
+  --fg-default:     var(--color-ink);
+  --fg-on-dark:     var(--color-cream);
+  --fg-meta:        var(--color-grey);
+  --fg-live:        var(--color-accent);
+
+  /* Spacing scale — 8pt base, editorial generous */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;   /* grid padding */
+  --space-8:  32px;   /* grid gap */
+  --space-12: 48px;
+  --space-16: 64px;   /* section gap */
+  --space-24: 96px;
+
+  /* Layout */
+  --grid-max: 1440px;
+  --reading-max: 75ch;
+
+  /* Borders */
+  --border-vertical: 4px;
+  --border-hairline: 1px;
+
+  /* Z-index scale */
+  --z-base:    0;
+  --z-content: 10;
+  --z-sticky:  20;
+  --z-nav:     30;
+  --z-overlay: 40;
+  --z-modal:   50;
+
+  /* Motion */
+  --ease-out:  cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in:   cubic-bezier(0.55, 0, 1, 0.45);
+  --dur-fast:  150ms;
+  --dur-base:  200ms;
+  --dur-page:  300ms;
+  --dur-pulse: 1500ms;
 }
 
 @theme {
@@ -56,6 +100,7 @@
   --animate-marquee: marquee 30s linear infinite;
   --animate-hero-title: hero-title 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-hero-eyebrow: hero-eyebrow 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
+  --animate-brain-breathe: brain-breathe 4.5s ease-in-out infinite;
 
   @keyframes marquee {
     0% { transform: translateX(0%); }
@@ -71,6 +116,11 @@
     0%   { opacity: 0; transform: translateY(6px); }
     100% { opacity: 1; transform: translateY(0); }
   }
+
+  @keyframes brain-breathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.025); }
+  }
 }
 
 @layer base {
@@ -84,16 +134,301 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
-    animation: none !important;
-  }
+/* =========================================================
+   Semantic typography — editorial primitives
+   Apply as classes (e.g. <h1 class="sd-h1">) or via element selectors (h1.sd)
+   ========================================================= */
 
+.sd-wordmark {
+  font-family: var(--font-family-display);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-display);
+}
+
+.sd-h1, h1.sd {
+  font-family: var(--font-family-display);
+  font-weight: 900;
+  font-size: clamp(48px, 7vw, 96px);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg-default);
+}
+
+.sd-h2, h2.sd {
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: clamp(32px, 4vw, 56px);
+  line-height: var(--leading-headline);
+  letter-spacing: var(--tracking-display);
+}
+
+.sd-h3, h3.sd {
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: var(--leading-headline);
+}
+
+.sd-standfirst {
+  font-family: var(--font-family-body);
+  font-weight: 300;
+  font-size: 19px;
+  line-height: var(--leading-reading);
+  max-width: var(--reading-max);
+}
+
+.sd-body, p.sd {
+  font-family: var(--font-family-body);
+  font-weight: 300;
+  font-size: 17px;
+  line-height: var(--leading-reading);
+  max-width: var(--reading-max);
+}
+
+.sd-pullquote {
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 1.5em;
+  line-height: var(--leading-headline);
+  border-left: var(--border-vertical) solid var(--color-orange);
+  padding-left: var(--space-6);
+}
+
+.sd-meta {
+  font-family: var(--font-family-mono);
+  font-weight: 400;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono);
+  line-height: 1.4;
+  color: var(--fg-meta);
+}
+
+.sd-meta-sm {
+  font-family: var(--font-family-mono);
+  font-weight: 500;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-wide);
+  line-height: 1.4;
+}
+
+.sd-mono-link {
+  font-family: var(--font-family-mono);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-wide);
+}
+
+/* Drop cap on first paragraph of long-form */
+.sd-article > p:first-of-type::first-letter {
+  font-family: var(--font-family-display);
+  font-weight: 900;
+  font-size: 4.5em;
+  float: left;
+  line-height: 0.85;
+  margin: 4px 10px 0 0;
+}
+
+/* =========================================================
+   Homepage hero — paper bg + polaroid brain + scribble wordmark
+   ========================================================= */
+
+.sd-hero {
+  position: relative;
+  height: 78vh;
+  min-height: 540px;
+  max-height: 820px;
+  /* Inner padding so the polaroid box-shadow ring is never clipped by overflow:hidden */
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+  background-color: var(--color-cream);
+  background-image: url("/images/hero-bg-paper.webp");
+  background-size: cover;
+  background-position: center;
+}
+
+.sd-hero-paper-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/hero-bg-paper.webp");
+  background-size: cover;
+  background-position: center;
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.sd-hero-bg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  /* Sized off both viewport axes AND the section's min-height so the polaroid frame fits at any aspect ratio */
+  width: min(68vw, 68vh, 720px, calc(100% - 48px));
+  height: min(68vw, 68vh, 720px, calc(100% - 48px));
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 0 1px rgba(46, 28, 8, 0.25),
+    0 0 0 8px var(--color-cream),
+    0 0 0 9px rgba(46, 28, 8, 0.5),
+    0 0 0 11px var(--color-cream),
+    0 0 0 12px rgba(46, 28, 8, 0.18),
+    0 18px 40px -14px rgba(46, 28, 8, 0.4),
+    0 6px 18px -8px rgba(46, 28, 8, 0.25);
+  filter: contrast(1.04) saturate(0.96);
+  pointer-events: none;
+}
+
+.sd-hero-bg::-webkit-media-controls,
+.sd-hero-bg::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
+.sd-hero-text {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  padding: 0 24px;
+  pointer-events: none;
+}
+
+.sd-scribble-wrap {
+  position: relative;
+  display: block;
+  max-width: min(88vw, 1140px);
+  width: 100%;
+  margin: 0 auto;
+}
+
+.sd-hero-wordmark {
+  display: block;
+  width: 100%;
+  height: auto;
+  mix-blend-mode: multiply;
+  filter: contrast(1.15);
+  opacity: 0;
+  animation: sd-wordmark-in 0.8s ease-out 1.4s forwards;
+}
+
+.sd-scribble {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.sd-scribble-p {
+  fill: none;
+  stroke: #2e1c08;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1600;
+  stroke-dashoffset: 1600;
+  opacity: 0.85;
+}
+
+.sd-scribble-p1 {
+  animation: sd-scribble-draw 0.55s cubic-bezier(0.5, 0, 0.5, 1) 0.1s forwards,
+             sd-scribble-fade 0.6s ease-out 1.6s forwards;
+}
+.sd-scribble-p2 {
+  animation: sd-scribble-draw 0.5s cubic-bezier(0.5, 0, 0.5, 1) 0.45s forwards,
+             sd-scribble-fade 0.6s ease-out 1.6s forwards;
+}
+.sd-scribble-p3 {
+  animation: sd-scribble-draw 0.5s cubic-bezier(0.5, 0, 0.5, 1) 0.85s forwards,
+             sd-scribble-fade 0.6s ease-out 1.6s forwards;
+}
+.sd-scribble-p4 {
+  animation: sd-scribble-draw 0.45s cubic-bezier(0.5, 0, 0.5, 1) 1.15s forwards,
+             sd-scribble-fade 0.6s ease-out 1.6s forwards;
+}
+
+@keyframes sd-scribble-draw { to { stroke-dashoffset: 0; } }
+@keyframes sd-scribble-fade { to { opacity: 0; } }
+@keyframes sd-wordmark-in { from { opacity: 0; } to { opacity: 1; } }
+
+.sd-hero-eyebrow {
+  font-family: var(--font-family-mono);
+  font-weight: 600;
+  font-size: clamp(11px, 1.2vw, 16px);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  margin: 22px 0 0;
+  color: var(--color-ink);
+  animation: hero-eyebrow 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
+}
+
+/* Tablet / small laptop */
+@media (max-width: 1024px) {
+  .sd-hero {
+    height: auto;
+    min-height: 480px;
+    padding: 48px 24px;
+  }
+  .sd-hero-bg {
+    width: min(70vw, 60vh, 560px, calc(100% - 48px));
+    height: min(70vw, 60vh, 560px, calc(100% - 48px));
+  }
+  .sd-hero-wordmark { max-width: 92vw; }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .sd-hero {
+    min-height: 420px;
+    padding: 40px 16px;
+  }
+  .sd-hero-bg {
+    width: min(78vw, 50vh, 360px, calc(100% - 32px));
+    height: min(78vw, 50vh, 360px, calc(100% - 32px));
+  }
+  .sd-hero-wordmark { max-width: 96vw; }
+  .sd-hero-eyebrow { margin-top: 14px; letter-spacing: 0.22em; }
+}
+
+/* Very short windows (e.g. resized desktop, landscape phones) */
+@media (max-height: 600px) {
+  .sd-hero {
+    height: auto;
+    min-height: 380px;
+    max-height: none;
+    padding: 32px 24px;
+  }
+  .sd-hero-bg {
+    width: min(50vw, 65vh, 400px);
+    height: min(50vw, 65vh, 400px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
   .animate-ping,
   .animate-hero-title,
-  .animate-hero-eyebrow {
+  .animate-hero-eyebrow,
+  .animate-brain-breathe,
+  .sd-hero-wordmark,
+  .sd-scribble-p,
+  .sd-hero-eyebrow {
     animation: none !important;
+    opacity: 1 !important;
   }
+
+  .sd-scribble-p { stroke-dashoffset: 0 !important; }
 
   video {
     display: none;

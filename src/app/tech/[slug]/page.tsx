@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getArticleBySlug, getArticlesByVertical, renderMarkdown } from "@/lib/articles";
 import { verticals } from "@/lib/verticals";
 import { ArticleCard } from "@/components/article-card";
+import { ArticleHeroImage } from "@/components/article-hero-image";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -42,6 +43,13 @@ export default async function TechArticlePage({ params }: Props) {
           </p>
         </div>
       </section>
+
+      {article.heroImage && (
+        <ArticleHeroImage
+          src={article.heroImage}
+          alt={article.heroImageConcept ?? article.title}
+        />
+      )}
 
       <section className="bg-cream py-16 px-6">
         <div className="mx-auto max-w-[1440px] grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-12">

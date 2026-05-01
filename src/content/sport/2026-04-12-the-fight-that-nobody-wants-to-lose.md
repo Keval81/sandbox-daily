@@ -7,6 +7,8 @@ tags: [boxing, heavyweight, rivalry, fury, joshua]
 category: sports
 edited_at: '2026-04-12T09:21:05.041Z'
 editor_notes: Fixed 3 over-explanations, 1 monotonous-rhythm, 1 unsourced-assertion
+hero_image: /images/articles/the-fight-that-nobody-wants-to-lose.png
+hero_image_concept: Tyson Fury, broad-shouldered and tall with a shaved head and thick grey-flecked beard, stands in a floodlit boxing ring at Tottenham Hotspur Stadium, gloves raised theatrically toward the crowd, while Anthony Joshua — square-jawed, powerfully built and bald — sits just beyond the ropes at ringside, arms folded, expression cold and unmoved, the two men locked in a charged stare across the divide of the ring apron.
 ---
 
 # The Fight That Nobody Wants to Lose

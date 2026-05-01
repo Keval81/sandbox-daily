@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 const navLinks = [
   { href: "/news", label: "NEWS", indicator: "border-orange" },
   { href: "/tech", label: "TECH", indicator: "border-cream" },
   { href: "/sport", label: "SPORT", indicator: "border-accent" },
+  { href: "/features", label: "FEATURES", indicator: "border-orange" },
 ];
 
 export function Nav() {
@@ -19,10 +21,18 @@ export function Nav() {
       <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-4">
         <Link
           href="/"
-          className="font-display text-2xl font-black uppercase tracking-tight text-cream"
+          aria-label="Sandbox Daily — home"
+          className="flex items-center"
           onClick={() => setOpen(false)}
         >
-          Sandbox Daily
+          <Image
+            src="/images/brain-logo.png"
+            alt="Sandbox Daily"
+            width={320}
+            height={240}
+            priority
+            className="h-10 w-auto md:h-11 mix-blend-screen"
+          />
         </Link>
 
         {/* Desktop nav */}

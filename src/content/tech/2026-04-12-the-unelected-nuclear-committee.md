@@ -1,12 +1,27 @@
 ---
 title: The Unelected Nuclear Committee
 slug: the-unelected-nuclear-committee
-date: 2026-04-12
+date: 2026-04-12T00:00:00.000Z
 word_count: 1289
-tags: [ai, governance, nuclear, policy, anthropic]
+tags:
+  - ai
+  - governance
+  - nuclear
+  - policy
+  - anthropic
 category: tech
 edited_at: '2026-04-12T12:03:53.180Z'
-editor_notes: 'Fixed 2 over-explanations, 2 pipeline-leakages, fact-checked: 0 corrected, 1 removed'
+editor_notes: >-
+  Fixed 2 over-explanations, 2 pipeline-leakages, fact-checked: 0 corrected, 1
+  removed
+hero_image: /images/articles/the-unelected-nuclear-committee.png
+hero_image_concept: >-
+  A single closed boardroom door viewed straight-on, with a heavy padlock and
+  chain securing it shut. Through a narrow gap in the door, faint light spills
+  out, suggesting a meeting in progress behind it. The door is imposing and
+  institutional, set in an otherwise bare wall.
+status: published
+approved_at: '2026-04-28T17:31:06.495Z'
 ---
 
 # The Unelected Nuclear Committee

@@ -1,12 +1,28 @@
 ---
 title: The Smart Money Is Eating Your Lunch
 slug: the-smart-money-is-eating-your-lunch
-date: 2026-04-12
+date: 2026-04-12T00:00:00.000Z
 word_count: 1181
-tags: [gold, investing, markets, finance, trading]
+tags:
+  - gold
+  - investing
+  - markets
+  - finance
+  - trading
 category: news
 edited_at: '2026-04-12T16:09:39.209Z'
-editor_notes: 'Fixed 6 over-explanations, 1 monotonous-rhythm, 1 formulaic-header, fact-checked: 0 corrected, 1 removed'
+editor_notes: >-
+  Fixed 6 over-explanations, 1 monotonous-rhythm, 1 formulaic-header,
+  fact-checked: 0 corrected, 1 removed
+hero_image: /images/articles/the-smart-money-is-eating-your-lunch.png
+hero_image_concept: >-
+  A lone figure in a tailored suit seated calmly at a dining table, knife and
+  fork in hand, plate before him piled with gold bars and coins. His expression
+  is serene, almost amused. Across the table, an empty overturned chair suggests
+  someone just fled. Minimal background — just the table, two place settings,
+  and scattered crumbs.
+status: published
+approved_at: '2026-04-28T17:30:32.265Z'
 ---
 
 # The Smart Money Is Eating Your Lunch

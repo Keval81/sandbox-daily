@@ -12,17 +12,23 @@ export function ArticleCard({ article, showVerticalTag = true, dark = false }: A
   const vertical = verticals[article.category];
   const href = `/${article.category}/${article.slug}`;
 
-  const borderColorMap = {
+  const borderColorMap: Record<string, string> = {
     news: "hover:border-l-orange",
     sport: "hover:border-l-green",
     tech: "hover:border-l-ink",
-  } as const;
+    features: "hover:border-l-orange",
+    spotlights: "hover:border-l-orange",
+  };
 
-  const tagColorMap = {
+  const tagColorMap: Record<string, string> = {
     news: "text-orange",
     sport: "text-green",
     tech: "text-ink",
-  } as const;
+    features: "text-orange",
+    spotlights: "text-orange",
+  };
+
+  const isSpotlight = article.category === "spotlights" && !!article.subjectName;
 
   return (
     <Link
@@ -36,6 +42,11 @@ export function ArticleCard({ article, showVerticalTag = true, dark = false }: A
           </span>
         )}
         <h3 className={`font-display text-xl font-bold leading-headline mt-1 group-hover:opacity-80 transition-opacity ${dark ? "text-cream" : "text-ink"}`}>
+          {isSpotlight && (
+            <span className="block font-display text-base font-semibold opacity-70 mb-1">
+              Spotlight: {article.subjectName}
+            </span>
+          )}
           {article.title}
         </h3>
         <p className="font-mono text-meta uppercase tracking-mono text-grey mt-2">

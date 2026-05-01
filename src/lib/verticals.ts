@@ -28,6 +28,24 @@ export const verticals: Record<Vertical, VerticalConfig> = {
     tagline: "The Circuit",
     route: "/tech",
   },
+  features: {
+    name: "features",
+    label: "FEATURES",
+    bg: "bg-ink",
+    text: "text-cream",
+    navIndicator: "border-orange",
+    tagline: "The Long Read",
+    route: "/features",
+  },
+  spotlights: {
+    name: "spotlights",
+    label: "SPOTLIGHT",
+    bg: "bg-ink",
+    text: "text-cream",
+    navIndicator: "border-orange",
+    tagline: "Brilliant Minds",
+    route: "/spotlights",
+  },
 };
 
 export function getVertical(name: string): VerticalConfig | undefined {
