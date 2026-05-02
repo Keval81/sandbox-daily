@@ -35,4 +35,5 @@ export interface VerticalConfig {
   navIndicator: string;
   tagline: string;
   route: string;
+  icon: string;
 }

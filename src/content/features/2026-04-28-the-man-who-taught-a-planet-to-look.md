@@ -57,7 +57,7 @@ reference_brief:
       - David Attenborough Planet Earth III premiere
       - David Attenborough climate change speech UN
       - David Attenborough centenarian 2026 portrait
-hero_image: /images/articles/the-man-who-taught-a-planet-to-look.png
+hero_image: /images/articles/the-man-who-taught-a-planet-to-look.webp
 hero_image_concept: >-
   David Attenborough — David Attenborough in his early-to-mid fifties, circa
   1979, filming Life on Earth — seated close to mountain gorillas in Rwanda, the
@@ -65,14 +65,14 @@ hero_image_concept: >-
   khaki shirt, reverent stillness, the camera capturing the moment that defined
   natural history television for a generation.
 inline_images:
-  - path: /images/articles/the-man-who-taught-a-planet-to-look-inline-1.png
+  - path: /images/articles/the-man-who-taught-a-planet-to-look-inline-1.webp
     concept: >-
       David Attenborough, young years — David Attenborough in his late twenties,
       circa 1954, on location during Zoo Quest filming — khaki field clothes,
       probably sweat-damp, crouching near tropical vegetation with a BBC film
       crew visible behind him. Lean, dark-haired, energetic, the look of a young
       naturalist who has just traded a London editing suite for a jungle.
-  - path: /images/articles/the-man-who-taught-a-planet-to-look-inline-2.png
+  - path: /images/articles/the-man-who-taught-a-planet-to-look-inline-2.webp
     concept: >-
       David Attenborough, current years — David Attenborough approaching one
       hundred, thin white hair, deeply lined face, still sharp-eyed — speaking

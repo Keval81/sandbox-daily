@@ -7,7 +7,7 @@ tags: [ethereum, blockchain, finance, tokenization, wallstreet]
 category: tech
 edited_at: '2026-04-16T12:56:34.096Z'
 editor_notes: Fixed 1 pipeline-leakage, 2 over-explanations, 3 unsourced-assertions, 1 formulaic-header
-hero_image: /images/articles/the-15-000-bet-that-banks-hope-their-competitors-make-first.png
+hero_image: /images/articles/the-15-000-bet-that-banks-hope-their-competitors-make-first.webp
 hero_image_concept: Vivek Raman, a sharp-featured South Asian man in his late thirties wearing an open-collar dress shirt, and Danny Ryan, a lean white man with short dark hair and wire-rimmed glasses, stand facing each other across a vast mahogany boardroom table. Between them, centred on the polished surface, floats a large Ethereum diamond — the classic octahedral gem shape. Behind them, floor-to-ceiling windows frame a New York skyline of dense skyscrapers. Both men lean forward slightly, hands pressed to the table, gazes locked on the diamond with a mixture of conviction and calculation.
 ---
 

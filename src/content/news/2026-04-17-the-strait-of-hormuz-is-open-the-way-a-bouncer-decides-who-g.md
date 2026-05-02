@@ -16,8 +16,7 @@ edited_at: '2026-04-17T19:00:29.879Z'
 editor_notes: >-
   Fixed 5 over-explanations, 1 formulaic-header, 1 monotonous-rhythm, 1
   pipeline-leakage, fact-checked: 1 corrected, 0 removed
-hero_image: >-
-  /images/articles/the-strait-of-hormuz-is-open-the-way-a-bouncer-decides-who-g.png
+hero_image: /images/articles/the-strait-of-hormuz-is-open-the-way-a-bouncer-decides-who-g.webp
 hero_image_concept: >-
   A broad-shouldered bouncer figure in military fatigues stands with arms
   crossed at the centre of a narrow rocky sea passage, blocking the way. Behind

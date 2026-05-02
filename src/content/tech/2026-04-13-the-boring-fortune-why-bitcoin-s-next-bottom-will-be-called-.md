@@ -16,8 +16,7 @@ edited_at: '2026-04-13T14:21:54.266Z'
 editor_notes: >-
   Fixed 3 over-explanations, 1 formulaic-header, 1 monotonous-rhythm, 1
   pipeline-leakage, 2 unsourced-assertions, fact-checked: 0 corrected, 1 removed
-hero_image: >-
-  /images/articles/the-boring-fortune-why-bitcoin-s-next-bottom-will-be-called-.png
+hero_image: /images/articles/the-boring-fortune-why-bitcoin-s-next-bottom-will-be-called-.webp
 hero_image_concept: >-
   A large Bitcoin symbol rendered as a heavy metallic coin, tilted slightly,
   resting on an open ruled spreadsheet filled with dense rows and columns of

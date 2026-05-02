@@ -7,7 +7,7 @@ tags: [football, liverpool, management, nostalgia, champions]
 category: sports
 edited_at: '2026-04-11T17:12:45.485Z'
 editor_notes: Fixed 2 pipeline-leakages, 2 over-explanations, 1 formulaic-header
-hero_image: /images/articles/the-gerrard-fantasy-is-a-symptom-not-a-solution.png
+hero_image: /images/articles/the-gerrard-fantasy-is-a-symptom-not-a-solution.webp
 hero_image_concept: Steven Gerrard, jaw set and eyes fierce, stands alone in the Anfield dugout — collar up, arms crossed — staring toward a pitch lost in shadow. The empty stadium tiers curve behind him, spare and cavernous, communicating the weight of expectation and absence.
 ---
 

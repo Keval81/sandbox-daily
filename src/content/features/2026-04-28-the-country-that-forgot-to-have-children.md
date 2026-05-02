@@ -14,7 +14,7 @@ edited_at: '2026-04-28T20:18:44.129Z'
 editor_notes: >-
   Fixed 4 over-explanations, 1 formulaic-header, 1 monotonous-rhythm, 1
   pipeline-leakage
-hero_image: /images/articles/the-country-that-forgot-to-have-children.png
+hero_image: /images/articles/the-country-that-forgot-to-have-children.webp
 hero_image_concept: >-
   Two vast topographic contour systems rendered in ultra-fine graphite — one
   ascending from the left, one descending from the right — meet at a single
@@ -22,14 +22,14 @@ hero_image_concept: >-
   bare cream paper, an expanding emptiness. The crossing feels inevitable,
   tectonic, irreversible.
 inline_images:
-  - path: /images/articles/the-country-that-forgot-to-have-children-inline-1.png
+  - path: /images/articles/the-country-that-forgot-to-have-children-inline-1.webp
     concept: >-
       An architectural cross-section of a cantilevered beam, exquisitely
       detailed in graphite — the right side massive, dense with hatched weight,
       the left support impossibly thin and finely drawn. Hairline stress
       fractures radiate from the fulcrum. The structure holds, but barely, the
       physics of its collapse already visible in the geometry.
-  - path: /images/articles/the-country-that-forgot-to-have-children-inline-2.png
+  - path: /images/articles/the-country-that-forgot-to-have-children-inline-2.webp
     concept: >-
       A single cartographic landmass seen from above, its coastline rendered in
       obsessive graphite detail. From every border, thin parallel lines stream

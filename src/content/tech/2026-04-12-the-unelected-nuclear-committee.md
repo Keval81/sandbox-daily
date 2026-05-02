@@ -14,7 +14,7 @@ edited_at: '2026-04-12T12:03:53.180Z'
 editor_notes: >-
   Fixed 2 over-explanations, 2 pipeline-leakages, fact-checked: 0 corrected, 1
   removed
-hero_image: /images/articles/the-unelected-nuclear-committee.png
+hero_image: /images/articles/the-unelected-nuclear-committee.webp
 hero_image_concept: >-
   A single closed boardroom door viewed straight-on, with a heavy padlock and
   chain securing it shut. Through a narrow gap in the door, faint light spills

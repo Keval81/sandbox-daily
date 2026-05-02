@@ -7,7 +7,7 @@ tags: [automation, programming, anthropic, developer, productivity]
 category: tech
 edited_at: '2026-04-15T10:24:23.083Z'
 editor_notes: Fixed 2 over-explanations, 1 pipeline-leakage, 1 monotonous-rhythm, 1 formulaic-header
-hero_image: /images/articles/your-new-junior-developer-doesn-t-sleep-doesn-t-eat-and-gets.png
+hero_image: /images/articles/your-new-junior-developer-doesn-t-sleep-doesn-t-eat-and-gets.webp
 hero_image_concept: A small, neatly dressed robotic figure — sleek, humanoid, with a glowing Anthropic logo embedded in its chest — sits hunched at a plain wooden desk cluttered with GitHub pull-request printouts and a stack of markdown files, a clock on the wall frozen at the fifteenth tick mark. The robot's hands rest flat on the desk, motionless, as if suddenly switched off mid-task, a single completed report sliding off the edge of the desk toward the floor.
 ---
 

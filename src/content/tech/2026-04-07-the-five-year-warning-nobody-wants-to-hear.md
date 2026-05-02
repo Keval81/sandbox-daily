@@ -1,6 +1,7 @@
 ---
 title: The Five-Year Warning Nobody Wants to Hear
 slug: the-five-year-warning-nobody-wants-to-hear
+hero_image: /images/articles/the-five-year-warning-nobody-wants-to-hear.webp
 date: 2026-04-07
 word_count: 1254
 tags: [ai, investing, automation, crypto, finance]

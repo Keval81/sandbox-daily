@@ -1,6 +1,7 @@
 ---
 title: The Number on the Scale Is the Only Story Worth Telling
 slug: the-number-on-the-scale-is-the-only-story-worth-telling
+hero_image: /images/articles/the-number-on-the-scale-is-the-only-story-worth-telling.webp
 date: 2026-04-11
 word_count: 543
 tags: [boxing, fury, heavyweight, weigh-in, makhmudov]

@@ -9,6 +9,7 @@ export const verticals: Record<Vertical, VerticalConfig> = {
     navIndicator: "border-orange",
     tagline: "The Intelligence Briefing",
     route: "/news",
+    icon: "/images/sections/news.webp",
   },
   sport: {
     name: "sport",
@@ -18,6 +19,7 @@ export const verticals: Record<Vertical, VerticalConfig> = {
     navIndicator: "border-accent",
     tagline: "The Performance Lab",
     route: "/sport",
+    icon: "/images/sections/sport.webp",
   },
   tech: {
     name: "tech",
@@ -27,6 +29,7 @@ export const verticals: Record<Vertical, VerticalConfig> = {
     navIndicator: "border-cream",
     tagline: "The Circuit",
     route: "/tech",
+    icon: "/images/sections/tech.webp",
   },
   features: {
     name: "features",
@@ -36,6 +39,7 @@ export const verticals: Record<Vertical, VerticalConfig> = {
     navIndicator: "border-orange",
     tagline: "The Long Read",
     route: "/features",
+    icon: "/images/sections/features.webp",
   },
 };
 

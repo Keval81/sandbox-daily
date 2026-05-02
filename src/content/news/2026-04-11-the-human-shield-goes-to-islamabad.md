@@ -1,6 +1,7 @@
 ---
 title: The Human Shield Goes to Islamabad
 slug: the-human-shield-goes-to-islamabad
+hero_image: /images/articles/the-human-shield-goes-to-islamabad.webp
 date: 2026-04-11
 word_count: 1416
 tags: [diplomacy, iran, pakistan, trump, nuclear]

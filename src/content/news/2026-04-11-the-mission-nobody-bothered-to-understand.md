@@ -1,6 +1,7 @@
 ---
 title: The Mission Nobody Bothered to Understand
 slug: the-mission-nobody-bothered-to-understand
+hero_image: /images/articles/the-mission-nobody-bothered-to-understand.webp
 date: 2026-04-11
 word_count: 1462
 tags: [space, astronauts, mission, exploration, technology]

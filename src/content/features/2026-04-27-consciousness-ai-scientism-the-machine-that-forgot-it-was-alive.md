@@ -8,12 +8,12 @@ category: features
 feature_type: normal
 edited_at: '2026-04-28T12:14:33.707Z'
 editor_notes: 'Fixed 2 formulaic-headers, 4 over-explanations, fact-checked: 0 corrected, 4 removed'
-hero_image: /images/articles/consciousness-ai-scientism-the-machine-that-forgot-it-was-alive.png
+hero_image: /images/articles/consciousness-ai-scientism-the-machine-that-forgot-it-was-alive.webp
 hero_image_concept: A vast cream plane dominated by two enormous geometric solids in close proximity — a densely cross-hatched sphere and an open wireframe cube — neither touching, the negative space between them charged with tension. The sphere is rendered with obsessive graphite detail suggesting interiority and depth; the cube is pure skeletal outline, hollow to its core.
 inline_images:
-  - path: /images/articles/consciousness-ai-scientism-the-machine-that-forgot-it-was-alive-inline-1.png
+  - path: /images/articles/consciousness-ai-scientism-the-machine-that-forgot-it-was-alive-inline-1.webp
     concept: 'An architectural cross-section blueprint of a perfectly symmetrical mechanical form — gears, conduits, and chambers rendered in precise technical draftsmanship — but at its exact geometric centre sits a small, irregularly organic void: an empty chamber shaped like no engineered form, surrounded by fine radiating hatching that fades into the cream page.'
-  - path: /images/articles/consciousness-ai-scientism-the-machine-that-forgot-it-was-alive-inline-2.png
+  - path: /images/articles/consciousness-ai-scientism-the-machine-that-forgot-it-was-alive-inline-2.webp
     concept: A cartographic fragment — an unlabelled topographic map of a coastline, all contour lines and depth soundings — but one portion of the map simply stops mid-survey, the contour lines dissolving into open cream paper as if the territory refused to be charted. A single trajectory arc begins at the mapped edge and curves off into the unmapped expanse.
 ---
 

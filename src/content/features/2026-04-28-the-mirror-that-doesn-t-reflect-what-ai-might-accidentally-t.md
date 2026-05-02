@@ -17,8 +17,7 @@ edited_at: '2026-04-28T16:19:59.087Z'
 editor_notes: >-
   Fixed 3 over-explanations, 2 pipeline-leakages, 1 formulaic-header, 1
   monotonous-rhythm, fact-checked: 0 corrected, 1 removed
-hero_image: >-
-  /images/articles/the-mirror-that-doesn-t-reflect-what-ai-might-accidentally-t.png
+hero_image: /images/articles/the-mirror-that-doesn-t-reflect-what-ai-might-accidentally-t.webp
 hero_image_concept: >-
   An immense, perfectly rendered convex mirror-form dominates the composition,
   its surface covered in impossibly fine topographic contour lines instead of a
@@ -26,7 +25,7 @@ hero_image_concept: >-
   where the focal point should be. Surrounding cream space is vast and silent.
 inline_images:
   - path: >-
-      /images/articles/the-mirror-that-doesn-t-reflect-what-ai-might-accidentally-t-inline-1.png
+      /images/articles/the-mirror-that-doesn-t-reflect-what-ai-might-accidentally-t-inline-1.webp
     concept: >-
       Two cross-sections float side by side: on the left, a dense lattice of
       geometric nodes connected by razor-thin filaments — complete, inspectable,
@@ -35,7 +34,7 @@ inline_images:
       trailing off unresolved. The gap between the two forms is precise and
       deliberate.
   - path: >-
-      /images/articles/the-mirror-that-doesn-t-reflect-what-ai-might-accidentally-t-inline-2.png
+      /images/articles/the-mirror-that-doesn-t-reflect-what-ai-might-accidentally-t-inline-2.webp
     concept: >-
       A massive schematic blueprint of a hand-cranked projection apparatus,
       rendered in obsessive mechanical detail — gears, lenses, armatures — all

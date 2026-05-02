@@ -13,7 +13,7 @@ edited_at: '2026-04-13T22:21:05.764Z'
 editor_notes: >-
   Fixed 6 over-explanations, 1 formulaic-header, 1 monotonous-rhythm, 1
   unsourced-assertion
-hero_image: /images/articles/the-universe-s-most-overhyped-hole.png
+hero_image: /images/articles/the-universe-s-most-overhyped-hole.webp
 hero_image_concept: >-
   A massive, swirling black hole rendered as a deep vortex dominating the frame,
   its accretion disk spiraling inward toward an impossibly dark center. The

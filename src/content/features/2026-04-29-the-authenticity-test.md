@@ -58,7 +58,7 @@ reference_brief:
       - Jürgen Klopp Red Bull Salzburg presentation
       - Klopp Red Bull announcement January 2025
       - Jürgen Klopp Red Bull GmbH 2025
-hero_image: /images/articles/the-authenticity-test.png
+hero_image: /images/articles/the-authenticity-test.webp
 hero_image_concept: >-
   Jürgen Klopp — Klopp at fifty-one, Anfield, 7 May 2019, seconds after the
   final whistle of the 4-0 Barcelona comeback. He is mid-stride onto the pitch,
@@ -71,7 +71,7 @@ hero_image_concept: >-
   is trembling with something between laughter and tears. Floodlit, soaked in
   sweat and drizzle.
 inline_images:
-  - path: /images/articles/the-authenticity-test-inline-1.png
+  - path: /images/articles/the-authenticity-test-inline-1.webp
     concept: >-
       Jürgen Klopp, young years — Klopp at thirty-four, newly appointed Mainz 05
       manager, 2001. He stands on the touchline of the Bruchwegstadion — a
@@ -83,7 +83,7 @@ inline_images:
       forward as if he might sprint onto the pitch himself. A plastic water
       bottle lies overturned at his feet. The lighting is flat, grey,
       second-division afternoon.
-  - path: /images/articles/the-authenticity-test-inline-2.png
+  - path: /images/articles/the-authenticity-test-inline-2.webp
     concept: >-
       Jürgen Klopp, current years — Klopp at fifty-eight, seated at a long
       corporate table in a Red Bull facility in Salzburg, 2025. He wears a crisp

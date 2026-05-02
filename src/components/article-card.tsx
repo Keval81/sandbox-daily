@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { type Article } from "@/lib/types";
 import { verticals } from "@/lib/verticals";
 import { TypewriterText } from "./typewriter-text";
@@ -34,8 +35,19 @@ export function ArticleCard({ article, showVerticalTag = true, dark = false, typ
   return (
     <Link
       href={href}
-      className={`group block rounded-sharp border-l-4 border-l-transparent ${borderColorMap[article.category]} transition-all duration-200 cursor-pointer`}
+      className={`group block rounded-sharp border-l-4 border-l-transparent ${borderColorMap[article.category]} transition-all duration-200 cursor-pointer overflow-hidden`}
     >
+      {article.heroImage && (
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-ink/10">
+          <Image
+            src={article.heroImage}
+            alt={article.title}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          />
+        </div>
+      )}
       <article className="p-4">
         {showVerticalTag && (
           <span className={`font-mono text-meta-sm uppercase tracking-mono-wide ${tagColorMap[article.category]}`}>

@@ -1,6 +1,7 @@
 ---
 title: The Accidental Empire
 slug: the-accidental-empire
+hero_image: /images/articles/the-accidental-empire.webp
 date: 2026-04-07
 word_count: 1233
 tags: [crypto, blockchain, finance, infrastructure, economy]

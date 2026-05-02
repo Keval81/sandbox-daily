@@ -14,7 +14,7 @@ edited_at: '2026-04-12T16:09:39.209Z'
 editor_notes: >-
   Fixed 6 over-explanations, 1 monotonous-rhythm, 1 formulaic-header,
   fact-checked: 0 corrected, 1 removed
-hero_image: /images/articles/the-smart-money-is-eating-your-lunch.png
+hero_image: /images/articles/the-smart-money-is-eating-your-lunch.webp
 hero_image_concept: >-
   A lone figure in a tailored suit seated calmly at a dining table, knife and
   fork in hand, plate before him piled with gold bars and coins. His expression

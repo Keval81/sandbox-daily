@@ -61,19 +61,18 @@ reference_brief:
       - Federico Faggin interview AI consciousness 2023
       - Federico Faggin Enrico Fermi Prize 2014
       - Federico Faggin lecture panpsychism recent
-hero_image: >-
-  /images/articles/the-man-who-built-the-brain-of-the-machine-then-argued-it-do.png
+hero_image: /images/articles/the-man-who-built-the-brain-of-the-machine-then-argued-it-do.webp
 hero_image_concept: >-
   Federico Faggin — Faggin holding or working on the Intel 4004 microprocessor
   he designed
 inline_images:
   - path: >-
-      /images/articles/the-man-who-built-the-brain-of-the-machine-then-argued-it-do-inline-1.png
+      /images/articles/the-man-who-built-the-brain-of-the-machine-then-argued-it-do-inline-1.webp
     concept: >-
       Federico Faggin, young years — Faggin in his late 20s at Intel, circa
       1970-71, designing the 4004
   - path: >-
-      /images/articles/the-man-who-built-the-brain-of-the-machine-then-argued-it-do-inline-2.png
+      /images/articles/the-man-who-built-the-brain-of-the-machine-then-argued-it-do-inline-2.webp
     concept: >-
       Federico Faggin, current years — Faggin in recent years, post-Synaptics,
       doing consciousness research

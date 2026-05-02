@@ -1,6 +1,7 @@
 ---
 title: The Ceasefire Nobody Believes In
 slug: the-ceasefire-nobody-believes-in
+hero_image: /images/articles/the-ceasefire-nobody-believes-in.webp
 date: 2026-04-10
 word_count: 1288
 tags: [ceasefire, ukraine, war, diplomacy, russia]

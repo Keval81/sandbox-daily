@@ -1,6 +1,7 @@
 ---
 title: The Moral High Ground Has Never Been So Convenient
 slug: the-moral-high-ground-has-never-been-so-convenient
+hero_image: /images/articles/the-moral-high-ground-has-never-been-so-convenient.webp
 date: 2026-04-10
 word_count: 1262
 tags: [politics, epstein, melania, accountability, scandal]

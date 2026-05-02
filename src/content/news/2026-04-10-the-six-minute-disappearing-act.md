@@ -1,6 +1,7 @@
 ---
 title: The Six-Minute Disappearing Act
 slug: the-six-minute-disappearing-act
+hero_image: /images/articles/the-six-minute-disappearing-act.webp
 date: 2026-04-10
 word_count: 1338
 tags: [politics, melania, media, distraction, whitehouse]
