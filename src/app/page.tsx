@@ -97,7 +97,7 @@ export default function Home() {
       <BreakingTicker headlines={breakingHeadlines} />
       <VerticalStrip />
       <TrendingBar topics={trendingTopics} />
-      <ArticleGrid articles={articles} />
+      <ArticleGrid articles={articles} typewriterTitles />
       <SubscribeStrip />
     </>
   );

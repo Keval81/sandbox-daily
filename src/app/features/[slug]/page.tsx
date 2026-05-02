@@ -30,9 +30,16 @@ export default async function FeaturesArticlePage({ params }: Props) {
       <section className={`${config.bg} ${config.text} py-20 px-6`}>
         <div className="mx-auto max-w-[1440px]">
           <span className="font-mono text-meta-sm uppercase tracking-mono-wide opacity-70">
-            {config.label}
+            {article.subjectName
+              ? "BRILLIANT MINDS · SPOTLIGHT SERIES"
+              : config.label}
           </span>
           <h1 className="font-display text-4xl font-black leading-headline mt-4 md:text-6xl max-w-4xl">
+            {article.subjectName && (
+              <span className="block font-display text-2xl md:text-4xl font-bold opacity-80 mb-3">
+                Spotlight: {article.subjectName}
+              </span>
+            )}
             {article.title}
           </h1>
           <p className="font-mono text-meta uppercase tracking-mono mt-6 opacity-80">

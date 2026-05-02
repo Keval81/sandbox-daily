@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
       "public/video/**/*",
     ],
   },
+  async redirects() {
+    return [
+      { source: "/spotlights", destination: "/features", permanent: true },
+      { source: "/spotlights/:slug", destination: "/features/:slug", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

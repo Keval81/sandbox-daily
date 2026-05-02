@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { type Article } from "@/lib/types";
 import { verticals } from "@/lib/verticals";
+import { TypewriterText } from "./typewriter-text";
 
 interface ArticleCardProps {
   article: Article;
   showVerticalTag?: boolean;
   dark?: boolean;
+  /** When set, the title types in with this delay (ms). Used by the homepage grid for staggered entrance. */
+  typewriterDelayMs?: number;
 }
 
-export function ArticleCard({ article, showVerticalTag = true, dark = false }: ArticleCardProps) {
+export function ArticleCard({ article, showVerticalTag = true, dark = false, typewriterDelayMs }: ArticleCardProps) {
   const vertical = verticals[article.category];
   const href = `/${article.category}/${article.slug}`;
 
@@ -17,7 +20,6 @@ export function ArticleCard({ article, showVerticalTag = true, dark = false }: A
     sport: "hover:border-l-green",
     tech: "hover:border-l-ink",
     features: "hover:border-l-orange",
-    spotlights: "hover:border-l-orange",
   };
 
   const tagColorMap: Record<string, string> = {
@@ -25,10 +27,9 @@ export function ArticleCard({ article, showVerticalTag = true, dark = false }: A
     sport: "text-green",
     tech: "text-ink",
     features: "text-orange",
-    spotlights: "text-orange",
   };
 
-  const isSpotlight = article.category === "spotlights" && !!article.subjectName;
+  const isSpotlight = !!article.subjectName;
 
   return (
     <Link
@@ -47,7 +48,11 @@ export function ArticleCard({ article, showVerticalTag = true, dark = false }: A
               Spotlight: {article.subjectName}
             </span>
           )}
-          {article.title}
+          {typeof typewriterDelayMs === "number" ? (
+            <TypewriterText text={article.title} delayMs={typewriterDelayMs} charMs={28} />
+          ) : (
+            article.title
+          )}
         </h3>
         <p className="font-mono text-meta uppercase tracking-mono text-grey mt-2">
           {new Date(article.date).toLocaleDateString("en-GB", {

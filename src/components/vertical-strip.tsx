@@ -6,12 +6,11 @@ export function VerticalStrip() {
     { vertical: verticals.news, tagline: "Breaking news, long-form reporting, opinion and analysis." },
     { vertical: verticals.tech, tagline: "AI, infrastructure, venture capital, digital culture." },
     { vertical: verticals.sport, tagline: "Elite sport, data-driven tactics, performance science." },
-    { vertical: verticals.features, tagline: "Deep dives into science, culture, and the ideas that shape us." },
-    { vertical: verticals.spotlights, tagline: "Profiles of the people whose ideas are reshaping the present." },
+    { vertical: verticals.features, tagline: "Deep dives, long reads, and profiles of the people whose ideas are reshaping the present." },
   ];
 
   return (
-    <section className="grid grid-cols-1 md:grid-cols-5">
+    <section className="grid grid-cols-1 md:grid-cols-4">
       {strips.map((strip, i) => (
         <Link
           key={strip.vertical.name}

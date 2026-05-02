@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { TypewriterText } from "./typewriter-text";
 
 const navLinks = [
   { href: "/news", label: "NEWS", indicator: "border-orange" },
@@ -25,13 +25,10 @@ export function Nav() {
           className="flex items-center"
           onClick={() => setOpen(false)}
         >
-          <Image
-            src="/images/brain-logo.png"
-            alt="Sandbox Daily"
-            width={320}
-            height={240}
-            priority
-            className="h-10 w-auto md:h-11 mix-blend-screen"
+          <TypewriterText
+            text="Sandbox Daily"
+            charMs={80}
+            className="font-display text-2xl md:text-3xl font-black uppercase tracking-tight text-cream leading-none"
           />
         </Link>
 

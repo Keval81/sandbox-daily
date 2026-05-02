@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
 
-const VALID_VERTICALS = ["news", "sport", "tech", "features", "spotlights"] as const;
+const VALID_VERTICALS = ["news", "sport", "tech", "features"] as const;
 type Vertical = (typeof VALID_VERTICALS)[number];
 
 const VALID_ACTIONS = ["approve", "reject"] as const;

@@ -1,33 +1,103 @@
 ---
 title: The Authenticity Test
 slug: the-authenticity-test
-date: 2026-04-29
+date: 2026-04-29T00:00:00.000Z
 word_count: 2276
-tags: [authenticity, football, klopp, leadership, identity]
+tags:
+  - authenticity
+  - football
+  - klopp
+  - leadership
+  - identity
 category: features
 feature_type: spotlight
 subject_slug: jurgen-klopp
 subject_name: Jürgen Klopp
 edited_at: '2026-04-29T15:38:12.396Z'
-editor_notes: Fixed 5 over-explanations, 1 formulaic-header, 1 monotonous-rhythm
+editor_notes: 'Fixed 5 over-explanations, 1 formulaic-header, 1 monotonous-rhythm'
 reference_brief:
   young:
-    moment: Jürgen Klopp in his late twenties or early thirties as a gangly, unremarkable striker at Mainz 05 in the mid-1990s, wearing the club's red-and-white kit on a modest Bundesliga 2 pitch, all elbows and effort — or shortly after, around 2001-2004, as the young, bespectacled Mainz manager on the touchline in a tracksuit, leading the club toward their first-ever Bundesliga promotion.
-    search_hints: [Jürgen Klopp Mainz 05 player 1990s, Klopp Mainz manager 2001 Bundesliga 2, Mainz 05 Bundesliga promotion 2004 Klopp, Jürgen Klopp young coach Mainz Bruchweg stadium, Klopp Mainz 05 Trainer 2003]
+    moment: >-
+      Jürgen Klopp in his late twenties or early thirties as a gangly,
+      unremarkable striker at Mainz 05 in the mid-1990s, wearing the club's
+      red-and-white kit on a modest Bundesliga 2 pitch, all elbows and effort —
+      or shortly after, around 2001-2004, as the young, bespectacled Mainz
+      manager on the touchline in a tracksuit, leading the club toward their
+      first-ever Bundesliga promotion.
+    search_hints:
+      - Jürgen Klopp Mainz 05 player 1990s
+      - Klopp Mainz manager 2001 Bundesliga 2
+      - Mainz 05 Bundesliga promotion 2004 Klopp
+      - Jürgen Klopp young coach Mainz Bruchweg stadium
+      - Klopp Mainz 05 Trainer 2003
   peak:
-    moment: Klopp at peak intensity — either arms outstretched on the Anfield touchline after Liverpool's miraculous 4-0 comeback against Barcelona in the 2019 Champions League semifinal, or hoisting the Champions League trophy in Madrid's Wanda Metropolitano on 1 June 2019, wearing a red Liverpool tracksuit jacket, glasses slightly askew, face cracked open with joy, confetti falling around him.
-    search_hints: [Klopp Liverpool Champions League trophy 2019 Madrid, Klopp Anfield Barcelona 4-0 Champions League 2019, Jürgen Klopp Premier League trophy 2020 Liverpool, Klopp celebration Wanda Metropolitano final Tottenham, Klopp Liverpool Champions League winners 2019]
+    moment: >-
+      Klopp at peak intensity — either arms outstretched on the Anfield
+      touchline after Liverpool's miraculous 4-0 comeback against Barcelona in
+      the 2019 Champions League semifinal, or hoisting the Champions League
+      trophy in Madrid's Wanda Metropolitano on 1 June 2019, wearing a red
+      Liverpool tracksuit jacket, glasses slightly askew, face cracked open with
+      joy, confetti falling around him.
+    search_hints:
+      - Klopp Liverpool Champions League trophy 2019 Madrid
+      - Klopp Anfield Barcelona 4-0 Champions League 2019
+      - Jürgen Klopp Premier League trophy 2020 Liverpool
+      - Klopp celebration Wanda Metropolitano final Tottenham
+      - Klopp Liverpool Champions League winners 2019
   current:
-    moment: Klopp at fifty-seven or fifty-eight, greyer and slightly heavier in the face, in a corporate Red Bull setting — perhaps at a press conference or Red Bull Salzburg facility in 2025, wearing a collared shirt or Red Bull-branded attire rather than a touchline tracksuit, no pitch behind him, looking composed and ambassadorial rather than wild-eyed, the energy-drink logo visible somewhere in frame.
-    search_hints: [Jürgen Klopp Red Bull global head of soccer 2025, Klopp Red Bull press conference 2025, Jürgen Klopp Red Bull Salzburg presentation, Klopp Red Bull announcement January 2025, Jürgen Klopp Red Bull GmbH 2025]
+    moment: >-
+      Klopp at fifty-seven or fifty-eight, greyer and slightly heavier in the
+      face, in a corporate Red Bull setting — perhaps at a press conference or
+      Red Bull Salzburg facility in 2025, wearing a collared shirt or Red
+      Bull-branded attire rather than a touchline tracksuit, no pitch behind
+      him, looking composed and ambassadorial rather than wild-eyed, the
+      energy-drink logo visible somewhere in frame.
+    search_hints:
+      - Jürgen Klopp Red Bull global head of soccer 2025
+      - Klopp Red Bull press conference 2025
+      - Jürgen Klopp Red Bull Salzburg presentation
+      - Klopp Red Bull announcement January 2025
+      - Jürgen Klopp Red Bull GmbH 2025
 hero_image: /images/articles/the-authenticity-test.png
-hero_image_concept: Jürgen Klopp — Klopp at fifty-one, Anfield, 7 May 2019, seconds after the final whistle of the 4-0 Barcelona comeback. He is mid-stride onto the pitch, red Liverpool tracksuit jacket unzipped and flapping, glasses knocked slightly askew on his face. His arms are flung wide — not in triumph but in disbelief, jaw dropped, eyes glassy and wet, the roar not yet fully formed on his lips. Behind him the Kop is a wall of red scarves and open mouths. Players are already running toward him — Virgil van Dijk's arm reaching into frame. His feet are planted wide, that broadcast-tower stance, but his whole upper body is trembling with something between laughter and tears. Floodlit, soaked in sweat and drizzle.
+hero_image_concept: >-
+  Jürgen Klopp — Klopp at fifty-one, Anfield, 7 May 2019, seconds after the
+  final whistle of the 4-0 Barcelona comeback. He is mid-stride onto the pitch,
+  red Liverpool tracksuit jacket unzipped and flapping, glasses knocked slightly
+  askew on his face. His arms are flung wide — not in triumph but in disbelief,
+  jaw dropped, eyes glassy and wet, the roar not yet fully formed on his lips.
+  Behind him the Kop is a wall of red scarves and open mouths. Players are
+  already running toward him — Virgil van Dijk's arm reaching into frame. His
+  feet are planted wide, that broadcast-tower stance, but his whole upper body
+  is trembling with something between laughter and tears. Floodlit, soaked in
+  sweat and drizzle.
 inline_images:
   - path: /images/articles/the-authenticity-test-inline-1.png
-    concept: Jürgen Klopp, young years — Klopp at thirty-four, newly appointed Mainz 05 manager, 2001. He stands on the touchline of the Bruchwegstadion — a modest ground, half-empty terracing visible behind him — wearing an oversized dark tracksuit and thick-rimmed glasses that are slightly too big for his face. His hair is dark, his frame lean and gangly. One arm is fully extended, pointing urgently at something upfield, mouth wide open mid-shout, the other hand clenched at his side. His whole body is tilted forward as if he might sprint onto the pitch himself. A plastic water bottle lies overturned at his feet. The lighting is flat, grey, second-division afternoon.
+    concept: >-
+      Jürgen Klopp, young years — Klopp at thirty-four, newly appointed Mainz 05
+      manager, 2001. He stands on the touchline of the Bruchwegstadion — a
+      modest ground, half-empty terracing visible behind him — wearing an
+      oversized dark tracksuit and thick-rimmed glasses that are slightly too
+      big for his face. His hair is dark, his frame lean and gangly. One arm is
+      fully extended, pointing urgently at something upfield, mouth wide open
+      mid-shout, the other hand clenched at his side. His whole body is tilted
+      forward as if he might sprint onto the pitch himself. A plastic water
+      bottle lies overturned at his feet. The lighting is flat, grey,
+      second-division afternoon.
   - path: /images/articles/the-authenticity-test-inline-2.png
-    concept: Jürgen Klopp, current years — Klopp at fifty-eight, seated at a long corporate table in a Red Bull facility in Salzburg, 2025. He wears a crisp navy collared shirt, no tracksuit, no club crest — only a small Red Bull logo on the breast. His hair is greyer, face slightly fuller, stubble neatly trimmed. His hands are folded in front of him, fingers interlaced, and he is listening to someone off-frame with a composed, closed-mouth half-smile — polite, measured, ambassadorial. The jaw is still. The arms are still. The energy that once broadcast through his whole body is contained, visible only in the alertness of his eyes, which carry something watchful and slightly restless beneath the calm. Behind him, a clean white wall and the Red Bull corporate wordmark in matte silver.
-status: pending
+    concept: >-
+      Jürgen Klopp, current years — Klopp at fifty-eight, seated at a long
+      corporate table in a Red Bull facility in Salzburg, 2025. He wears a crisp
+      navy collared shirt, no tracksuit, no club crest — only a small Red Bull
+      logo on the breast. His hair is greyer, face slightly fuller, stubble
+      neatly trimmed. His hands are folded in front of him, fingers interlaced,
+      and he is listening to someone off-frame with a composed, closed-mouth
+      half-smile — polite, measured, ambassadorial. The jaw is still. The arms
+      are still. The energy that once broadcast through his whole body is
+      contained, visible only in the alertness of his eyes, which carry
+      something watchful and slightly restless beneath the calm. Behind him, a
+      clean white wall and the Red Bull corporate wordmark in matte silver.
+status: published
+approved_at: '2026-05-01T16:16:51.278Z'
 ---
 
 # The Authenticity Test

@@ -10,6 +10,8 @@ export const metadata = {
 
 export default function FeaturesPage() {
   const articles = getArticlesByVertical("features");
+  const spotlights = articles.filter((a) => !!a.subjectName);
+  const longReads = articles.filter((a) => !a.subjectName);
 
   return (
     <>
@@ -18,7 +20,12 @@ export default function FeaturesPage() {
         headline="The Long Read"
         standfirst="Deep dives into science, culture, and the ideas that shape us. No news hooks required."
       />
-      <ArticleGrid articles={articles} titleColor="text-ink" />
+      {longReads.length > 0 && (
+        <ArticleGrid articles={longReads} title="The Long Read" titleColor="text-ink" />
+      )}
+      {spotlights.length > 0 && (
+        <ArticleGrid articles={spotlights} title="Brilliant Minds" titleColor="text-ink" />
+      )}
       <SubscribeStrip
         vertical="features"
         headline="Ideas Worth Sitting With"

@@ -12,11 +12,9 @@ import {
 
 const contentDir = path.join(process.cwd(), "src/content");
 
-function categoryToVertical(category: string, featureType?: string): Vertical {
+function categoryToVertical(category: string): Vertical {
   if (category === "sports") return "sport";
-  if (category === "features") {
-    return featureType === "spotlight" ? "spotlights" : "features";
-  }
+  if (category === "spotlights") return "features";
   return category as Vertical;
 }
 
@@ -51,7 +49,7 @@ function parseArticleFile(dir: string, filename: string): Article {
     date: data.date,
     wordCount: data.word_count || 0,
     tags: data.tags || [],
-    category: categoryToVertical(data.category, data.feature_type),
+    category: categoryToVertical(data.category),
     content,
     editedAt: data.edited_at,
     editorNotes: data.editor_notes,
@@ -84,7 +82,7 @@ export function getArticlesByVertical(vertical: Vertical): Article[] {
  * Sorted most-recent first so newly-pipelined pieces float to the top.
  */
 export function getPendingArticles(): Article[] {
-  const verticals: Vertical[] = ["news", "sport", "tech", "features", "spotlights"];
+  const verticals: Vertical[] = ["news", "sport", "tech", "features"];
   return verticals
     .flatMap((v) => readVerticalDir(v))
     .filter((a) => a.status === "pending")
@@ -111,13 +109,7 @@ export function getArticleBySlug(
 }
 
 export function getAllArticles(): Article[] {
-  const verticals: Vertical[] = [
-    "news",
-    "sport",
-    "tech",
-    "features",
-    "spotlights",
-  ];
+  const verticals: Vertical[] = ["news", "sport", "tech", "features"];
   return verticals
     .flatMap((v) => getArticlesByVertical(v))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

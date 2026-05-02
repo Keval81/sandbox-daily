@@ -32,7 +32,6 @@ function renderInlineFigure(img: InlineImage): string {
     `<div class="relative w-full overflow-hidden rounded-sharp bg-ink" style="${containerStyle}">`,
     `<img src="${src}" alt="${alt}" loading="lazy" style="${imgStyle}" />`,
     "</div>",
-    `<figcaption class="font-mono text-meta-sm uppercase tracking-mono-wide text-grey mt-3 px-1">${alt}</figcaption>`,
     "</figure>",
   ].join("");
 }

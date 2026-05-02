@@ -12,13 +12,7 @@ interface Props {
 
 export const dynamic = "force-dynamic";
 
-const VALID_VERTICALS: Vertical[] = [
-  "news",
-  "sport",
-  "tech",
-  "features",
-  "spotlights",
-];
+const VALID_VERTICALS: Vertical[] = ["news", "sport", "tech", "features"];
 
 function isVertical(v: string): v is Vertical {
   return (VALID_VERTICALS as string[]).includes(v);
@@ -53,12 +47,12 @@ export default async function ReviewArticlePage({ params }: Props) {
       <section className={`${config.bg} ${config.text} py-20 px-6`}>
         <div className="mx-auto max-w-[1440px]">
           <span className="font-mono text-meta-sm uppercase tracking-mono-wide opacity-70">
-            {article.category === "spotlights"
+            {article.subjectName
               ? "BRILLIANT MINDS · SPOTLIGHT SERIES"
               : config.label}
           </span>
           <h1 className="font-display text-4xl font-black leading-headline mt-4 md:text-6xl max-w-4xl">
-            {article.category === "spotlights" && article.subjectName && (
+            {article.subjectName && (
               <span className="block font-display text-2xl md:text-4xl font-bold opacity-80 mb-3">
                 Spotlight: {article.subjectName}
               </span>

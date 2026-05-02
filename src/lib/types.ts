@@ -1,4 +1,4 @@
-export type Vertical = "news" | "sport" | "tech" | "features" | "spotlights";
+export type Vertical = "news" | "sport" | "tech" | "features";
 
 export type ArticleStatus = "pending" | "published";
 

@@ -5,12 +5,15 @@ interface ArticleGridProps {
   articles: Article[];
   title?: string;
   titleColor?: string;
+  /** When true, card titles type in with a per-card stagger. Homepage only. */
+  typewriterTitles?: boolean;
 }
 
 export function ArticleGrid({
   articles,
   title = "Latest",
   titleColor = "text-ink",
+  typewriterTitles = false,
 }: ArticleGridProps) {
   return (
     <section className="bg-cream py-16 px-6">
@@ -22,8 +25,12 @@ export function ArticleGrid({
           <div className="flex-1 h-px bg-ink/20" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {articles.map((article) => (
-            <ArticleCard key={article.slug} article={article} />
+          {articles.map((article, i) => (
+            <ArticleCard
+              key={article.slug}
+              article={article}
+              typewriterDelayMs={typewriterTitles ? i * 180 : undefined}
+            />
           ))}
         </div>
       </div>
