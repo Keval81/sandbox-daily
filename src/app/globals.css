@@ -6,8 +6,8 @@
   --color-green:  #1A3A2A;   /* Deep Tissue Green — Sport */
   --color-cream:  #F5EED8;   /* Vellum Cream — Tech / body bg */
   --color-ink:    #111111;   /* Press Ink — Global nav, footer */
-  --color-grey:   #7A7169;   /* Grey Matter — meta / bylines only */
-  --color-accent: #3D7A57;   /* Synaptic Green — live, interactive */
+  --color-grey:   #6E655B;   /* Grey Matter — meta / bylines only (4.93:1 AA on cream) */
+  --color-accent: #56A077;   /* Synaptic Green — live, interactive (6.02:1 AA on ink) */
 
   /* Semantic foreground / background */
   --bg-page:        var(--color-cream);
@@ -59,8 +59,8 @@
   --color-green: #1A3A2A;
   --color-cream: #F5EED8;
   --color-ink: #111111;
-  --color-grey: #7A7169;
-  --color-accent: #3D7A57;
+  --color-grey: #6E655B;
+  --color-accent: #56A077;
 
   /* Font families — use dedicated theme vars to avoid circular ref with next/font */
   --font-family-display: var(--font-display), "Playfair Display", serif;
@@ -131,6 +131,15 @@
   ::selection {
     background-color: var(--color-orange);
     color: var(--color-cream);
+  }
+
+  /* Brand guide §10.2 — visible focus rings on all interactive elements.
+     `currentColor` follows each component's text colour, so the ring
+     always contrasts against its own background (cream on ink, ink on cream, etc.). */
+  *:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+    border-radius: var(--radius-sharp, 4px);
   }
 }
 

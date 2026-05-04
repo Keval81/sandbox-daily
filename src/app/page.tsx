@@ -25,6 +25,7 @@ export default function Home() {
   return (
     <>
       <section className="sd-hero" data-bg="paper">
+        <h1 className="sr-only">Sandbox Daily — News, Tech, Sport</h1>
         <video
           className="sd-hero-bg"
           autoPlay
@@ -44,7 +45,7 @@ export default function Home() {
             <img
               className="sd-hero-wordmark"
               src="/images/wordmark-typewriter.webp"
-              alt="Sandbox Daily"
+              alt=""
             />
             <svg
               className="sd-scribble"

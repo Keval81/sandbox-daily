@@ -42,8 +42,14 @@ export default function RootLayout({
       className={`${playfair.variable} ${sourceSerif.variable} ${ibmPlexMono.variable}`}
     >
       <body className="bg-cream text-ink antialiased">
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-ink focus:text-cream focus:px-4 focus:py-2 focus:rounded-sharp font-mono text-meta uppercase tracking-mono-wide"
+          >
+            Skip to content
+          </a>
           <Nav />
-          <main className="pt-16">{children}</main>
+          <main id="main-content" className="pt-16">{children}</main>
           <Footer />
         </body>
     </html>

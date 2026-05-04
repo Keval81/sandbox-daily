@@ -5,7 +5,7 @@ export const verticals: Record<Vertical, VerticalConfig> = {
     name: "news",
     label: "NEWS",
     bg: "bg-orange",
-    text: "text-cream",
+    text: "text-ink",
     navIndicator: "border-orange",
     tagline: "The Intelligence Briefing",
     route: "/news",

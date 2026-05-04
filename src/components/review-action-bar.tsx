@@ -95,7 +95,7 @@ export function ReviewActionBar({ vertical, slug, title }: Props) {
             type="button"
             disabled={pending}
             onClick={() => act("approve")}
-            className="font-mono text-meta uppercase tracking-mono-wide bg-orange text-cream px-6 py-3 rounded-sharp hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="font-mono text-meta uppercase tracking-mono-wide bg-orange text-ink px-6 py-3 rounded-sharp hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {pending ? "Working…" : "Approve · Go Live"}
           </button>

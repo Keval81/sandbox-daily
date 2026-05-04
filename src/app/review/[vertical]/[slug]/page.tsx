@@ -36,7 +36,7 @@ export default async function ReviewArticlePage({ params }: Props) {
   return (
     <>
       {/* Pending banner so the page is unmistakably a preview. */}
-      <div className="bg-orange text-cream py-3 px-6 text-center sticky top-0 z-40">
+      <div className="bg-orange text-ink py-3 px-6 text-center sticky top-0 z-40">
         <p className="font-mono text-meta-sm uppercase tracking-mono-wide">
           PREVIEW · status:{" "}
           <span className="font-bold">{article.status}</span> · this view is
