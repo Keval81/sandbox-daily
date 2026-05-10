@@ -59,6 +59,7 @@ function parseArticleFile(dir: string, filename: string): Article {
     inlineImages,
     status,
     subjectName: typeof data.subject_name === "string" ? data.subject_name : undefined,
+    revisionRound: typeof data.revision_round === "number" ? data.revision_round : undefined,
   };
 }
 
