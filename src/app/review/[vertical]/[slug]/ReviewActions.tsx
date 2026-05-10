@@ -90,7 +90,16 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive }: Prop
     return (
       <RevisionStatus
         jobId={jobId}
-        onDone={() => router.refresh()}
+        onDone={() => {
+          annotations.clearAll();
+          setOverallNotes("");
+          setImageRegen(false);
+          setImageContext("");
+          setError(null);
+          setJobId(null);
+          setMode("default");
+          router.refresh();
+        }}
         onError={(msg) => {
           setError(msg);
           setMode("annotating");
