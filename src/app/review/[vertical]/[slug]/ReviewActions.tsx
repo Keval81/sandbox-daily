@@ -15,9 +15,11 @@ interface Props {
   vertical: ReviewRequest["vertical"];
   slug: string;
   articleHtml: string;
+  /** Action buttons + annotation drawer only render when true. */
+  interactive: boolean;
 }
 
-export function ReviewActions({ vertical, slug, articleHtml }: Props) {
+export function ReviewActions({ vertical, slug, articleHtml, interactive }: Props) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("default");
   const [overallNotes, setOverallNotes] = useState("");
@@ -136,7 +138,7 @@ export function ReviewActions({ vertical, slug, articleHtml }: Props) {
         />
       )}
 
-      {mode === "default" && (
+      {mode === "default" && interactive && (
         <div className="flex gap-3 pt-8 border-t-2 border-ink mt-12">
           <button
             type="button"
@@ -159,6 +161,14 @@ export function ReviewActions({ vertical, slug, articleHtml }: Props) {
           >
             Reject
           </button>
+        </div>
+      )}
+
+      {mode === "default" && !interactive && (
+        <div className="mt-12 pt-8 border-t-2 border-ink">
+          <p className="font-mono text-meta-sm uppercase tracking-mono-wide opacity-70">
+            Review actions are only enabled in local dev. Approve, request revision, or reject this piece from your local server.
+          </p>
         </div>
       )}
 

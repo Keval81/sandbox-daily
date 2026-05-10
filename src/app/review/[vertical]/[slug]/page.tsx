@@ -28,6 +28,7 @@ export default async function ReviewArticlePage({ params }: Props) {
   const renderedHtml = await renderMarkdown(article.content);
   const htmlContent = injectInlineImages(renderedHtml, article.inlineImages);
   const config = verticals[article.category];
+  const isDev = process.env.NODE_ENV !== "production";
 
   return (
     <>
@@ -80,6 +81,7 @@ export default async function ReviewArticlePage({ params }: Props) {
               vertical={article.category}
               slug={article.slug}
               articleHtml={htmlContent}
+              interactive={isDev}
             />
           </div>
           <aside className="hidden lg:block">
