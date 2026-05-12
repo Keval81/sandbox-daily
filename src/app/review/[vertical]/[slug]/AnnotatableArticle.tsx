@@ -1,9 +1,28 @@
 // src/app/review/[vertical]/[slug]/AnnotatableArticle.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState, type Ref } from "react";
 import type { InlineComment } from "@/lib/revision/types";
 import { CommentPopover } from "./CommentPopover";
+
+// Memoized so `setSelection` / parent re-renders don't cause React to re-apply
+// `dangerouslySetInnerHTML`, which would tear down + rebuild every child node
+// of the prose container and destroy the user's in-progress drag anchor.
+const ArticleBody = memo(function ArticleBody({
+  bodyHtml,
+  innerRef,
+}: {
+  bodyHtml: string;
+  innerRef: Ref<HTMLDivElement>;
+}) {
+  return (
+    <div
+      ref={innerRef}
+      className="prose prose-stone max-w-reading"
+      dangerouslySetInnerHTML={{ __html: bodyHtml }}
+    />
+  );
+});
 
 interface SelectionInfo {
   paragraphIndex: number;
@@ -77,11 +96,7 @@ export function AnnotatableArticle({
 
   return (
     <div className="relative">
-      <div
-        ref={articleRef}
-        className="prose prose-stone max-w-reading"
-        dangerouslySetInnerHTML={{ __html: bodyHtml }}
-      />
+      <ArticleBody bodyHtml={bodyHtml} innerRef={articleRef} />
       {selection && <CommentPopover rect={selection.rect} onClick={onAdd} />}
     </div>
   );
@@ -89,57 +104,70 @@ export function AnnotatableArticle({
 
 function captureSelection(
   root: HTMLElement | null,
-  comments: InlineComment[]
+  _comments: InlineComment[]
 ): SelectionInfo | null {
   if (!root) return null;
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return null;
   const range = sel.getRangeAt(0);
   if (!root.contains(range.commonAncestorContainer)) return null;
-  const quote = sel.toString().trim();
+
+  const paragraphs = Array.from(
+    root.querySelectorAll<HTMLElement>("p,h1,h2,h3,h4,blockquote,li")
+  );
+
+  // Find the first paragraph the user's range touches. For a single-paragraph
+  // drag this is the paragraph under the cursor; for a multi-paragraph drag
+  // this is the topmost paragraph in the selection. Anchoring to one paragraph
+  // means the reviser-agent gets one well-scoped target instead of a mixed quote.
+  const paragraph = paragraphs.find((p) => rangeIntersectsNode(range, p));
+  if (!paragraph) return null;
+  const paragraphIndex = paragraphs.indexOf(paragraph);
+
+  // Clip the range to that paragraph so the quote is text that actually lives
+  // inside it — otherwise applyHighlights can't wrap it later.
+  const clippedRange = clipRangeToNode(range, paragraph);
+  const quote = clippedRange.toString().trim();
   if (!quote) return null;
 
-  const paragraph = findParagraph(range.commonAncestorContainer, root);
-  if (!paragraph) return null;
-
-  const paragraphs = Array.from(root.querySelectorAll("p,h1,h2,h3,h4,blockquote,li"));
-  const paragraphIndex = paragraphs.indexOf(paragraph);
-  if (paragraphIndex < 0) return null;
-
-  if (overlapsExistingHighlight(range, root)) return null;
+  if (overlapsExistingHighlight(clippedRange, root)) return null;
 
   const paragraphText = paragraph.textContent ?? "";
   const precedingContext = paragraphs[paragraphIndex - 1]?.textContent ?? "";
   const followingContext = paragraphs[paragraphIndex + 1]?.textContent ?? "";
-
   const charOffset = paragraphText.indexOf(quote);
-
-  // Suppress unused-variable warning while keeping the offset available for future use.
-  void comments;
 
   return {
     paragraphIndex,
     charOffset: charOffset >= 0 ? charOffset : 0,
     quote,
-    rect: range.getBoundingClientRect(),
+    rect: clippedRange.getBoundingClientRect(),
     paragraphText,
     precedingContext,
     followingContext,
   };
 }
 
-function findParagraph(node: Node, root: HTMLElement): HTMLElement | null {
-  let cur: Node | null = node;
-  while (cur && cur !== root) {
-    if (cur.nodeType === Node.ELEMENT_NODE) {
-      const el = cur as HTMLElement;
-      if (["P", "H1", "H2", "H3", "H4", "BLOCKQUOTE", "LI"].includes(el.tagName)) {
-        return el;
-      }
-    }
-    cur = cur.parentNode;
+function rangeIntersectsNode(range: Range, node: Node): boolean {
+  const nodeRange = document.createRange();
+  nodeRange.selectNodeContents(node);
+  return (
+    range.compareBoundaryPoints(Range.END_TO_START, nodeRange) < 0 &&
+    range.compareBoundaryPoints(Range.START_TO_END, nodeRange) > 0
+  );
+}
+
+function clipRangeToNode(range: Range, node: Node): Range {
+  const nodeRange = document.createRange();
+  nodeRange.selectNodeContents(node);
+  const clipped = range.cloneRange();
+  if (range.compareBoundaryPoints(Range.START_TO_START, nodeRange) < 0) {
+    clipped.setStart(nodeRange.startContainer, nodeRange.startOffset);
   }
-  return null;
+  if (range.compareBoundaryPoints(Range.END_TO_END, nodeRange) > 0) {
+    clipped.setEnd(nodeRange.endContainer, nodeRange.endOffset);
+  }
+  return clipped;
 }
 
 function overlapsExistingHighlight(range: Range, root: HTMLElement): boolean {

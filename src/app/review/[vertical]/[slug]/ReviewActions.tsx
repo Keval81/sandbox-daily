@@ -1,7 +1,7 @@
 // src/app/review/[vertical]/[slug]/ReviewActions.tsx
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ReviewRequest } from "@/lib/revision/types";
 import { useAnnotations } from "./use-annotations";
@@ -30,6 +30,10 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive }: Prop
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const annotations = useAnnotations();
+
+  // Stable so AnnotatableArticle's applyHighlights effect doesn't re-run on every
+  // parent render and stomp on an in-progress drag selection.
+  const onEditComment = useCallback((id: string) => setHighlightedId(id), []);
 
   const callApi = async (action: "approve" | "reject") => {
     const res = await fetch("/api/review", {
@@ -119,7 +123,7 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive }: Prop
             const created = annotations.addComment(draft);
             setHighlightedId(created.id);
           }}
-          onEditComment={(id) => setHighlightedId(id)}
+          onEditComment={onEditComment}
           highlightedId={highlightedId}
         />
       ) : (

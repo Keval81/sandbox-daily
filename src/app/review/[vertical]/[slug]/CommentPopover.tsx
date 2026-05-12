@@ -7,8 +7,11 @@ interface Props {
 }
 
 export function CommentPopover({ rect, onClick }: Props) {
-  const top = rect.top + window.scrollY - 44;
-  const left = rect.left + window.scrollX + rect.width / 2 - 60;
+  // rect is viewport-relative (DOMRect from Range.getBoundingClientRect), so
+  // position:fixed lets us sit it right above the selection without translating
+  // through any ancestor's coordinate space.
+  const top = Math.max(8, rect.top - 44);
+  const left = rect.left + rect.width / 2 - 60;
 
   return (
     <button
@@ -19,7 +22,7 @@ export function CommentPopover({ rect, onClick }: Props) {
       }}
       onClick={onClick}
       style={{
-        position: "absolute",
+        position: "fixed",
         top,
         left,
         zIndex: 50,
