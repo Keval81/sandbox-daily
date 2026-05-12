@@ -2,9 +2,9 @@ import { notFound } from "next/navigation";
 import { getAnyArticleBySlug, renderMarkdown } from "@/lib/articles";
 import { verticals } from "@/lib/verticals";
 import { ArticleHeroImage } from "@/components/article-hero-image";
-import { ReviewActionBar } from "@/components/review-action-bar";
-import { ARTICLE_PROSE_CLASS, injectInlineImages } from "@/lib/article-html";
+import { injectInlineImages } from "@/lib/article-html";
 import type { Vertical } from "@/lib/types";
+import { ReviewActions } from "./ReviewActions";
 
 interface Props {
   params: Promise<{ vertical: string; slug: string }>;
@@ -25,13 +25,10 @@ export default async function ReviewArticlePage({ params }: Props) {
   const article = getAnyArticleBySlug(vertical, slug);
   if (!article) notFound();
 
-  // The reject button is destructive; we only expose it from local dev to
-  // avoid letting a public visitor discard articles.
-  const isDev = process.env.NODE_ENV !== "production";
-
   const renderedHtml = await renderMarkdown(article.content);
   const htmlContent = injectInlineImages(renderedHtml, article.inlineImages);
   const config = verticals[article.category];
+  const isDev = process.env.NODE_ENV !== "production";
 
   return (
     <>
@@ -79,10 +76,14 @@ export default async function ReviewArticlePage({ params }: Props) {
 
       <section className="bg-cream py-16 px-6">
         <div className="mx-auto max-w-[1440px] grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-12">
-          <article
-            className={ARTICLE_PROSE_CLASS}
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
-          />
+          <div>
+            <ReviewActions
+              vertical={article.category}
+              slug={article.slug}
+              articleHtml={htmlContent}
+              interactive={isDev}
+            />
+          </div>
           <aside className="hidden lg:block">
             <div className="sticky top-24">
               <div className="mb-8">
@@ -107,23 +108,6 @@ export default async function ReviewArticlePage({ params }: Props) {
           </aside>
         </div>
       </section>
-
-      {isDev ? (
-        <ReviewActionBar
-          vertical={article.category}
-          slug={article.slug}
-          title={article.title}
-        />
-      ) : (
-        <div className="bg-ink text-cream py-6 px-6 border-t-4 border-orange">
-          <div className="mx-auto max-w-[1200px]">
-            <p className="font-mono text-meta-sm uppercase tracking-mono-wide opacity-70">
-              Approve / Reject buttons are only enabled in local dev. Approve
-              this piece from your local server.
-            </p>
-          </div>
-        </div>
-      )}
     </>
   );
 }

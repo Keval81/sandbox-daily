@@ -78,6 +78,9 @@ export default function ReviewIndexPage() {
                     <div className="p-6">
                       <p className="font-mono text-meta-sm uppercase tracking-mono-wide text-orange mb-2">
                         {config.label} · PENDING
+                        {article.revisionRound && article.revisionRound > 0
+                          ? ` · ROUND ${article.revisionRound + 1}`
+                          : ""}
                       </p>
                       <h2 className="font-display text-2xl font-bold leading-headline text-ink group-hover:opacity-70 transition-opacity">
                         {article.title}

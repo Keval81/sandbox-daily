@@ -25,6 +25,8 @@ export interface Article {
   status: ArticleStatus;
   /** For spotlights: subject's display name, used in cards and breadcrumbs. */
   subjectName?: string;
+  /** How many revision passes this article has been through (0 = first draft). */
+  revisionRound?: number;
 }
 
 export interface VerticalConfig {

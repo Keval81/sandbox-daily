@@ -222,7 +222,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { writeJobUpdate, type WriteJobOptions } from "../src/job.ts";
+import { writeJobUpdate, type WriteJobOptions } from "../src/job.js";
 
 test("writeJobUpdate creates job record on first call", async () => {
   const dir = await mkdtemp(join(tmpdir(), "job-"));
@@ -432,7 +432,7 @@ cd ~/Desktop/ssnn-outputs/reviser-agent && \
 // tests/validator.test.ts
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validateRevision } from "../src/validator.ts";
+import { validateRevision } from "../src/validator.js";
 
 const ORIGINAL = `# Original Title
 
@@ -623,8 +623,8 @@ cd ~/Desktop/ssnn-outputs/reviser-agent && \
 // tests/prompt.test.ts
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildPrompt, REVISER_SYSTEM_PROMPT } from "../src/prompt.ts";
-import type { ReviewRequest } from "../src/types.ts";
+import { buildPrompt, REVISER_SYSTEM_PROMPT } from "../src/prompt.js";
+import type { ReviewRequest } from "../src/types.js";
 
 const ARTICLE = `# Itauma's Quiet Threat
 
@@ -796,7 +796,7 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import matter from "gray-matter";
-import { publishRevision } from "../src/publisher.ts";
+import { publishRevision } from "../src/publisher.js";
 
 async function fixture(): Promise<{
   root: string;
