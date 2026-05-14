@@ -4,6 +4,8 @@ import { verticals } from "@/lib/verticals";
 import { ArticleHeroImage } from "@/components/article-hero-image";
 import { injectInlineImages } from "@/lib/article-html";
 import type { Vertical } from "@/lib/types";
+import { getPersistedRevisionState } from "@/lib/revision/persisted-state";
+import { PersistedRevisionNotice } from "./PersistedRevisionNotice";
 import { ReviewActions } from "./ReviewActions";
 
 interface Props {
@@ -29,6 +31,11 @@ export default async function ReviewArticlePage({ params }: Props) {
   const htmlContent = injectInlineImages(renderedHtml, article.inlineImages);
   const config = verticals[article.category];
   const isDev = process.env.NODE_ENV !== "production";
+  const persistedRevisionState = await getPersistedRevisionState({
+    status: article.status,
+    vertical: article.category,
+    slug: article.slug,
+  });
 
   return (
     <>
@@ -77,6 +84,12 @@ export default async function ReviewArticlePage({ params }: Props) {
       <section className="bg-cream py-16 px-6">
         <div className="mx-auto max-w-[1440px] grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-12">
           <div>
+            <PersistedRevisionNotice
+              vertical={article.category}
+              slug={article.slug}
+              state={persistedRevisionState}
+              interactive={isDev}
+            />
             <ReviewActions
               vertical={article.category}
               slug={article.slug}

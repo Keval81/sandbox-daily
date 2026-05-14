@@ -77,7 +77,7 @@ export default function ReviewIndexPage() {
                     )}
                     <div className="p-6">
                       <p className="font-mono text-meta-sm uppercase tracking-mono-wide text-orange mb-2">
-                        {config.label} · PENDING
+                        {config.label} · {article.status.toUpperCase()}
                         {article.revisionRound && article.revisionRound > 0
                           ? ` · ROUND ${article.revisionRound + 1}`
                           : ""}

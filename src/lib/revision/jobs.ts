@@ -4,29 +4,33 @@ import { openSync } from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { REVIEW_JOBS_ROOT, REVISER_AGENT_PATH } from "./paths";
+import { REVIEW_JOBS_ROOT, REVIEW_REQUESTS_ROOT, REVISER_AGENT_PATH } from "./paths";
 import type { JobRecord, ReviewRequest } from "./types";
 
-export async function readJob(jobId: string): Promise<JobRecord | null> {
+export async function readJob(jobId: string, jobsRoot = REVIEW_JOBS_ROOT): Promise<JobRecord | null> {
   try {
-    const raw = await fs.readFile(path.join(REVIEW_JOBS_ROOT, `${jobId}.json`), "utf-8");
+    const raw = await fs.readFile(path.join(jobsRoot, `${jobId}.json`), "utf-8");
     return JSON.parse(raw) as JobRecord;
   } catch {
     return null;
   }
 }
 
-export async function findActiveJobFor(vertical: ReviewRequest["vertical"], slug: string): Promise<JobRecord | null> {
+export async function findActiveJobFor(
+  vertical: ReviewRequest["vertical"],
+  slug: string,
+  jobsRoot = REVIEW_JOBS_ROOT
+): Promise<JobRecord | null> {
   let entries: string[] = [];
   try {
-    entries = await fs.readdir(REVIEW_JOBS_ROOT);
+    entries = await fs.readdir(jobsRoot);
   } catch {
     return null;
   }
   for (const entry of entries) {
     if (!entry.endsWith(".json")) continue;
     try {
-      const raw = await fs.readFile(path.join(REVIEW_JOBS_ROOT, entry), "utf-8");
+      const raw = await fs.readFile(path.join(jobsRoot, entry), "utf-8");
       const job = JSON.parse(raw) as JobRecord;
       if (
         job.vertical === vertical &&
@@ -42,9 +46,59 @@ export async function findActiveJobFor(vertical: ReviewRequest["vertical"], slug
   return null;
 }
 
+export async function findLatestJobFor(
+  vertical: ReviewRequest["vertical"],
+  slug: string,
+  jobsRoot = REVIEW_JOBS_ROOT
+): Promise<JobRecord | null> {
+  let entries: string[] = [];
+  try {
+    entries = await fs.readdir(jobsRoot);
+  } catch {
+    return null;
+  }
+
+  const jobs: JobRecord[] = [];
+  for (const entry of entries) {
+    if (!entry.endsWith(".json")) continue;
+    try {
+      const raw = await fs.readFile(path.join(jobsRoot, entry), "utf-8");
+      const job = JSON.parse(raw) as JobRecord;
+      if (job.vertical === vertical && job.slug === slug) {
+        jobs.push(job);
+      }
+    } catch {
+      // ignore malformed records
+    }
+  }
+
+  jobs.sort(
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
+  return jobs[0] ?? null;
+}
+
+export async function readReviewRequestFor(
+  vertical: ReviewRequest["vertical"],
+  slug: string,
+  requestsRoot = REVIEW_REQUESTS_ROOT
+): Promise<ReviewRequest | null> {
+  try {
+    const raw = await fs.readFile(
+      path.join(requestsRoot, vertical, `${slug}.review-request.json`),
+      "utf-8"
+    );
+    return JSON.parse(raw) as ReviewRequest;
+  } catch {
+    return null;
+  }
+}
+
 export interface CreateJobInput {
   slug: string;
   vertical: ReviewRequest["vertical"];
+  jobsRoot?: string;
 }
 
 export interface CreatedJob {
@@ -54,10 +108,11 @@ export interface CreatedJob {
 }
 
 export async function createJobRecord(input: CreateJobInput): Promise<CreatedJob> {
-  await fs.mkdir(REVIEW_JOBS_ROOT, { recursive: true });
+  const jobsRoot = input.jobsRoot ?? REVIEW_JOBS_ROOT;
+  await fs.mkdir(jobsRoot, { recursive: true });
   const jobId = randomUUID();
-  const recordPath = path.join(REVIEW_JOBS_ROOT, `${jobId}.json`);
-  const logPath = path.join(REVIEW_JOBS_ROOT, `${jobId}.log`);
+  const recordPath = path.join(jobsRoot, `${jobId}.json`);
+  const logPath = path.join(jobsRoot, `${jobId}.log`);
   const now = new Date().toISOString();
   const record: JobRecord = {
     id: jobId,
@@ -97,4 +152,49 @@ export function spawnReviser(input: SpawnReviserInput): void {
     }
   );
   child.unref();
+}
+
+export interface RetryPersistedReviewRequestInput {
+  slug: string;
+  vertical: ReviewRequest["vertical"];
+  jobsRoot?: string;
+  requestsRoot?: string;
+  spawn?: (input: SpawnReviserInput) => void;
+}
+
+export interface RetriedRevisionJob {
+  jobId: string;
+  status: "queued";
+}
+
+export async function retryPersistedReviewRequest(
+  input: RetryPersistedReviewRequestInput
+): Promise<RetriedRevisionJob> {
+  const request = await readReviewRequestFor(
+    input.vertical,
+    input.slug,
+    input.requestsRoot
+  );
+  if (!request) {
+    throw new Error(`Review request not found for ${input.vertical}/${input.slug}`);
+  }
+
+  const active = await findActiveJobFor(input.vertical, input.slug, input.jobsRoot);
+  if (active) {
+    throw new Error("Article is already in revision.");
+  }
+
+  const job = await createJobRecord({
+    slug: request.slug,
+    vertical: request.vertical,
+    jobsRoot: input.jobsRoot,
+  });
+  const spawn = input.spawn ?? spawnReviser;
+  spawn({
+    jobId: job.jobId,
+    slug: request.slug,
+    vertical: request.vertical,
+    logPath: job.logPath,
+  });
+  return { jobId: job.jobId, status: "queued" };
 }

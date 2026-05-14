@@ -41,7 +41,9 @@ function parseArticleFile(dir: string, filename: string): Article {
   // (written before status was introduced) keep showing on the live site.
   const rawStatus = typeof data.status === "string" ? data.status : "published";
   const status: ArticleStatus =
-    rawStatus === "pending" ? "pending" : "published";
+    rawStatus === "pending" || rawStatus === "revision-requested"
+      ? rawStatus
+      : "published";
 
   return {
     slug: data.slug || filename.replace(/\.md$/, ""),
@@ -86,7 +88,7 @@ export function getPendingArticles(): Article[] {
   const verticals: Vertical[] = ["news", "sport", "tech", "features"];
   return verticals
     .flatMap((v) => readVerticalDir(v))
-    .filter((a) => a.status === "pending")
+    .filter((a) => a.status === "pending" || a.status === "revision-requested")
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 

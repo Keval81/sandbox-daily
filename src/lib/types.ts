@@ -1,6 +1,6 @@
 export type Vertical = "news" | "sport" | "tech" | "features";
 
-export type ArticleStatus = "pending" | "published";
+export type ArticleStatus = "pending" | "published" | "revision-requested";
 
 export interface InlineImage {
   path: string;
