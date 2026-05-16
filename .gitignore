@@ -43,6 +43,7 @@ next-env.d.ts
 
 # local-only working files (not part of the project)
 /design-source/
+/.superpowers/
 /.claude/
 /.review-discarded/
 /public/images/articles/style-options/
