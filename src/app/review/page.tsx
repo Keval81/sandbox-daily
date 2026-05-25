@@ -72,6 +72,7 @@ export default function ReviewIndexPage() {
                           fill
                           sizes="(max-width: 768px) 100vw, 600px"
                           className="object-cover"
+                          unoptimized
                         />
                       </div>
                     )}

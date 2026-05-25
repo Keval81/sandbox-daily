@@ -111,6 +111,7 @@ export function SectionCarousel({
                     fill
                     sizes="(max-width: 768px) 100vw, 25vw"
                     className="object-cover transition-transform duration-500 group-hover/slide:scale-105"
+                    unoptimized
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center font-mono text-meta-sm uppercase opacity-50">
