@@ -128,6 +128,20 @@
     font-family: var(--font-body), "Source Serif 4", serif;
   }
 
+  body:has([data-admin-shell]) {
+    background: #07090f;
+    color: #f8fafc;
+  }
+
+  body:has([data-admin-shell]) > nav,
+  body:has([data-admin-shell]) > footer {
+    display: none;
+  }
+
+  body:has([data-admin-shell]) > main#main-content {
+    padding-top: 0;
+  }
+
   ::selection {
     background-color: var(--color-orange);
     color: var(--color-cream);
