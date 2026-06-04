@@ -10,13 +10,22 @@ export function RadarList({ events }: { events: RadarEvent[] }) {
 
   async function promote(id: string) {
     setBusy(id);
-    const res = await fetch("/admin/radar/promote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ event_id: id }),
-    });
-    if (res.ok) setPromoted((p) => new Set(p).add(id));
-    setBusy(null);
+    try {
+      const res = await fetch("/admin/radar/promote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_id: id }),
+      });
+      if (res.ok) {
+        setPromoted((p) => new Set(p).add(id));
+      } else {
+        console.error("promote failed", res.status, await res.text());
+      }
+    } catch (err) {
+      console.error("promote network error", err);
+    } finally {
+      setBusy(null);
+    }
   }
 
   if (events.length === 0) return <p>No events surfaced yet.</p>;
@@ -29,7 +38,7 @@ export function RadarList({ events }: { events: RadarEvent[] }) {
               <span className="text-xs uppercase px-2 py-0.5 rounded bg-neutral-100">{e.location}</span>
               <span className="text-xs text-neutral-500">vol {e.volume} · score {e.score}</span>
             </div>
-            <h2 className="font-medium mt-1">{e.title}</h2>
+            <p className="font-medium mt-1">{e.title}</p>
             <div className="text-xs text-neutral-400 mt-1">
               {e.sources.slice(0, 3).map((s, i) => (
                 <a key={s} href={s} target="_blank" rel="noreferrer" className="underline mr-2">source {i + 1}</a>
