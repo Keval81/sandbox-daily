@@ -24,6 +24,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             >
               Workflow
             </Link>
+            <Link
+              className="rounded-full bg-slate-100 px-3 py-2 text-slate-950"
+              href="/admin/radar"
+            >
+              Radar
+            </Link>
             <span className="rounded-full border border-slate-700 px-3 py-2">
               Engagement Later
             </span>
