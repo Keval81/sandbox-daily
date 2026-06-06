@@ -1,15 +1,10 @@
 import { getAllArticles } from "@/lib/articles";
 import { BreakingTicker } from "@/components/breaking-ticker";
+import { getTickerHeadlines } from "@/lib/radar/ticker";
 import { VerticalStrip } from "@/components/vertical-strip";
 import { TrendingBar } from "@/components/trending-bar";
 import { ArticleGrid } from "@/components/article-grid";
 import { SubscribeStrip } from "@/components/subscribe-strip";
-
-const breakingHeadlines = [
-  "FURY CHALLENGES JOSHUA AT TOTTENHAM — JOSHUA CALLS HIM A CLOUT CHASER",
-  "IRAN WALKS AWAY FROM ISLAMABAD TALKS WITH CEASEFIRE INTACT",
-  "ANTHROPIC WITHHOLDS VULNERABILITY-FINDING AI MODEL FROM PUBLIC RELEASE",
-];
 
 const trendingTopics = [
   { label: "Fury vs Joshua", score: 94 },
@@ -19,8 +14,9 @@ const trendingTopics = [
   { label: "Usyk Defence", score: 71 },
 ];
 
-export default function Home() {
+export default async function Home() {
   const articles = getAllArticles().slice(0, 9);
+  const breakingHeadlines = await getTickerHeadlines();
 
   return (
     <>

@@ -1,6 +1,7 @@
 import { getArticlesByVertical } from "@/lib/articles";
 import { Hero } from "@/components/hero";
 import { BreakingTicker } from "@/components/breaking-ticker";
+import { getTickerHeadlines } from "@/lib/radar/ticker";
 import { ArticleGrid } from "@/components/article-grid";
 import { SubscribeStrip } from "@/components/subscribe-strip";
 
@@ -9,8 +10,9 @@ export const metadata = {
   description: "Breaking news, long-form reporting, opinion and analysis.",
 };
 
-export default function NewsPage() {
+export default async function NewsPage() {
   const articles = getArticlesByVertical("news");
+  const breakingHeadlines = await getTickerHeadlines();
 
   return (
     <>
@@ -19,13 +21,7 @@ export default function NewsPage() {
         headline="The Intelligence Briefing"
         standfirst="Breaking news, long-form reporting, opinion and analysis. The stories that matter, examined without compromise."
       />
-      <BreakingTicker
-        headlines={[
-          "IRAN WALKS AWAY FROM ISLAMABAD TALKS",
-          "EU AI REGULATION FRAMEWORK ADVANCES",
-          "STRAIT OF HORMUZ TRANSIT FEES PROPOSED",
-        ]}
-      />
+      <BreakingTicker headlines={breakingHeadlines} />
       <ArticleGrid articles={articles} titleColor="text-orange" />
       <SubscribeStrip vertical="news" headline="Never Miss a Story" />
     </>
