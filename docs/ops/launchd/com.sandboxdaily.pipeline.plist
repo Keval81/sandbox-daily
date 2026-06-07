@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Sandbox Daily Pipeline — triggers when research-docs/ changes -->
+    <key>Label</key>
+    <string>com.sandboxdaily.pipeline</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/sandboxsansan/Desktop/ssnn-outputs/run-pipeline.sh</string>
+    </array>
+
+    <!-- Fire when any file in research-docs/ is added or modified -->
+    <key>WatchPaths</key>
+    <array>
+        <string>/Users/sandboxsansan/Desktop/ssnn-outputs/research-docs</string>
+    </array>
+
+    <!-- Debounce: wait 15 seconds after the change before firing,
+         in case multiple docs land in quick succession -->
+    <key>ThrottleInterval</key>
+    <integer>15</integer>
+
+    <!-- Ensure node/npm/claude are on PATH -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key>
+        <string>/Users/sandboxsansan</string>
+    </dict>
+
+    <!-- Log stdout and stderr so you can debug -->
+    <key>StandardOutPath</key>
+    <string>/Users/sandboxsansan/Desktop/ssnn-outputs/pipeline.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/sandboxsansan/Desktop/ssnn-outputs/pipeline.log</string>
+
+    <!-- Don't restart on failure — wait for next file change -->
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>
