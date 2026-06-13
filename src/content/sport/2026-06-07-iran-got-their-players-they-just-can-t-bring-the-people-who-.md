@@ -1,15 +1,28 @@
 ---
 title: Iran Got Their Players. They Just Can't Bring the People Who Run the Team.
 slug: iran-got-their-players-they-just-can-t-bring-the-people-who-
-date: 2026-06-07
+date: 2026-06-07T00:00:00.000Z
 word_count: 1210
-tags: [iran, worldcup, soccer, politics, sanctions]
+tags:
+  - iran
+  - worldcup
+  - soccer
+  - politics
+  - sanctions
 category: sports
 edited_at: '2026-06-07T11:08:37.496Z'
 editor_notes: Fixed 3 over-explanations
-hero_image: /images/articles/iran-got-their-players-they-just-can-t-bring-the-people-who-.png
-hero_image_concept: An Iranian footballer in a national-team jersey strides forward through a turnstile gate, kit bag on his shoulder, head up and confident; just behind him a federation official in a suit clutching a clipboard is stopped dead by a lowered barrier arm, shoulders slumped. The scene is a busy stadium entrance corridor — concrete walls, hanging directional signs, scuffed floor, an Iranian flag draped on the wall beyond the gate.
-status: pending
+hero_image: >-
+  /images/articles/iran-got-their-players-they-just-can-t-bring-the-people-who-.png
+hero_image_concept: >-
+  An Iranian footballer in a national-team jersey strides forward through a
+  turnstile gate, kit bag on his shoulder, head up and confident; just behind
+  him a federation official in a suit clutching a clipboard is stopped dead by a
+  lowered barrier arm, shoulders slumped. The scene is a busy stadium entrance
+  corridor — concrete walls, hanging directional signs, scuffed floor, an
+  Iranian flag draped on the wall beyond the gate.
+status: published
+approved_at: '2026-06-07T13:32:49.903Z'
 ---
 
 # Iran Got Their Players. They Just Can't Bring the People Who Run the Team.
