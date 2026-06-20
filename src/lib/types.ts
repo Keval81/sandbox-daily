@@ -1,5 +1,26 @@
 export type Vertical = "news" | "sport" | "tech" | "features";
 
+export interface QualityScore {
+  proseVoice: number;
+  structure: number;
+  clarity: number;
+  originality: number;
+  sourcing: number;
+  fairness: number;
+  overall: number;
+  tier: string;
+  rationale: Record<string, string>;
+  scoredAt: string;
+}
+
+export interface RelevanceScore {
+  average: number;
+  newsworthiness?: number;
+  traction?: number;
+  complexity?: number;
+  uniqueness?: number;
+}
+
 export type ArticleStatus = "pending" | "published" | "revision-requested";
 
 export interface InlineImage {
@@ -27,6 +48,8 @@ export interface Article {
   subjectName?: string;
   /** How many revision passes this article has been through (0 = first draft). */
   revisionRound?: number;
+  qualityScore?: QualityScore;
+  relevanceScore?: RelevanceScore;
 }
 
 export interface VerticalConfig {

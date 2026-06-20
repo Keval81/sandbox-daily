@@ -9,6 +9,7 @@ import {
   type InlineImage,
   type Vertical,
 } from "./types";
+import { parseQualityScore, parseRelevanceScore } from "./quality-score";
 
 const contentDir = path.join(process.cwd(), "src/content");
 
@@ -62,6 +63,8 @@ function parseArticleFile(dir: string, filename: string): Article {
     status,
     subjectName: typeof data.subject_name === "string" ? data.subject_name : undefined,
     revisionRound: typeof data.revision_round === "number" ? data.revision_round : undefined,
+    qualityScore: parseQualityScore(data as Record<string, unknown>),
+    relevanceScore: parseRelevanceScore(data as Record<string, unknown>),
   };
 }
 

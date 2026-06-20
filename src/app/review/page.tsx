@@ -95,6 +95,21 @@ export default function ReviewIndexPage() {
                         {" · "}
                         {article.readTime} min read · {article.wordCount} words
                       </p>
+                      {(article.qualityScore || article.relevanceScore) && (
+                        <div className="flex flex-wrap items-center gap-2 mt-4">
+                          {article.qualityScore && (
+                            <span className="font-mono text-meta-sm uppercase tracking-mono border-2 border-ink px-2 py-1 rounded-sharp">
+                              Quality {article.qualityScore.overall.toFixed(1)} ·{" "}
+                              {article.qualityScore.tier}
+                            </span>
+                          )}
+                          {article.relevanceScore && (
+                            <span className="font-mono text-meta-sm uppercase tracking-mono text-grey border border-grey/40 px-2 py-1 rounded-sharp">
+                              Relevance {article.relevanceScore.average.toFixed(1)}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <p className="font-mono text-meta-sm uppercase tracking-mono-wide text-ink mt-4 underline">
                         Open preview →
                       </p>
