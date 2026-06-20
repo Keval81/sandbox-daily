@@ -118,6 +118,60 @@ export default async function ReviewArticlePage({ params }: Props) {
                   </p>
                 </div>
               )}
+              {article.qualityScore && (
+                <div className="mb-8 border-t border-grey/30 pt-6">
+                  <p className="font-mono text-meta-sm uppercase tracking-mono-wide text-grey mb-3">
+                    Editor Quality Score
+                  </p>
+                  <p className="font-display text-3xl font-black text-ink leading-none">
+                    {article.qualityScore.overall.toFixed(1)}
+                    <span className="text-xl">/10</span>
+                  </p>
+                  <p className="font-mono text-meta-sm uppercase tracking-mono text-orange mt-1 mb-4">
+                    {article.qualityScore.tier}
+                  </p>
+                  <ul className="space-y-2">
+                    {(
+                      [
+                        ["Prose & Voice", "proseVoice"],
+                        ["Structure", "structure"],
+                        ["Clarity", "clarity"],
+                        ["Originality", "originality"],
+                        ["Sourcing", "sourcing"],
+                        ["Fairness", "fairness"],
+                      ] as const
+                    ).map(([label, key]) => (
+                      <li
+                        key={key}
+                        className="font-body text-meta-sm leading-reading text-ink"
+                      >
+                        <span className="font-bold">
+                          {label}: {article.qualityScore![key]}
+                        </span>
+                        {article.qualityScore!.rationale[key] && (
+                          <span className="text-grey">
+                            {" "}
+                            — {article.qualityScore!.rationale[key]}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {article.relevanceScore && (
+                <div className="mb-8 border-t border-grey/30 pt-6">
+                  <p className="font-mono text-meta-sm uppercase tracking-mono-wide text-grey mb-3">
+                    Pre-write Relevance
+                  </p>
+                  <p className="font-body text-meta-sm leading-reading text-ink">
+                    Newsworthiness/timeliness judged before writing:{" "}
+                    <span className="font-bold">
+                      {article.relevanceScore.average.toFixed(1)}/10
+                    </span>
+                  </p>
+                </div>
+              )}
             </div>
           </aside>
         </div>
