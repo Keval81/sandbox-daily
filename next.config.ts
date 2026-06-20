@@ -9,14 +9,22 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
-  // The /api/review function reads markdown via fs at runtime, which makes
-  // Next.js trace the entire content + image trees into its bundle (~350MB,
-  // exceeds Vercel's 300MB function size limit). Exclude the heavy assets —
-  // the route only needs the markdown frontmatter, not the images themselves.
+  // Several routes read article markdown via fs at runtime (/api/review,
+  // /review, /admin/workflow, the vertical/slug pages). That makes Next.js
+  // trace the whole project — including every image/video in public/ — into
+  // each serverless function bundle, blowing Vercel's function size limit
+  // (build compiles fine, then the deploy ERRORs at function packaging).
+  // No function serves binary media (Vercel's static CDN does), so exclude
+  // it from ALL function bundles. Functions still get the markdown they read.
   outputFileTracingExcludes: {
-    "/api/review": [
-      "public/images/articles/**/*",
+    "**": [
+      "public/images/**/*",
       "public/video/**/*",
+      "public/**/*.mp4",
+      "public/**/*.webp",
+      "public/**/*.png",
+      "public/**/*.jpg",
+      "public/**/*.jpeg",
     ],
   },
   async redirects() {
