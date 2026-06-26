@@ -10,6 +10,7 @@ import {
   type Vertical,
 } from "./types";
 import { parseQualityScore, parseRelevanceScore } from "./quality-score";
+import { stripLeadingH1 } from "./strip-leading-h1";
 
 const contentDir = path.join(process.cwd(), "src/content");
 
@@ -122,6 +123,6 @@ export function getAllArticles(): Article[] {
 }
 
 export async function renderMarkdown(content: string): Promise<string> {
-  const result = await remark().use(html).process(content);
+  const result = await remark().use(html).process(stripLeadingH1(content));
   return result.toString();
 }
