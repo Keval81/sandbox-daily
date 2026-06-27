@@ -13,6 +13,7 @@ interface ReviewRequest {
   vertical: Vertical;
   slug: string;
   action: Action;
+  fields?: { title?: string; standfirst?: string; social_post?: string };
 }
 
 const CONTENT_ROOT = path.join(process.cwd(), "src/content");
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
   }
 
   if (action === "approve") {
-    await approveArticle(articlePath);
+    await approveArticle(articlePath, body.fields);
     return NextResponse.json({ ok: true, action: "approved" });
   }
 
@@ -108,9 +109,15 @@ async function findArticleFile(
   return null;
 }
 
-async function approveArticle(articlePath: string): Promise<void> {
+async function approveArticle(
+  articlePath: string,
+  fields?: { title?: string; standfirst?: string; social_post?: string }
+): Promise<void> {
   const raw = await fs.readFile(articlePath, "utf-8");
   const parsed = matter(raw);
+  if (fields?.title && fields.title.trim()) parsed.data.title = fields.title.trim();
+  if (typeof fields?.standfirst === "string") parsed.data.standfirst = fields.standfirst.trim();
+  if (typeof fields?.social_post === "string") parsed.data.social_post = fields.social_post.trim();
   parsed.data.status = "published";
   parsed.data.approved_at = new Date().toISOString();
   const next = matter.stringify(parsed.content, parsed.data);

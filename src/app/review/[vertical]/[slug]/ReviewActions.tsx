@@ -17,9 +17,12 @@ interface Props {
   articleHtml: string;
   /** Action buttons + annotation drawer only render when true. */
   interactive: boolean;
+  headline?: string;
+  standfirst?: string;
+  socialPost?: string;
 }
 
-export function ReviewActions({ vertical, slug, articleHtml, interactive }: Props) {
+export function ReviewActions({ vertical, slug, articleHtml, interactive, headline, standfirst, socialPost }: Props) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("default");
   const [overallNotes, setOverallNotes] = useState("");
@@ -29,6 +32,9 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive }: Prop
   const [error, setError] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [editHeadline, setEditHeadline] = useState(headline ?? "");
+  const [editStandfirst, setEditStandfirst] = useState(standfirst ?? "");
+  const [editSocial, setEditSocial] = useState(socialPost ?? "");
   const annotations = useAnnotations();
 
   // Stable so AnnotatableArticle's applyHighlights effect doesn't re-run on every
@@ -39,7 +45,15 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive }: Prop
     const res = await fetch("/api/review", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ vertical, slug, action }),
+      body: JSON.stringify({
+        vertical,
+        slug,
+        action,
+        fields:
+          action === "approve"
+            ? { title: editHeadline, standfirst: editStandfirst, social_post: editSocial }
+            : undefined,
+      }),
     });
     if (!res.ok) {
       const j = await res.json();
@@ -149,6 +163,43 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive }: Prop
           onSubmit={submitRevision}
           submitting={false}
         />
+      )}
+
+      {mode === "default" && interactive && (
+        <div className="mt-12 pt-8 border-t-2 border-ink space-y-5">
+          <div>
+            <label className="block font-mono text-meta-sm uppercase tracking-mono-wide text-grey mb-2">Headline</label>
+            <input
+              type="text"
+              value={editHeadline}
+              onChange={(e) => setEditHeadline(e.target.value)}
+              className="w-full border-2 border-ink bg-cream px-3 py-2 font-display text-xl"
+            />
+          </div>
+          <div>
+            <label className="block font-mono text-meta-sm uppercase tracking-mono-wide text-grey mb-2">Standfirst</label>
+            <textarea
+              value={editStandfirst}
+              onChange={(e) => setEditStandfirst(e.target.value)}
+              rows={2}
+              className="w-full border-2 border-ink bg-cream px-3 py-2 font-body"
+            />
+          </div>
+          <div>
+            <label className="block font-mono text-meta-sm uppercase tracking-mono-wide text-grey mb-2">
+              X caption <span className={editSocial.length > 280 ? "text-orange" : "text-grey"}>· {editSocial.length}/280</span>
+            </label>
+            <textarea
+              value={editSocial}
+              onChange={(e) => setEditSocial(e.target.value)}
+              rows={3}
+              className="w-full border-2 border-ink bg-cream px-3 py-2 font-body"
+            />
+            <p className="font-mono text-meta-sm text-grey mt-2">
+              Posting: post natively with the image, then drop the article link in your first reply (a link in the post suppresses reach).
+            </p>
+          </div>
+        </div>
       )}
 
       {mode === "default" && interactive && (

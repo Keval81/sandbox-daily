@@ -98,6 +98,9 @@ export default async function ReviewArticlePage({ params }: Props) {
               slug={article.slug}
               articleHtml={htmlContent}
               interactive={isDev}
+              headline={article.title}
+              standfirst={article.standfirst}
+              socialPost={article.socialPost}
             />
           </div>
           <aside className="hidden lg:block">
