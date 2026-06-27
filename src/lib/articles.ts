@@ -66,6 +66,9 @@ function parseArticleFile(dir: string, filename: string): Article {
     revisionRound: typeof data.revision_round === "number" ? data.revision_round : undefined,
     qualityScore: parseQualityScore(data as Record<string, unknown>),
     relevanceScore: parseRelevanceScore(data as Record<string, unknown>),
+    standfirst: typeof data.standfirst === "string" ? data.standfirst : undefined,
+    socialPost: typeof data.social_post === "string" ? data.social_post : undefined,
+    originalTitle: typeof data.original_title === "string" ? data.original_title : undefined,
   };
 }
 

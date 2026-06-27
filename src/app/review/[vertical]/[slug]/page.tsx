@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getAnyArticleBySlug, renderMarkdown } from "@/lib/articles";
 import { verticals } from "@/lib/verticals";
 import { ArticleHeroImage } from "@/components/article-hero-image";
+import { ArticleStandfirst } from "@/components/article-standfirst";
 import { injectInlineImages } from "@/lib/article-html";
 import type { Vertical } from "@/lib/types";
 import { getPersistedRevisionState } from "@/lib/revision/persisted-state";
@@ -63,6 +64,7 @@ export default async function ReviewArticlePage({ params }: Props) {
             )}
             {article.title}
           </h1>
+          <ArticleStandfirst standfirst={article.standfirst} />
           <p className="font-mono text-meta uppercase tracking-mono mt-6 opacity-80">
             {new Date(article.date).toLocaleDateString("en-GB", {
               day: "numeric",

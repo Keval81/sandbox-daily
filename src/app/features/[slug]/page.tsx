@@ -3,6 +3,7 @@ import { getArticleBySlug, getArticlesByVertical, renderMarkdown } from "@/lib/a
 import { verticals } from "@/lib/verticals";
 import { ArticleCard } from "@/components/article-card";
 import { ArticleHeroImage } from "@/components/article-hero-image";
+import { ArticleStandfirst } from "@/components/article-standfirst";
 import { ARTICLE_PROSE_CLASS, injectInlineImages } from "@/lib/article-html";
 
 interface Props {
@@ -42,6 +43,7 @@ export default async function FeaturesArticlePage({ params }: Props) {
             )}
             {article.title}
           </h1>
+          <ArticleStandfirst standfirst={article.standfirst} />
           <p className="font-mono text-meta uppercase tracking-mono mt-6 opacity-80">
             {new Date(article.date).toLocaleDateString("en-GB", {
               day: "numeric",

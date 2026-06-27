@@ -3,6 +3,7 @@ import { getArticleBySlug, getArticlesByVertical, renderMarkdown } from "@/lib/a
 import { verticals } from "@/lib/verticals";
 import { ArticleCard } from "@/components/article-card";
 import { ArticleHeroImage } from "@/components/article-hero-image";
+import { ArticleStandfirst } from "@/components/article-standfirst";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -33,6 +34,7 @@ export default async function SportArticlePage({ params }: Props) {
           <h1 className="font-display text-4xl font-black leading-headline mt-4 md:text-6xl max-w-4xl">
             {article.title}
           </h1>
+          <ArticleStandfirst standfirst={article.standfirst} />
           <p className="font-mono text-meta uppercase tracking-mono mt-6 opacity-80">
             {new Date(article.date).toLocaleDateString("en-GB", {
               day: "numeric",

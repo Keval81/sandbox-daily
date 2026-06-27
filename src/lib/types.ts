@@ -50,6 +50,12 @@ export interface Article {
   revisionRound?: number;
   qualityScore?: QualityScore;
   relevanceScore?: RelevanceScore;
+  /** Plain-English dek shown under the headline (replaces the old duplicate title). */
+  standfirst?: string;
+  /** Engagement-tuned X caption (<=280 chars, no link) for the social post. */
+  socialPost?: string;
+  /** The writer's original title, preserved when the editor rewrites `title`. */
+  originalTitle?: string;
 }
 
 export interface VerticalConfig {
