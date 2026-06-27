@@ -63,6 +63,7 @@ export async function POST(request: Request) {
     overall_notes: validation.body.overall_notes,
     inline_comments: validation.body.inline_comments,
     image: validation.body.image,
+    ...(validation.body.overrides ? { overrides: validation.body.overrides } : {}),
   };
 
   const requestDir = path.join(REVIEW_REQUESTS_ROOT, vertical);

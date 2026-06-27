@@ -21,6 +21,17 @@ export interface ImageRevision {
   context: string | null;
 }
 
+/**
+ * Hand-edited packaging fields the reviewer changed in the review UI. Only the
+ * fields the reviewer actually touched are present; the reviser keeps these
+ * verbatim and regenerates only the untouched fields.
+ */
+export interface PackagingOverrides {
+  title?: string;
+  standfirst?: string;
+  social_post?: string;
+}
+
 export interface ReviewRequest {
   slug: string;
   vertical: "news" | "sport" | "tech" | "features";
@@ -29,6 +40,7 @@ export interface ReviewRequest {
   overall_notes: string;
   inline_comments: InlineComment[];
   image: ImageRevision;
+  overrides?: PackagingOverrides;
 }
 
 export type JobStatus = "queued" | "running" | "done" | "error";

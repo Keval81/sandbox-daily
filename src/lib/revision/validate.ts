@@ -54,6 +54,23 @@ export function validateRevisionRequestBody(input: unknown): ValidationResult {
     return { ok: false, error: "Provide overall notes, at least one inline comment, or both." };
   }
 
+  let overrides: ReviewRequest["overrides"];
+  if (body.overrides !== undefined) {
+    if (typeof body.overrides !== "object" || body.overrides === null || Array.isArray(body.overrides)) {
+      return { ok: false, error: "overrides must be an object." };
+    }
+    const o = body.overrides as Record<string, unknown>;
+    const picked: NonNullable<ReviewRequest["overrides"]> = {};
+    for (const key of ["title", "standfirst", "social_post"] as const) {
+      if (o[key] === undefined) continue;
+      if (typeof o[key] !== "string") {
+        return { ok: false, error: `overrides.${key} must be a string.` };
+      }
+      picked[key] = o[key] as string;
+    }
+    if (Object.keys(picked).length > 0) overrides = picked;
+  }
+
   return {
     ok: true,
     body: {
@@ -62,6 +79,7 @@ export function validateRevisionRequestBody(input: unknown): ValidationResult {
       overall_notes: body.overall_notes,
       inline_comments: body.inline_comments as ReviewRequest["inline_comments"],
       image: body.image as ReviewRequest["image"],
+      ...(overrides ? { overrides } : {}),
     },
   };
 }

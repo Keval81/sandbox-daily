@@ -67,6 +67,16 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive, headli
   const submitRevision = async () => {
     setMode("submitting");
     setError(null);
+    // Send only the packaging fields the reviewer actually hand-edited — the
+    // reviser keeps these verbatim and regenerates only the untouched ones.
+    // Compared trimmed; an empty box is treated as "no override" (let the
+    // reviser regenerate) rather than publishing a blank headline/dek/caption.
+    const overrides: { title?: string; standfirst?: string; social_post?: string } = {};
+    const changed = (edited: string, original?: string) =>
+      edited.trim().length > 0 && edited.trim() !== (original ?? "").trim();
+    if (changed(editHeadline, headline)) overrides.title = editHeadline.trim();
+    if (changed(editStandfirst, standfirst)) overrides.standfirst = editStandfirst.trim();
+    if (changed(editSocial, socialPost)) overrides.social_post = editSocial.trim();
     const res = await fetch("/api/review/revision", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -76,6 +86,7 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive, headli
         overall_notes: overallNotes,
         inline_comments: annotations.comments,
         image: { regenerate: imageRegen, context: imageRegen ? imageContext : null },
+        ...(Object.keys(overrides).length ? { overrides } : {}),
       }),
     });
     const j = await res.json();

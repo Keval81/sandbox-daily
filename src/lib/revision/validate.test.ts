@@ -66,3 +66,46 @@ test("accepts body with comments and no overall notes", () => {
   const result = validateRevisionRequestBody(withComments);
   assert.equal(result.ok, true);
 });
+
+test("passes through only the overridden packaging fields", () => {
+  const result = validateRevisionRequestBody({
+    ...VALID_BODY,
+    overrides: { title: "Iran-US war MAY be over" },
+  });
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.deepEqual(result.body.overrides, { title: "Iran-US war MAY be over" });
+  }
+});
+
+test("keeps overrides undefined when an empty object is sent", () => {
+  const result = validateRevisionRequestBody({ ...VALID_BODY, overrides: {} });
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.body.overrides, undefined);
+  }
+});
+
+test("ignores unknown override keys, keeping only the known ones", () => {
+  const result = validateRevisionRequestBody({
+    ...VALID_BODY,
+    overrides: { standfirst: "A sharper dek.", colour: "blue" },
+  });
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.deepEqual(result.body.overrides, { standfirst: "A sharper dek." });
+  }
+});
+
+test("rejects a non-string override value", () => {
+  const result = validateRevisionRequestBody({
+    ...VALID_BODY,
+    overrides: { title: 42 },
+  });
+  assert.equal(result.ok, false);
+});
+
+test("rejects overrides that is not an object", () => {
+  const result = validateRevisionRequestBody({ ...VALID_BODY, overrides: "nope" });
+  assert.equal(result.ok, false);
+});
