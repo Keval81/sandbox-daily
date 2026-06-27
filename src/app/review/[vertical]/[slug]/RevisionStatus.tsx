@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import type { JobRecord } from "@/lib/revision/types";
+import { classifyRevisionProgress, type RevisionProgress } from "@/lib/revision/progress";
 
 interface Props {
   jobId: string;
@@ -11,11 +12,10 @@ interface Props {
 }
 
 const POLL_INTERVAL_MS = 2000;
-const MAX_DURATION_MS = 5 * 60_000;
 
 export function RevisionStatus({ jobId, onDone, onError }: Props) {
   const [job, setJob] = useState<JobRecord | null>(null);
-  const [stuck, setStuck] = useState(false);
+  const [progress, setProgress] = useState<RevisionProgress>("active");
 
   useEffect(() => {
     let cancelled = false;
@@ -37,10 +37,11 @@ export function RevisionStatus({ jobId, onDone, onError }: Props) {
           onError(j.error ?? "Reviser reported error");
           return;
         }
-        if (Date.now() - start > MAX_DURATION_MS) {
-          setStuck(true);
-          return;
-        }
+        // Warn when slow but KEEP polling — only stop at the hard ceiling, so a
+        // big draft or a transient-API retry cycle isn't falsely abandoned.
+        const phase = classifyRevisionProgress(Date.now() - start);
+        setProgress(phase);
+        if (phase === "stuck") return;
         setTimeout(tick, POLL_INTERVAL_MS);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Unknown error";
@@ -54,7 +55,7 @@ export function RevisionStatus({ jobId, onDone, onError }: Props) {
     };
   }, [jobId, onDone, onError]);
 
-  if (stuck) {
+  if (progress === "stuck") {
     return (
       <div className="border-2 border-ink bg-cream p-6 my-6 rounded-sharp">
         <p className="font-mono text-meta uppercase tracking-mono-wide text-orange mb-2">
@@ -76,6 +77,11 @@ export function RevisionStatus({ jobId, onDone, onError }: Props) {
         Re-drafting...
       </p>
       <p className="font-body text-body">{humanise(job?.current_step ?? "queued")}</p>
+      {progress === "slow" && (
+        <p className="font-mono text-meta-sm text-grey mt-2">
+          Taking longer than usual — the model may be busy and retrying. Still working; leave this open.
+        </p>
+      )}
     </div>
   );
 }
