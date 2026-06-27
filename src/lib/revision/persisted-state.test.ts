@@ -54,6 +54,8 @@ test("loads a failed revision job so the article page can show it after reload",
       requestsRoot,
     });
 
+    if (!state) throw new Error("expected persisted revision state, got null");
+
     assert.equal(state.job?.status, "error");
     assert.equal(state.lastError, "Output failed validation: missing H1");
     assert.equal(state.canRetry, true);
