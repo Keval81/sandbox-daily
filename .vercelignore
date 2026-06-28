@@ -1,0 +1,10 @@
+# Local-only redesign working assets (drafts, raw clips, ffmpeg/ImageMagick
+# intermediates ~391MB). Not used at runtime; uploading it bloats the deploy
+# and gets traced into the /admin/workflow serverless function (over the 250MB
+# function-size limit). Already gitignored — also keep it out of Vercel uploads.
+design-source/
+
+# Local-only archive of rejected articles + their hero images (~357MB).
+# /api/review (which moves files here) is disabled in production; uploading it
+# made that serverless function exceed Vercel's 250MB limit.
+.review-discarded/

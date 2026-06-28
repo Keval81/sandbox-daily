@@ -25,6 +25,14 @@ const nextConfig: NextConfig = {
       "public/**/*.png",
       "public/**/*.jpg",
       "public/**/*.jpeg",
+      // Local-only redesign working assets (~391MB) — never needed by any
+      // function; also kept out of uploads via .vercelignore.
+      "design-source/**/*",
+      // Local-only archive of rejected articles + their hero images (~357MB).
+      // /api/review (which writes here) is disabled in production; this archive
+      // exists only for local recovery. It was the actual cause of the
+      // api/review function exceeding Vercel's 250MB limit (357MB of the 359MB).
+      ".review-discarded/**/*",
     ],
   },
   async redirects() {
