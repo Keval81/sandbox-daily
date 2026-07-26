@@ -10,6 +10,7 @@ const navLinks = [
   { href: "/tech", label: "TECH", indicator: "border-cream" },
   { href: "/sport", label: "SPORT", indicator: "border-accent" },
   { href: "/features", label: "FEATURES", indicator: "border-orange" },
+  { href: "/globe", label: "PLANET", indicator: "border-accent" },
 ];
 
 export function Nav() {
