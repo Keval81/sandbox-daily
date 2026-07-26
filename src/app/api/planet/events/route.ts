@@ -16,6 +16,7 @@ function sampleFeed(): HazardFeed {
     events: SAMPLE_EVENTS,
     updatedAt: new Date().toISOString(),
     sources: ["Sample data"],
+    sourceCounts: { "Sample data": SAMPLE_EVENTS.length },
     degraded: true,
     counts,
   };

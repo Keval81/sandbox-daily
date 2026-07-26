@@ -196,16 +196,23 @@ export async function getHazardFeed(): Promise<HazardFeed> {
   ]);
 
   const sources: string[] = [];
+  const sourceCounts: Record<string, number> = {};
   let events: HazardEvent[] = [];
 
   if (eonetRes.status === "fulfilled") {
     const e = normalizeEonet(eonetRes.value);
-    if (e.length) sources.push("NASA EONET");
+    if (e.length) {
+      sources.push("NASA EONET");
+      sourceCounts["NASA EONET"] = e.length;
+    }
     events = events.concat(e);
   }
   if (usgsRes.status === "fulfilled") {
     const u = normalizeUsgs(usgsRes.value);
-    if (u.length) sources.push("USGS");
+    if (u.length) {
+      sources.push("USGS");
+      sourceCounts["USGS"] = u.length;
+    }
     events = events.concat(u);
   }
 
@@ -213,6 +220,7 @@ export async function getHazardFeed(): Promise<HazardFeed> {
   if (degraded) {
     events = SAMPLE_EVENTS;
     sources.push("Sample data");
+    sourceCounts["Sample data"] = SAMPLE_EVENTS.length;
   }
 
   // Newest first — the list and ticker read top-down.
@@ -222,6 +230,7 @@ export async function getHazardFeed(): Promise<HazardFeed> {
     events,
     updatedAt: new Date().toISOString(),
     sources,
+    sourceCounts,
     degraded,
     counts: countByCategory(events),
   };

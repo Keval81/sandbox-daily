@@ -211,8 +211,12 @@ export function PlanetExplorer() {
 
           <div className="mt-3 flex items-center justify-between font-mono text-[9px] uppercase tracking-mono text-grey">
             <span>
-              {feed?.sources?.length
-                ? feed.sources.join(" · ")
+              {feed
+                ? feed.degraded
+                  ? "Sample data · offline"
+                  : Object.entries(feed.sourceCounts)
+                      .map(([k, v]) => `${k} ${v}`)
+                      .join(" · ")
                 : "NASA EONET · USGS"}
             </span>
             {feed && (

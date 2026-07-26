@@ -43,6 +43,8 @@ export interface HazardFeed {
   updatedAt: string;
   /** Which upstream sources actually responded. */
   sources: string[];
+  /** Event count contributed by each upstream (proof the feed is live). */
+  sourceCounts: Record<string, number>;
   /** True when live upstreams failed and bundled sample data is served. */
   degraded: boolean;
   counts: Record<HazardCategory, number>;
