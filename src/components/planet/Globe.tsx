@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import landData from "@/lib/planet/land.json";
+import bordersData from "@/lib/planet/borders.json";
 import { categoryColor } from "@/lib/planet/categories";
 import type { HazardEvent } from "@/lib/planet/types";
 
@@ -10,6 +11,9 @@ const GLOBE_R = 1;
 
 interface LandData {
   polygons: number[][][][];
+}
+interface BordersData {
+  lines: number[][][];
 }
 
 /** Longitude/latitude (degrees) → point on a sphere of the given radius. */
@@ -97,37 +101,61 @@ function makeEarthTexture(): THREE.Texture {
       path.closePath();
     }
   }
-  x.fillStyle = "#3f6b3f";
+  x.fillStyle = "#46754a";
   x.fill(path, "evenodd");
 
-  // Latitude tint bands, clipped to land.
+  // Gentle, natural latitude tint (muted — not striped) clipped to land.
   x.save();
   x.clip(path, "evenodd");
   const lg = x.createLinearGradient(0, 0, 0, TH);
-  lg.addColorStop(at(90), "#e8eef2");
-  lg.addColorStop(at(72), "#dbe6ec");
-  lg.addColorStop(at(66), "#33502f");
-  lg.addColorStop(at(52), "#3c6538");
-  lg.addColorStop(at(36), "#557041");
-  lg.addColorStop(at(28), "#9c7d46");
-  lg.addColorStop(at(20), "#8f8140");
-  lg.addColorStop(at(10), "#3f7a3c");
-  lg.addColorStop(at(0), "#2f7137");
-  lg.addColorStop(at(-10), "#3f7a3c");
-  lg.addColorStop(at(-22), "#9a7b46");
-  lg.addColorStop(at(-34), "#7c7a3e");
-  lg.addColorStop(at(-48), "#3c6538");
-  lg.addColorStop(at(-64), "#54633f");
-  lg.addColorStop(at(-70), "#dbe6ec");
-  lg.addColorStop(at(-90), "#eef3f6");
+  lg.addColorStop(at(90), "#e6edf1");
+  lg.addColorStop(at(74), "#d7e3e9");
+  lg.addColorStop(at(68), "#3c5c3e");
+  lg.addColorStop(at(50), "#4a774d");
+  lg.addColorStop(at(34), "#6f7350");
+  lg.addColorStop(at(24), "#8a7d4e");
+  lg.addColorStop(at(15), "#4f7d43");
+  lg.addColorStop(at(0), "#3f7a44");
+  lg.addColorStop(at(-15), "#4f7d43");
+  lg.addColorStop(at(-24), "#8a7d4e");
+  lg.addColorStop(at(-38), "#6f7350");
+  lg.addColorStop(at(-55), "#4a774d");
+  lg.addColorStop(at(-62), "#cfe0e6");
+  lg.addColorStop(at(-90), "#eef4f7");
   x.fillStyle = lg;
-  x.globalAlpha = 0.9;
+  x.globalAlpha = 0.55;
   x.fillRect(0, 0, TW, TH);
   x.globalAlpha = 1;
+
+  // Polar ice caps — opaque white over Greenland/Arctic and Antarctica.
+  const ice = x.createLinearGradient(0, 0, 0, TH);
+  ice.addColorStop(0, "rgba(240,246,250,0.97)");
+  ice.addColorStop(at(72), "rgba(228,239,245,0.8)");
+  ice.addColorStop(at(63), "rgba(228,239,245,0)");
+  ice.addColorStop(at(-58), "rgba(226,237,244,0)");
+  ice.addColorStop(at(-66), "rgba(236,245,249,0.92)");
+  ice.addColorStop(1, "rgba(246,250,252,0.98)");
+  x.fillStyle = ice;
+  x.fillRect(0, 0, TW, TH);
+
+  // Country borders (interior), thin, drawn only over land.
+  x.strokeStyle = "rgba(230,240,255,0.18)";
+  x.lineWidth = 0.8;
+  x.beginPath();
+  for (const line of (bordersData as BordersData).lines) {
+    for (let i = 0; i < line.length - 1; i++) {
+      const a = line[i];
+      const b = line[i + 1];
+      if (Math.abs(a[0] - b[0]) > 180) continue; // skip antimeridian wrap
+      x.moveTo(X(a[0]), Y(a[1]));
+      x.lineTo(X(b[0]), Y(b[1]));
+    }
+  }
+  x.stroke();
   x.restore();
 
   // Coastline definition + faint graticule.
-  x.strokeStyle = "rgba(8,20,32,0.55)";
+  x.strokeStyle = "rgba(6,16,28,0.6)";
   x.lineWidth = 1;
   x.stroke(path);
   x.strokeStyle = "rgba(255,255,255,0.045)";
@@ -258,12 +286,12 @@ export function Globe({
           varying vec3 vNormal;
           uniform vec3 uColor;
           void main() {
-            float intensity = pow(0.72 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
-            gl_FragColor = vec4(uColor, 1.0) * intensity;
+            float intensity = pow(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.4);
+            gl_FragColor = vec4(uColor, 1.0) * intensity * 0.82;
           }`,
       });
       const glow = new THREE.Mesh(
-        new THREE.SphereGeometry(GLOBE_R * 1.22, 64, 64),
+        new THREE.SphereGeometry(GLOBE_R * 1.17, 64, 64),
         mat
       );
       scene.add(glow); // sits in scene so it never rotates with markers
