@@ -6,6 +6,7 @@ import type { HazardEvent } from "./types";
 const raw: Array<Omit<HazardEvent, "id" | "source"> & { id: string }> = [
   { id: "s-wf-1", title: "Wildfire — Northern California, USA", category: "wildfire", lon: -121.6, lat: 39.8, date: "2026-07-25T18:00:00Z", severity: 0.9, magnitude: "active" },
   { id: "s-wf-2", title: "Wildfire — Attica, Greece", category: "wildfire", lon: 23.9, lat: 38.1, date: "2026-07-26T06:00:00Z", severity: 0.8, magnitude: "active" },
+  { id: "s-wf-9", title: "Wildfire — Aude, southern France", category: "wildfire", lon: 2.6, lat: 43.1, date: "2026-07-26T05:00:00Z", severity: 0.84, magnitude: "active" },
   { id: "s-wf-3", title: "Bushfire — New South Wales, Australia", category: "wildfire", lon: 150.4, lat: -33.7, date: "2026-07-24T22:00:00Z", severity: 0.72, magnitude: "active" },
   { id: "s-wf-4", title: "Wildfire — Alberta, Canada", category: "wildfire", lon: -114.1, lat: 55.2, date: "2026-07-25T12:00:00Z", severity: 0.65, magnitude: "active" },
   { id: "s-wf-5", title: "Wildfire — Siberia, Russia", category: "wildfire", lon: 108.3, lat: 61.5, date: "2026-07-25T03:00:00Z", severity: 0.85, magnitude: "active" },
