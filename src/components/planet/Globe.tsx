@@ -2,14 +2,14 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import coastlineData from "@/lib/planet/coastlines.json";
+import landData from "@/lib/planet/land.json";
 import { categoryColor } from "@/lib/planet/categories";
 import type { HazardEvent } from "@/lib/planet/types";
 
 const GLOBE_R = 1;
 
-interface CoastlineData {
-  lines: number[][][];
+interface LandData {
+  polygons: number[][][][];
 }
 
 /** Longitude/latitude (degrees) → point on a sphere of the given radius. */
@@ -54,6 +54,99 @@ function makeRingTexture(): THREE.Texture {
   ctx.stroke();
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/**
+ * Build an equirectangular "Blue Marble" earth texture from bundled land
+ * polygons — blue oceans, latitude-tinted land (tropical green, arid tan,
+ * boreal, polar ice), baked coastline and a faint graticule. Lighting is left
+ * to the scene, so no shading is baked in.
+ */
+function makeEarthTexture(): THREE.Texture {
+  const TW = 2048;
+  const TH = 1024;
+  const c = document.createElement("canvas");
+  c.width = TW;
+  c.height = TH;
+  const x = c.getContext("2d")!;
+  const X = (lon: number) => ((lon + 180) / 360) * TW;
+  const Y = (lat: number) => ((90 - lat) / 180) * TH;
+  const at = (lat: number) => (90 - lat) / 180;
+
+  // Ocean — deep blue, a touch lighter through the tropics.
+  const og = x.createLinearGradient(0, 0, 0, TH);
+  og.addColorStop(0.0, "#0a1f36");
+  og.addColorStop(0.3, "#0e2c48");
+  og.addColorStop(0.5, "#12436a");
+  og.addColorStop(0.7, "#0e2c48");
+  og.addColorStop(1.0, "#0a1f36");
+  x.fillStyle = og;
+  x.fillRect(0, 0, TW, TH);
+
+  // Land path.
+  const path = new Path2D();
+  for (const poly of (landData as LandData).polygons) {
+    for (const ring of poly) {
+      ring.forEach(([lon, lat], i) => {
+        const px = X(lon);
+        const py = Y(lat);
+        if (i === 0) path.moveTo(px, py);
+        else path.lineTo(px, py);
+      });
+      path.closePath();
+    }
+  }
+  x.fillStyle = "#3f6b3f";
+  x.fill(path, "evenodd");
+
+  // Latitude tint bands, clipped to land.
+  x.save();
+  x.clip(path, "evenodd");
+  const lg = x.createLinearGradient(0, 0, 0, TH);
+  lg.addColorStop(at(90), "#e8eef2");
+  lg.addColorStop(at(72), "#dbe6ec");
+  lg.addColorStop(at(66), "#33502f");
+  lg.addColorStop(at(52), "#3c6538");
+  lg.addColorStop(at(36), "#557041");
+  lg.addColorStop(at(28), "#9c7d46");
+  lg.addColorStop(at(20), "#8f8140");
+  lg.addColorStop(at(10), "#3f7a3c");
+  lg.addColorStop(at(0), "#2f7137");
+  lg.addColorStop(at(-10), "#3f7a3c");
+  lg.addColorStop(at(-22), "#9a7b46");
+  lg.addColorStop(at(-34), "#7c7a3e");
+  lg.addColorStop(at(-48), "#3c6538");
+  lg.addColorStop(at(-64), "#54633f");
+  lg.addColorStop(at(-70), "#dbe6ec");
+  lg.addColorStop(at(-90), "#eef3f6");
+  x.fillStyle = lg;
+  x.globalAlpha = 0.9;
+  x.fillRect(0, 0, TW, TH);
+  x.globalAlpha = 1;
+  x.restore();
+
+  // Coastline definition + faint graticule.
+  x.strokeStyle = "rgba(8,20,32,0.55)";
+  x.lineWidth = 1;
+  x.stroke(path);
+  x.strokeStyle = "rgba(255,255,255,0.045)";
+  for (let lat = -60; lat <= 60; lat += 30) {
+    x.beginPath();
+    x.moveTo(0, Y(lat));
+    x.lineTo(TW, Y(lat));
+    x.stroke();
+  }
+  for (let lon = -150; lon <= 150; lon += 30) {
+    x.beginPath();
+    x.moveTo(X(lon), 0);
+    x.lineTo(X(lon), TH);
+    x.stroke();
+  }
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
   return tex;
 }
 
@@ -132,61 +225,20 @@ export function Globe({
     const world = new THREE.Group();
     scene.add(world);
 
-    // ---- Ocean sphere ------------------------------------------------------
-    const oceanMat = new THREE.MeshPhongMaterial({
-      color: 0x0b1f3a,
-      emissive: 0x030812,
-      specular: 0x1a3a6a,
-      shininess: 18,
+    // ---- Earth sphere (Blue Marble texture; scene lights do the shading) ----
+    const earthTex = makeEarthTexture();
+    const earthMat = new THREE.MeshPhongMaterial({
+      map: earthTex,
+      specular: 0x2a4a66,
+      shininess: 15,
+      emissive: 0x0a1526,
+      emissiveIntensity: 0.35,
     });
-    const ocean = new THREE.Mesh(
+    const earth = new THREE.Mesh(
       new THREE.SphereGeometry(GLOBE_R, 96, 96),
-      oceanMat
+      earthMat
     );
-    world.add(ocean);
-
-    // ---- Coastlines --------------------------------------------------------
-    {
-      const data = coastlineData as CoastlineData;
-      const verts: number[] = [];
-      for (const line of data.lines) {
-        for (let i = 0; i < line.length - 1; i++) {
-          const a = latLonToVec3(line[i][1], line[i][0], GLOBE_R * 1.002);
-          const b = latLonToVec3(line[i + 1][1], line[i + 1][0], GLOBE_R * 1.002);
-          verts.push(a.x, a.y, a.z, b.x, b.y, b.z);
-        }
-      }
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
-      const mat = new THREE.LineBasicMaterial({
-        color: 0x4fd0c0,
-        transparent: true,
-        opacity: 0.55,
-      });
-      world.add(new THREE.LineSegments(geo, mat));
-    }
-
-    // ---- Graticule (lat/lon grid) -----------------------------------------
-    {
-      const verts: number[] = [];
-      const push = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-        const a = latLonToVec3(lat1, lon1, GLOBE_R * 1.001);
-        const b = latLonToVec3(lat2, lon2, GLOBE_R * 1.001);
-        verts.push(a.x, a.y, a.z, b.x, b.y, b.z);
-      };
-      for (let lat = -60; lat <= 60; lat += 30)
-        for (let lon = -180; lon < 180; lon += 6) push(lat, lon, lat, lon + 6);
-      for (let lon = -180; lon < 180; lon += 30)
-        for (let lat = -90; lat < 90; lat += 6) push(lat, lon, lat + 6, lon);
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
-      const mat = new THREE.LineBasicMaterial({
-        color: 0x2a4d7a,
-        transparent: true,
-        opacity: 0.18,
-      });
-      world.add(new THREE.LineSegments(geo, mat));
-    }
+    world.add(earth);
 
     // ---- Atmosphere glow (fresnel shell) -----------------------------------
     {

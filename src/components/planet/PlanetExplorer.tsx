@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Globe } from "./Globe";
 import { CATEGORIES, CATEGORY_ORDER } from "@/lib/planet/categories";
+import { disasterScore } from "@/lib/planet/score";
 import { timeAgo, severityLabel } from "@/lib/planet/format";
 import type {
   HazardCategory,
@@ -119,6 +120,13 @@ export function PlanetExplorer() {
 
   const wildfireCount = feed?.counts.wildfire ?? 0;
 
+  // Global Hazard Index — a snapshot over ALL current events, not the filtered
+  // subset (it describes the state of the planet, not the current view).
+  const index = useMemo(
+    () => (allEvents.length ? disasterScore(allEvents) : null),
+    [allEvents]
+  );
+
   return (
     <div className="relative h-[calc(100dvh-64px)] w-full overflow-hidden bg-[#05070e] text-cream">
       {/* Radial vignette + subtle grid backdrop */}
@@ -170,7 +178,28 @@ export function PlanetExplorer() {
             Live wildfires &amp; natural hazards, worldwide.
           </p>
 
-          <div className="mt-2.5 grid grid-cols-3 gap-2 sm:mt-3">
+          <div className="mt-4 flex items-center gap-3.5">
+            <HazardGauge
+              score={index?.score ?? 0}
+              color={index?.color ?? "#43e0a0"}
+            />
+            <div className="min-w-0">
+              <div className="font-mono text-meta-sm uppercase tracking-mono-wide text-grey">
+                Global Hazard Index
+              </div>
+              <div
+                className="font-mono text-[15px] font-bold uppercase leading-tight tracking-mono"
+                style={{ color: index?.color ?? "#F5EED8" }}
+              >
+                {index?.band ?? "—"}
+              </div>
+              <div className="mt-0.5 font-mono text-meta-sm tracking-mono text-grey">
+                {feed ? `${allEvents.length} events · ${wildfireCount} wildfires` : "—"}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 hidden grid-cols-3 gap-2 sm:grid">
             <Stat label="Events" value={feed ? allEvents.length : "—"} />
             <Stat label="Wildfires" value={feed ? wildfireCount : "—"} accent="#ff5a1f" />
             <Stat
@@ -405,6 +434,35 @@ function LivePip({
         style={{ background: color }}
       />
     </span>
+  );
+}
+
+function HazardGauge({ score, color }: { score: number; color: string }) {
+  return (
+    <div
+      className="relative h-[70px] w-[70px] shrink-0 rounded-full transition-shadow duration-500"
+      style={{
+        background: `conic-gradient(${color} ${score}%, rgba(255,255,255,0.08) 0)`,
+        boxShadow: `0 0 16px -6px ${color}`,
+      }}
+      role="meter"
+      aria-valuenow={score}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label="Global hazard index"
+    >
+      <div className="absolute inset-[5px] rounded-full bg-[#0b1120]" />
+      <div className="absolute inset-0 grid place-items-center text-center leading-none">
+        <div>
+          <div className="font-mono text-xl font-bold tabular-nums text-cream">
+            {score}
+          </div>
+          <div className="mt-0.5 font-mono text-[7px] tracking-mono text-grey">
+            / 100
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
