@@ -2,19 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import landData from "@/lib/planet/land.json";
-import bordersData from "@/lib/planet/borders.json";
 import { categoryColor } from "@/lib/planet/categories";
 import type { HazardEvent } from "@/lib/planet/types";
 
 const GLOBE_R = 1;
-
-interface LandData {
-  polygons: number[][][][];
-}
-interface BordersData {
-  lines: number[][][];
-}
 
 /** Longitude/latitude (degrees) → point on a sphere of the given radius. */
 function latLonToVec3(lat: number, lon: number, r: number): THREE.Vector3 {
@@ -58,123 +49,6 @@ function makeRingTexture(): THREE.Texture {
   ctx.stroke();
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
-
-/**
- * Build an equirectangular "Blue Marble" earth texture from bundled land
- * polygons — blue oceans, latitude-tinted land (tropical green, arid tan,
- * boreal, polar ice), baked coastline and a faint graticule. Lighting is left
- * to the scene, so no shading is baked in.
- */
-function makeEarthTexture(): THREE.Texture {
-  const TW = 2048;
-  const TH = 1024;
-  const c = document.createElement("canvas");
-  c.width = TW;
-  c.height = TH;
-  const x = c.getContext("2d")!;
-  const X = (lon: number) => ((lon + 180) / 360) * TW;
-  const Y = (lat: number) => ((90 - lat) / 180) * TH;
-  const at = (lat: number) => (90 - lat) / 180;
-
-  // Ocean — deep blue, a touch lighter through the tropics.
-  const og = x.createLinearGradient(0, 0, 0, TH);
-  og.addColorStop(0.0, "#0a1f36");
-  og.addColorStop(0.3, "#0e2c48");
-  og.addColorStop(0.5, "#12436a");
-  og.addColorStop(0.7, "#0e2c48");
-  og.addColorStop(1.0, "#0a1f36");
-  x.fillStyle = og;
-  x.fillRect(0, 0, TW, TH);
-
-  // Land path.
-  const path = new Path2D();
-  for (const poly of (landData as LandData).polygons) {
-    for (const ring of poly) {
-      ring.forEach(([lon, lat], i) => {
-        const px = X(lon);
-        const py = Y(lat);
-        if (i === 0) path.moveTo(px, py);
-        else path.lineTo(px, py);
-      });
-      path.closePath();
-    }
-  }
-  x.fillStyle = "#46754a";
-  x.fill(path, "evenodd");
-
-  // Gentle, natural latitude tint (muted — not striped) clipped to land.
-  x.save();
-  x.clip(path, "evenodd");
-  const lg = x.createLinearGradient(0, 0, 0, TH);
-  lg.addColorStop(at(90), "#e6edf1");
-  lg.addColorStop(at(74), "#d7e3e9");
-  lg.addColorStop(at(68), "#3c5c3e");
-  lg.addColorStop(at(50), "#4a774d");
-  lg.addColorStop(at(34), "#6f7350");
-  lg.addColorStop(at(24), "#8a7d4e");
-  lg.addColorStop(at(15), "#4f7d43");
-  lg.addColorStop(at(0), "#3f7a44");
-  lg.addColorStop(at(-15), "#4f7d43");
-  lg.addColorStop(at(-24), "#8a7d4e");
-  lg.addColorStop(at(-38), "#6f7350");
-  lg.addColorStop(at(-55), "#4a774d");
-  lg.addColorStop(at(-62), "#cfe0e6");
-  lg.addColorStop(at(-90), "#eef4f7");
-  x.fillStyle = lg;
-  x.globalAlpha = 0.55;
-  x.fillRect(0, 0, TW, TH);
-  x.globalAlpha = 1;
-
-  // Polar ice caps — opaque white over Greenland/Arctic and Antarctica.
-  const ice = x.createLinearGradient(0, 0, 0, TH);
-  ice.addColorStop(0, "rgba(240,246,250,0.97)");
-  ice.addColorStop(at(72), "rgba(228,239,245,0.8)");
-  ice.addColorStop(at(63), "rgba(228,239,245,0)");
-  ice.addColorStop(at(-58), "rgba(226,237,244,0)");
-  ice.addColorStop(at(-66), "rgba(236,245,249,0.92)");
-  ice.addColorStop(1, "rgba(246,250,252,0.98)");
-  x.fillStyle = ice;
-  x.fillRect(0, 0, TW, TH);
-
-  // Country borders (interior), thin, drawn only over land.
-  x.strokeStyle = "rgba(230,240,255,0.18)";
-  x.lineWidth = 0.8;
-  x.beginPath();
-  for (const line of (bordersData as BordersData).lines) {
-    for (let i = 0; i < line.length - 1; i++) {
-      const a = line[i];
-      const b = line[i + 1];
-      if (Math.abs(a[0] - b[0]) > 180) continue; // skip antimeridian wrap
-      x.moveTo(X(a[0]), Y(a[1]));
-      x.lineTo(X(b[0]), Y(b[1]));
-    }
-  }
-  x.stroke();
-  x.restore();
-
-  // Coastline definition + faint graticule.
-  x.strokeStyle = "rgba(6,16,28,0.6)";
-  x.lineWidth = 1;
-  x.stroke(path);
-  x.strokeStyle = "rgba(255,255,255,0.045)";
-  for (let lat = -60; lat <= 60; lat += 30) {
-    x.beginPath();
-    x.moveTo(0, Y(lat));
-    x.lineTo(TW, Y(lat));
-    x.stroke();
-  }
-  for (let lon = -150; lon <= 150; lon += 30) {
-    x.beginPath();
-    x.moveTo(X(lon), 0);
-    x.lineTo(X(lon), TH);
-    x.stroke();
-  }
-
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
   return tex;
 }
 
@@ -240,12 +114,12 @@ export function Globe({
     renderer.domElement.style.touchAction = "none";
     renderer.domElement.style.cursor = "grab";
 
-    // Lighting — a warm key from upper-right, cool fill from below-left.
-    scene.add(new THREE.AmbientLight(0x2b3a5a, 0.9));
-    const key = new THREE.DirectionalLight(0xfff2e0, 1.5);
-    key.position.set(3, 2, 4);
+    // Lighting — sunlight key from upper-right, soft cool fill, night floor.
+    scene.add(new THREE.AmbientLight(0x3a4a66, 0.5));
+    const key = new THREE.DirectionalLight(0xfff4e6, 1.35);
+    key.position.set(3, 1.6, 3.2);
     scene.add(key);
-    const fill = new THREE.DirectionalLight(0x3355aa, 0.6);
+    const fill = new THREE.DirectionalLight(0x2a4472, 0.35);
     fill.position.set(-4, -2, -3);
     scene.add(fill);
 
@@ -253,20 +127,55 @@ export function Globe({
     const world = new THREE.Group();
     scene.add(world);
 
-    // ---- Earth sphere (Blue Marble texture; scene lights do the shading) ----
-    const earthTex = makeEarthTexture();
+    // ---- Earth sphere — real NASA imagery + topography relief --------------
+    const loader = new THREE.TextureLoader();
+    const maxAniso = renderer.capabilities.getMaxAnisotropy?.() ?? 4;
     const earthMat = new THREE.MeshPhongMaterial({
-      map: earthTex,
-      specular: 0x2a4a66,
-      shininess: 15,
-      emissive: 0x0a1526,
-      emissiveIntensity: 0.35,
+      color: 0x101820, // fallback until the day texture loads
+      specular: 0x2f4155,
+      shininess: 14,
+      bumpScale: 0.02, // topography relief height
+    });
+    loader.load("/planet/earth-day.jpg", (t) => {
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = maxAniso;
+      earthMat.map = t;
+      earthMat.color.set(0xffffff);
+      earthMat.needsUpdate = true;
+    });
+    loader.load("/planet/earth-topology.png", (t) => {
+      t.anisotropy = maxAniso;
+      earthMat.bumpMap = t;
+      earthMat.needsUpdate = true;
+    });
+    loader.load("/planet/earth-water.png", (t) => {
+      earthMat.specularMap = t;
+      earthMat.specular = new THREE.Color(0x3d5675);
+      earthMat.needsUpdate = true;
     });
     const earth = new THREE.Mesh(
-      new THREE.SphereGeometry(GLOBE_R, 96, 96),
+      new THREE.SphereGeometry(GLOBE_R, 128, 128),
       earthMat
     );
     world.add(earth);
+
+    // ---- Cloud layer — drifts slowly for a sense of weather ----------------
+    const cloudMat = new THREE.MeshPhongMaterial({
+      color: 0xf3f6ff,
+      transparent: true,
+      depthWrite: false,
+      opacity: 0.9,
+    });
+    loader.load("/planet/earth-clouds.jpg", (t) => {
+      t.anisotropy = maxAniso;
+      cloudMat.alphaMap = t; // cloud density → opacity
+      cloudMat.needsUpdate = true;
+    });
+    const clouds = new THREE.Mesh(
+      new THREE.SphereGeometry(GLOBE_R * 1.012, 96, 96),
+      cloudMat
+    );
+    world.add(clouds);
 
     // ---- Atmosphere glow (fresnel shell) -----------------------------------
     {
@@ -669,6 +578,9 @@ export function Globe({
 
       // Smooth camera dolly.
       camera.position.z += (cameraDist - camera.position.z) * 0.12;
+
+      // Clouds drift slowly relative to the surface (weather in motion).
+      if (!reduceMotion) clouds.rotation.y += dt * 0.008;
 
       // Pulse the glow-tip size subtly.
       if (points) {
