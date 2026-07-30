@@ -17,7 +17,93 @@ export const severityFromMagnitude = (mag: number): number => {
 };
 
 /**
- * EONET reports magnitude in mutually incompatible units (kts for storms, MW
- * for fires) and often omits it. Those events take their category's weight.
+ * The honest default for an event we cannot measure: an unrecognised unit, a
+ * missing magnitude, or a category with no curve below.
  */
 export const severityFromWeight = (weight: number): number => clamp(weight, 0, 1);
+
+const WILDFIRE_ACRES_LO = 100;
+const WILDFIRE_ACRES_HI = 500_000;
+const WILDFIRE_SEV_LO = 0.25;
+const WILDFIRE_SEV_HI = 1;
+
+/**
+ * Wildfire acres → 0..1, log10-linear. Fire area in the live EONET feed spans
+ * three orders of magnitude (500 to 280,000 acres), so a linear map would
+ * flatten everything below ~50,000 acres into the bottom fifth. Anchored at
+ * 100 acres → 0.25 (near the smallest fire EONET tracks) and 500,000 acres →
+ * 1.0 (a genuinely catastrophic burn). A non-finite or non-positive acreage
+ * clamps to the floor rather than feeding log10 a value it can't take.
+ */
+export const severityFromWildfireAcres = (acres: number): number => {
+  if (!Number.isFinite(acres) || acres <= 0) return WILDFIRE_SEV_LO;
+  const t =
+    (Math.log10(acres) - Math.log10(WILDFIRE_ACRES_LO)) /
+    (Math.log10(WILDFIRE_ACRES_HI) - Math.log10(WILDFIRE_ACRES_LO));
+  return clamp(
+    WILDFIRE_SEV_LO + t * (WILDFIRE_SEV_HI - WILDFIRE_SEV_LO),
+    WILDFIRE_SEV_LO,
+    WILDFIRE_SEV_HI
+  );
+};
+
+const STORM_KTS_LO = 30;
+const STORM_KTS_HI = 137;
+const STORM_SEV_LO = 0.3;
+const STORM_SEV_HI = 1;
+
+/**
+ * Severe storm knots → 0..1, linear, Saffir-Simpson-shaped. Anchored at 30
+ * kts (below tropical-storm force) → 0.3 and 137 kts (the category 5
+ * threshold) → 1.0.
+ */
+export const severityFromStormKts = (kts: number): number => {
+  if (!Number.isFinite(kts)) return STORM_SEV_LO;
+  const t = (kts - STORM_KTS_LO) / (STORM_KTS_HI - STORM_KTS_LO);
+  return clamp(
+    STORM_SEV_LO + t * (STORM_SEV_HI - STORM_SEV_LO),
+    STORM_SEV_LO,
+    STORM_SEV_HI
+  );
+};
+
+/**
+ * A category's magnitude curve, keyed by the unit it expects. A unit
+ * mismatch (e.g. a wildfire reported in MW instead of acres) is treated the
+ * same as no curve at all: it falls through to the category weight.
+ */
+const MAGNITUDE_CURVES: Record<string, { unit: string; curve: (value: number) => number }> = {
+  wildfire: { unit: "acres", curve: severityFromWildfireAcres },
+  severeStorm: { unit: "kts", curve: severityFromStormKts },
+};
+
+export interface SeverityResult {
+  severity: number;
+  severityFrom: "magnitude" | "category";
+}
+
+/**
+ * Derives an EONET event's severity from its reported magnitude wherever we
+ * have a curve for the category and the reported unit matches what that
+ * curve expects, falling back to the category weight everywhere else: an
+ * unrecognised unit, a missing magnitude, or a category with no curve at
+ * all. Provenance travels with the value so the UI never presents a baseline
+ * as if it were a measurement.
+ */
+export const severityFor = (
+  category: string,
+  magnitudeValue: number | undefined,
+  magnitudeUnit: string | undefined,
+  categoryWeight: number
+): SeverityResult => {
+  const mapped = MAGNITUDE_CURVES[category];
+  if (
+    mapped &&
+    typeof magnitudeValue === "number" &&
+    Number.isFinite(magnitudeValue) &&
+    magnitudeUnit === mapped.unit
+  ) {
+    return { severity: mapped.curve(magnitudeValue), severityFrom: "magnitude" };
+  }
+  return { severity: severityFromWeight(categoryWeight), severityFrom: "category" };
+};

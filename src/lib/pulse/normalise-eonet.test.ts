@@ -117,8 +117,44 @@ test("falls back to now when a geometry carries no date at all", () => {
   assert.ok(events[0].date.endsWith("Z"));
 });
 
-test("marks every EONET severity as a category baseline, never a measurement", () => {
+test("marks severity as a measurement for a category with no magnitude curve, never a baseline pretending otherwise", () => {
+  // EONET_6004 files under "other" in the traps fixture — no curve exists for
+  // that category, so it must take the honest category-weight fallback.
+  assert.equal(byId("eonet:EONET_6004").severityFrom, "category");
+});
+
+test("derives severity from magnitude for every event in the live feed, since wildfire acres and storm knots are both fully covered there", () => {
   const { events } = normaliseEonet(live, WEIGHTS);
   assert.ok(events.length > 0);
-  assert.equal(events.every((e) => e.severityFrom === "category"), true);
+  assert.equal(events.every((e) => e.severityFrom === "magnitude"), true);
+});
+
+test("wildfire severities spread across the real acreage distribution instead of collapsing to one value", () => {
+  const { events } = normaliseEonet(live, WEIGHTS);
+  const wildfires = events.filter((e) => e.category === "wildfire");
+  assert.equal(wildfires.length, 42);
+  assert.ok(wildfires.every((e) => e.severityFrom === "magnitude"));
+
+  const distinct = new Set(wildfires.map((e) => e.severity));
+  assert.ok(
+    distinct.size >= 20,
+    `expected a wide spread of distinct severities, got ${distinct.size}`
+  );
+
+  const min = Math.min(...wildfires.map((e) => e.severity));
+  const max = Math.max(...wildfires.map((e) => e.severity));
+  assert.ok(
+    max - min > 0.3,
+    `expected a substantial spread between min and max, got min ${min} max ${max}`
+  );
+});
+
+test("severe storm severities are derived from knots in the live feed too", () => {
+  const { events } = normaliseEonet(live, WEIGHTS);
+  const storms = events.filter((e) => e.category === "severeStorm");
+  assert.equal(storms.length, 4);
+  assert.ok(storms.every((e) => e.severityFrom === "magnitude"));
+
+  const distinct = new Set(storms.map((e) => e.severity));
+  assert.ok(distinct.size >= 3, `expected storms to differ, got ${distinct.size}`);
 });

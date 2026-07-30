@@ -1,5 +1,5 @@
 import type { LayerEvent, NormalisedEvents } from "./types";
-import { severityFromWeight } from "./severity";
+import { severityFor } from "./severity";
 
 /**
  * EONET v3 category ids are camelCase and plural; our canonical keys are
@@ -109,6 +109,18 @@ export const normaliseEonet = (
         ? `${latest.magnitudeValue} ${latest.magnitudeUnit}`
         : undefined;
 
+    // Wildfire acres and severe-storm knots are measurements, comparable
+    // within their own category — severityFor() reaches for the matching
+    // curve when the unit lines up. Everything else (an unrecognised unit, a
+    // missing magnitude, or a category with no curve) takes the category's
+    // constant weight instead. Provenance travels with the value.
+    const { severity, severityFrom } = severityFor(
+      category,
+      latest.magnitudeValue,
+      latest.magnitudeUnit,
+      categoryWeights[category] ?? 0.6
+    );
+
     events.push({
       id: `eonet:${ev.id}`,
       layer: "hazards",
@@ -117,11 +129,8 @@ export const normaliseEonet = (
       lon: point[0],
       lat: point[1],
       date: new Date(stamp).toISOString(),
-      severity: severityFromWeight(categoryWeights[category] ?? 0.6),
-      // EONET reports magnitude in mutually incompatible units and often omits
-      // it, so severity here is the category's constant, not a measurement of
-      // this fire. Recorded so the UI cannot present it as one.
-      severityFrom: "category",
+      severity,
+      severityFrom,
       magnitude,
       source: "EONET",
       url: ev.sources?.[0]?.url ?? ev.link,
