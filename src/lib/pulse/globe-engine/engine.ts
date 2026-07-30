@@ -352,7 +352,19 @@ export class GlobeEngine {
     this.orient = qnorm(qmul(dq, this.orient));
   }
 
+  // The whole body is wrapped: a single throw anywhere in here would skip the
+  // trailing requestAnimationFrame and stall the loop permanently, turning one
+  // bad frame into a dead globe for the rest of the session.
   private tick = (): void => {
+    try {
+      this.step();
+    } catch (err) {
+      console.error("[GlobeEngine] frame failed", err);
+    }
+    if (!this.destroyed) this.raf = requestAnimationFrame(this.tick);
+  };
+
+  private step(): void {
     if (this.focusing && this.target) {
       this.orient = qslerp(this.orient, this.target, 0.12);
       const d = this.orient[0] * this.target[0] + this.orient[1] * this.target[1]
@@ -384,8 +396,7 @@ export class GlobeEngine {
       this.sphereDirty = true;
     }
     this.draw();
-    this.raf = requestAnimationFrame(this.tick);
-  };
+  }
 
   private draw(): void {
     const { ctx, CX, CY, R } = this;

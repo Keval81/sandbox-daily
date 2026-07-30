@@ -73,13 +73,17 @@ export function PulseGlobe({
   }, [focusOn]);
 
   return (
+    // Compact mode is decoration inside a link whose visible copy is already its
+    // accessible name; an aria-label here would prefix that name with invisible
+    // text (WCAG 2.5.3 Label in Name).
     <canvas
       ref={canvasRef}
       className="pulse-canvas"
       tabIndex={compact ? -1 : 0}
+      aria-hidden={compact ? true : undefined}
       aria-label={
         compact
-          ? "Rotating globe showing current natural hazards"
+          ? undefined
           : "Interactive globe of current natural hazards. Use arrow keys to rotate. Every event is also listed in the events panel."
       }
     />

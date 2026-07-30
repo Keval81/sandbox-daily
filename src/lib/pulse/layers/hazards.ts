@@ -36,8 +36,15 @@ const WEIGHTS = Object.fromEntries(
   Object.entries(HAZARD_CATEGORIES).map(([k, v]) => [k, v.weight])
 );
 
+/** A hung upstream must not stall a page regeneration; five seconds, then it is
+ *  a dead source like any other and the HUD says so. */
+const TIMEOUT_MS = 5000;
+
 const getJson = async (fetchImpl: typeof fetch, url: string): Promise<unknown> => {
-  const res = await fetchImpl(url, { next: { revalidate: REVALIDATE_SECONDS } });
+  const res = await fetchImpl(url, {
+    next: { revalidate: REVALIDATE_SECONDS },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error(`${url} responded ${res.status}`);
   return res.json();
 };
