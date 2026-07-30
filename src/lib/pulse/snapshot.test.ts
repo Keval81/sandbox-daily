@@ -90,6 +90,30 @@ test("ships the category metadata so the UI never hardcodes colours", () => {
   assert.equal(snap.layers[0].categories.wildfire.color, "#E75D31");
 });
 
+test("concatenates layers rather than deduping across them", () => {
+  // Same category key, same spot, same minute — but two different layers. A
+  // cross-layer merge would collapse these into one; nothing here may.
+  const a = { ...ev("a"), layer: "hazards" };
+  const b = { ...ev("b"), layer: "unrest", source: "OTHER" };
+  const snap = buildSnapshot(
+    [layer, layer],
+    [ok({ events: [a], unplottable: 0 }), ok({ events: [b], unplottable: 0 })],
+    NOW
+  );
+  assert.deepEqual(snap.events.map((e) => e.id).sort(), ["a", "b"]);
+});
+
+test("orders the concatenated event list newest first", () => {
+  const older = { ...ev("older"), date: "2026-07-28T00:00:00.000Z" };
+  const newer = { ...ev("newer"), date: "2026-07-30T11:00:00.000Z" };
+  const snap = buildSnapshot(
+    [layer, layer],
+    [ok({ events: [older], unplottable: 0 }), ok({ events: [newer], unplottable: 0 })],
+    NOW
+  );
+  assert.deepEqual(snap.events.map((e) => e.id), ["newer", "older"]);
+});
+
 test("an all-dead snapshot is empty rather than fabricated", () => {
   const snap = buildSnapshot([layer], [dead()], NOW);
   assert.equal(snap.events.length, 0);

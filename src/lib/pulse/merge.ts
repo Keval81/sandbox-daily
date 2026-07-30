@@ -27,9 +27,12 @@ const isDuplicate = (a: LayerEvent, b: LayerEvent): boolean => {
 };
 
 /**
- * Flattens every layer's events into one list, collapsing cross-source
- * duplicates. Quadratic, deliberately: these feeds carry tens of events, not
- * thousands, and a spatial index would be unreadable ceremony at this size.
+ * Collapses cross-SOURCE duplicates within ONE layer — the groups are that
+ * layer's own feeds (EONET's quakes and USGS's, say), never different layers.
+ * Duplication is decided on category, and category keys are only unique inside
+ * a layer, so this must not be used to combine layers: buildSnapshot
+ * concatenates instead. Quadratic, deliberately: these feeds carry tens of
+ * events, not thousands, and a spatial index would be unreadable ceremony here.
  */
 export const mergeLayers = (groups: LayerEvent[][]): LayerEvent[] => {
   const kept: LayerEvent[] = [];

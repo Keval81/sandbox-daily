@@ -1,6 +1,5 @@
 import type { LayerFetchResult, LayerSource, PulseSnapshot } from "./types";
 import { PULSE_LAYERS } from "./layers/registry";
-import { mergeLayers } from "./merge";
 import { everySourceDead } from "./freshness";
 
 export const buildSnapshot = (
@@ -14,7 +13,13 @@ export const buildSnapshot = (
   return {
     generatedAt: nowIso,
     stale: false,
-    events: mergeLayers(settled.map((v) => v?.events ?? [])),
+    // Concatenate, never merge. Dedupe compares category keys, which are only
+    // unique within a layer — merging across layers would silently collapse two
+    // unrelated events the moment a second layer reuses a category key. Each
+    // layer already deduped its own sources before handing them over.
+    events: settled
+      .flatMap((v) => v?.events ?? [])
+      .sort((a, b) => Date.parse(b.date) - Date.parse(a.date)),
     unplottable,
     layers: layers.map((layer, i) => {
       const value = settled[i];
