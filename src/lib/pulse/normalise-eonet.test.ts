@@ -51,7 +51,7 @@ test("drops an event with no usable geometry and counts it", () => {
   assert.equal(unplottable, 1);
 });
 
-test("takes severity from the category weight, since EONET magnitude units are incompatible", () => {
+test("takes severity from the category weight when the reported unit doesn't match a curve", () => {
   assert.equal(byId("eonet:EONET_6001").severity, 1);
   assert.equal(byId("eonet:EONET_6004").severity, 0.6);
 });
