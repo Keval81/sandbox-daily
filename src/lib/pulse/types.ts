@@ -89,7 +89,13 @@ export interface PulseLayerSummary {
 }
 
 export interface PulseSnapshot {
-  generatedAt: string;   // ISO 8601 — the real time this data was fetched
+  /**
+   * ISO 8601 — when this snapshot was ASSEMBLED, which is not when the data was
+   * fetched. Upstream responses are cached for REVALIDATE_SECONDS, so the events
+   * behind this stamp can be that much older. The UI says "as of" and names the
+   * refresh window rather than implying this instant.
+   */
+  generatedAt: string;
   stale: boolean;        // true = served from last-good cache; HUD must say "Snapshot"
   events: LayerEvent[];
   unplottable: number;

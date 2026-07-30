@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { getPulseSnapshot } from "@/lib/pulse/snapshot";
 import { PulseClient } from "@/components/pulse/pulse-client";
 
+/** Must match REVALIDATE_SECONDS in @/lib/pulse/freshness — Next statically
+ *  analyses this segment export, so it has to be a literal, not an import. */
 export const revalidate = 600;
 
 export const metadata: Metadata = {

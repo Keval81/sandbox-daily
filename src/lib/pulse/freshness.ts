@@ -22,17 +22,32 @@ export const deadSourceLabels = (layers: PulseLayerSummary[]): string[] =>
 export const everySourceDead = (layers: PulseLayerSummary[]): boolean =>
   layers.length > 0 && layers.every((l) => !l.live);
 
+/**
+ * Past this age the page stops calling itself Live. There is no client-side
+ * refetch — /pulse is prerendered ISR HTML — so a tab left open overnight would
+ * otherwise blink a green "Live" pip over nine-hour-old data. Twice the
+ * revalidate window is the first age that normal caching cannot explain.
+ */
+export const STALE_AFTER_MS = 2 * REVALIDATE_SECONDS * 1000;
+
 export interface Freshness {
   label: string;
   live: boolean;
 }
 
 /**
- * A snapshot assembled a second ago out of nothing is not "Live". Without this
- * term, a total outage with no warm cache renders a blinking green pip over an
- * empty planet — the exact failure this feature was rebuilt to prevent.
+ * A snapshot assembled a second ago out of nothing is not "Live", and neither is
+ * one a reader has had open for hours. Without the first term a total outage
+ * with no warm cache renders a blinking green pip over an empty planet — the
+ * exact failure this feature was rebuilt to prevent.
+ *
+ * Hydration-safe: `now` is seeded from generatedAt, so the age is 0 on both the
+ * server render and the first client render, and only the 60s tick can age it.
  */
-export const freshnessOf = (snapshot: PulseSnapshot): Freshness =>
-  snapshot.stale || everySourceDead(snapshot.layers)
+export const freshnessOf = (snapshot: PulseSnapshot, now: number): Freshness => {
+  const age = now - Date.parse(snapshot.generatedAt);
+  const aged = Number.isFinite(age) && age > STALE_AFTER_MS;
+  return snapshot.stale || everySourceDead(snapshot.layers) || aged
     ? { label: "Snapshot", live: false }
     : { label: "Live", live: true };
+};

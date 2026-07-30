@@ -6,6 +6,8 @@ import { deadSourceLabels, everySourceDead, freshnessOf } from "./freshness";
 import type { LayerEvent, LayerFetchResult, PulseSnapshot } from "./types";
 
 const NOW = "2026-07-30T12:00:00.000Z";
+/** What `now` is on the first render: seeded from the snapshot's own stamp. */
+const AT_RENDER = Date.parse(NOW);
 const layer = createHazardsLayer(fetch);
 
 const ev = (id: string): LayerEvent => ({
@@ -145,7 +147,7 @@ test("a total outage publishes no hazard index, fabricated Calm included", async
 test("a total outage reads Snapshot, not Live, and names both dead feeds", async () => {
   const snap = await snapshotFrom(throwingFetch);
   assert.equal(everySourceDead(snap.layers), true);
-  assert.deepEqual(freshnessOf(snap), { label: "Snapshot", live: false });
+  assert.deepEqual(freshnessOf(snap, AT_RENDER), { label: "Snapshot", live: false });
   assert.deepEqual(deadSourceLabels(snap.layers), ["EONET", "USGS"]);
 });
 
@@ -165,7 +167,7 @@ test("one dead feed still reads live, and names only the feed that died", async 
   assert.equal(snap.layers[0].live, true);
   assert.deepEqual(deadSourceLabels(snap.layers), ["EONET"]);
   assert.equal(everySourceDead(snap.layers), false);
-  assert.deepEqual(freshnessOf(snap), { label: "Live", live: true });
+  assert.deepEqual(freshnessOf(snap, AT_RENDER), { label: "Live", live: true });
   // A partially live layer still scores what it did get.
   assert.ok(snap.layers[0].index);
   assert.equal(snap.events.length, 1);
@@ -186,7 +188,7 @@ test("a failing round after a good one serves the cached payload, labelled stale
   const second = await quiet(() => getPulseSnapshot([bad]));
   assert.equal(second.stale, true);
   assert.equal(second.events.length, 1);        // the cached payload, not a blank globe
-  assert.equal(freshnessOf(second).label, "Snapshot");
+  assert.equal(freshnessOf(second, AT_RENDER).label, "Snapshot");
 });
 
 test("a failing round with no warm cache is honestly empty rather than cached", async () => {

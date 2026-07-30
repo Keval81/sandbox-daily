@@ -3,15 +3,16 @@ import { normaliseEonet } from "../normalise-eonet";
 import { normaliseUsgs } from "../normalise-usgs";
 import { mergeLayers } from "../merge";
 import { hazardIndex } from "../hazard-index";
+import { REVALIDATE_SECONDS } from "../freshness";
 
 const EONET_URL = "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&days=7";
 const USGS_URL =
   "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson";
 
-/** Ten minutes: EONET updates on the order of hours, and a news globe does not
- *  need per-second earthquake data. Upstream sees one request per ten minutes
- *  regardless of visitor count. */
-const REVALIDATE_SECONDS = 600;
+// REVALIDATE_SECONDS — ten minutes: EONET updates on the order of hours, and a
+// news globe does not need per-second earthquake data. Upstream sees one request
+// per ten minutes regardless of visitor count. It lives in ../freshness because
+// the UI has to know how old the data behind a snapshot can be.
 
 export const HAZARD_CATEGORIES: Record<string, CategoryMeta> = {
   wildfire:   { label: "Wildfire",      color: "#E75D31", weight: 1.0 },

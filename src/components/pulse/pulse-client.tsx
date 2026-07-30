@@ -7,7 +7,7 @@ import { LayerPanel } from "./layer-panel";
 import { EventConsole, type SortMode } from "./event-console";
 import { DetailPanel, DETAIL_TITLE_ID } from "./detail-panel";
 import { formatStamp } from "./format";
-import { deadSourceLabels, freshnessOf } from "@/lib/pulse/freshness";
+import { deadSourceLabels, freshnessOf, REVALIDATE_SECONDS } from "@/lib/pulse/freshness";
 import { eventKey } from "@/lib/pulse/category-key";
 import type { CategoryMeta, LayerEvent, Marker, PulseSnapshot } from "@/lib/pulse/types";
 
@@ -15,6 +15,8 @@ import type { CategoryMeta, LayerEvent, Marker, PulseSnapshot } from "@/lib/puls
 const FALLBACK_COLOR = "#98989D";
 
 const CONSOLE_ID = "pulse-console";
+
+const REFRESH_MINUTES = Math.round(REVALIDATE_SECONDS / 60);
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
@@ -139,7 +141,7 @@ export function PulseClient({ snapshot }: PulseClientProps) {
   // which half of the picture is missing; "Natural hazards unavailable" does not.
   const deadSources = useMemo(() => deadSourceLabels(snapshot.layers), [snapshot.layers]);
 
-  const freshness = freshnessOf(snapshot);
+  const freshness = freshnessOf(snapshot, now);
 
   const sources = useMemo(
     () => Array.from(new Set(snapshot.events.map((e) => e.source))),
@@ -263,12 +265,16 @@ export function PulseClient({ snapshot }: PulseClientProps) {
 
       <div className="pulse-hud" data-console-open={consoleOpen ? "true" : "false"}>
         <section className="pulse-panel pulse-callsign" aria-label="Feed status">
+          {/* "as of", not a bare timestamp: generatedAt is when the snapshot was
+              assembled, and the upstream responses behind it are cached for up to
+              the revalidate window, so the data can be older than the stamp. */}
           <p className="pulse-status" data-stale={freshness.live ? "false" : "true"}>
             <span className="pulse-pip" data-stale={freshness.live ? "false" : "true"} />
             <span className="pulse-status-label">{freshness.label}</span>
             <time className="pulse-status-time font-mono" dateTime={snapshot.generatedAt}>
-              {stamp}
+              as of {stamp}
             </time>
+            <span className="pulse-status-note">· refreshed every {REFRESH_MINUTES} min</span>
           </p>
 
           <h1 className="pulse-wordmark">
@@ -364,7 +370,7 @@ export function PulseClient({ snapshot }: PulseClientProps) {
         onSort={toggleSort}
         onSelect={handleSelect}
         open={consoleOpen}
-        footer={`${visible.length} of ${snapshot.events.length} shown · ${freshness.label.toLowerCase()} ${stamp}`}
+        footer={`${visible.length} of ${snapshot.events.length} shown · ${freshness.label.toLowerCase()} as of ${stamp}`}
         emptyLabel={
           snapshot.events.length === 0
             ? "No hazards in this snapshot."
