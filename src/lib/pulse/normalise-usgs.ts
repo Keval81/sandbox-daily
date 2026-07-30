@@ -27,6 +27,15 @@ export const normaliseUsgs = (raw: unknown): NormalisedEvents => {
       continue;
     }
 
+    // A NaN or out-of-range epoch makes toISOString throw RangeError, which
+    // escapes past the layer's allSettled and blanks the whole globe over one
+    // bad record. Number.isFinite catches both NaN and out-of-range.
+    const stamp = typeof f.properties?.time === "number" ? f.properties.time : Date.now();
+    if (!Number.isFinite(new Date(stamp).getTime())) {
+      unplottable += 1;
+      continue;
+    }
+
     const mag = f.properties?.mag;
     events.push({
       id: `usgs:${f.id}`,
@@ -35,7 +44,7 @@ export const normaliseUsgs = (raw: unknown): NormalisedEvents => {
       title: f.properties?.place ?? "Earthquake",
       lon,
       lat,
-      date: new Date(f.properties?.time ?? Date.now()).toISOString(),
+      date: new Date(stamp).toISOString(),
       severity: severityFromMagnitude(typeof mag === "number" ? mag : Number.NaN),
       magnitude: typeof mag === "number" ? `${mag} M` : undefined,
       source: "USGS",

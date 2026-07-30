@@ -80,3 +80,39 @@ test("returns an empty result rather than throwing on a malformed payload", () =
   assert.deepEqual(normaliseEonet({ nope: true }, WEIGHTS), { events: [], unplottable: 0 });
   assert.deepEqual(normaliseEonet(null, WEIGHTS), { events: [], unplottable: 0 });
 });
+
+test("counts an unparseable date instead of throwing and taking the feed down", () => {
+  const raw = {
+    events: [
+      {
+        id: "EONET_BAD",
+        title: "Broken timestamp",
+        categories: [{ id: "wildfires" }],
+        geometry: [{ date: "yesterday-ish", type: "Point", coordinates: [10, 20] }],
+      },
+      {
+        id: "EONET_GOOD",
+        title: "Fine",
+        categories: [{ id: "wildfires" }],
+        geometry: [{ date: "2026-07-30T00:00:00Z", type: "Point", coordinates: [11, 21] }],
+      },
+    ],
+  };
+  const { events, unplottable } = normaliseEonet(raw, WEIGHTS);
+  assert.deepEqual(events.map((e) => e.id), ["eonet:EONET_GOOD"]);
+  assert.equal(unplottable, 1);
+});
+
+test("falls back to now when a geometry carries no date at all", () => {
+  const raw = {
+    events: [{
+      id: "EONET_NODATE",
+      title: "Undated",
+      categories: [{ id: "wildfires" }],
+      geometry: [{ type: "Point", coordinates: [10, 20] }],
+    }],
+  };
+  const { events, unplottable } = normaliseEonet(raw, WEIGHTS);
+  assert.equal(unplottable, 0);
+  assert.ok(events[0].date.endsWith("Z"));
+});

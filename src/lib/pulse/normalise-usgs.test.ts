@@ -80,3 +80,28 @@ test("returns an empty result rather than throwing on a malformed payload", () =
   assert.deepEqual(normaliseUsgs({}), { events: [], unplottable: 0 });
   assert.deepEqual(normaliseUsgs(null), { events: [], unplottable: 0 });
 });
+
+test("counts an unusable epoch instead of throwing and taking the feed down", () => {
+  const raw = {
+    features: [
+      {
+        id: "us-nan",
+        properties: { mag: 5, place: "Bad time", time: Number.NaN, url: "" },
+        geometry: { coordinates: [10, 20, 5] },
+      },
+      {
+        id: "us-huge",
+        properties: { mag: 5, place: "Out of range", time: 8.64e15 + 1, url: "" },
+        geometry: { coordinates: [11, 21, 5] },
+      },
+      {
+        id: "us-ok",
+        properties: { mag: 5, place: "Fine", time: 1785000000000, url: "" },
+        geometry: { coordinates: [12, 22, 5] },
+      },
+    ],
+  };
+  const { events, unplottable } = normaliseUsgs(raw);
+  assert.deepEqual(events.map((e) => e.id), ["usgs:us-ok"]);
+  assert.equal(unplottable, 2);
+});

@@ -92,6 +92,16 @@ export const normaliseEonet = (
       continue;
     }
 
+    // new Date("not a date").toISOString() throws RangeError. That throw escapes
+    // this loop, escapes normaliseEonet, and lands after the layer's own
+    // allSettled — so one malformed timestamp anywhere in the feed would blank
+    // the entire globe. Count it like any other unusable record instead.
+    const stamp = typeof latest.date === "string" ? Date.parse(latest.date) : Date.now();
+    if (!Number.isFinite(stamp)) {
+      unplottable += 1;
+      continue;
+    }
+
     const rawCategory = ev.categories?.[0]?.id ?? "";
     const category = EONET_CATEGORY_MAP[rawCategory] ?? "other";
     const magnitude =
@@ -106,7 +116,7 @@ export const normaliseEonet = (
       title: ev.title ?? "Untitled event",
       lon: point[0],
       lat: point[1],
-      date: new Date(latest.date ?? Date.now()).toISOString(),
+      date: new Date(stamp).toISOString(),
       severity: severityFromWeight(categoryWeights[category] ?? 0.6),
       magnitude,
       source: "EONET",
