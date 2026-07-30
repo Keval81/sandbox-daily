@@ -310,7 +310,7 @@ Three shape traps, each one an actual defect if missed. Every one gets a test.
 
 **Interfaces:**
 - Consumes: `LayerEvent`, `LayerFetchResult` from `./types`; `severityFromWeight` from `./severity`; `HAZARD_CATEGORIES` is *not* consumed — the mapping table lives in this file and is exported for the layer to reuse.
-- Produces: `normaliseEonet(raw: unknown, categoryWeights: Record<string, number>): LayerFetchResult`, `EONET_CATEGORY_MAP: Record<string, string>`, `centroidOf(coords: number[][][]): [number, number]`.
+- Produces: `normaliseEonet(raw: unknown, categoryWeights: Record<string, number>): LayerFetchResult`, `EONET_CATEGORY_MAP: Record<string, string>`, `centroidOf(ring: number[][]): [number, number]` — one polygon ring, not the whole nested `coordinates` field.
 
 - [ ] **Step 1: Capture a live fixture**
 
