@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { PulseGlobe } from "./pulse-globe";
 import { HazardIndex } from "./hazard-index";
 import { LayerPanel } from "./layer-panel";
 import { EventConsole, type SortMode } from "./event-console";
-import { DetailPanel } from "./detail-panel";
+import { DetailPanel, DETAIL_TITLE_ID } from "./detail-panel";
 import { formatStamp } from "./format";
 import type { CategoryMeta, LayerEvent, Marker, PulseSnapshot } from "@/lib/pulse/types";
 
@@ -13,6 +13,28 @@ import type { CategoryMeta, LayerEvent, Marker, PulseSnapshot } from "@/lib/puls
 const FALLBACK_COLOR = "#98989D";
 
 const CONSOLE_ID = "pulse-console";
+
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
+const subscribeMotion = (onChange: () => void): (() => void) => {
+  const mq = matchMedia(REDUCED_MOTION);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+};
+const getMotion = (): boolean => matchMedia(REDUCED_MOTION).matches;
+/** The server cannot know the reader's motion preference; the store corrects it
+ *  on hydration, which is exactly what useSyncExternalStore is for. */
+const getServerMotion = (): boolean => false;
+
+/** One predicate for the visible list and for "did that filter just hide the
+ *  selected event?" — two copies would drift. */
+const matchesFilters = (e: LayerEvent, active: Set<string>, query: string): boolean => {
+  const q = query.trim().toLowerCase();
+  return (
+    (active.size === 0 || active.has(e.category)) &&
+    (q === "" || e.title.toLowerCase().includes(q))
+  );
+};
 
 interface PulseClientProps {
   snapshot: PulseSnapshot;
@@ -23,9 +45,18 @@ export function PulseClient({ snapshot }: PulseClientProps) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("recent");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [spin, setSpin] = useState(true);
+  const [spinRequested, setSpinRequested] = useState(true);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
+
+  // Set when a selection came from the console, so focus follows the user into
+  // the detail panel; a globe pick leaves focus on the canvas.
+  const focusDetailRef = useRef(false);
+
+  const reducedMotion = useSyncExternalStore(subscribeMotion, getMotion, getServerMotion);
+  // The engine refuses to spin under reduced motion (engine.ts setSpin), so the
+  // button has to read the same truth or it labels a stationary globe "Pause".
+  const spinning = spinRequested && !reducedMotion;
 
   // Relative times are measured from the snapshot's own timestamp first, so the
   // server HTML and the first client render agree; a mount effect then switches
@@ -42,14 +73,6 @@ export function PulseClient({ snapshot }: PulseClientProps) {
       clearTimeout(first);
       clearInterval(id);
     };
-  }, []);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelectedId(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   const categories = useMemo(() => {
@@ -70,12 +93,7 @@ export function PulseClient({ snapshot }: PulseClientProps) {
   }, [snapshot.events]);
 
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const list = snapshot.events.filter(
-      (e) =>
-        (active.size === 0 || active.has(e.category)) &&
-        (q === "" || e.title.toLowerCase().includes(q))
-    );
+    const list = snapshot.events.filter((e) => matchesFilters(e, active, query));
     return list.sort(
       sort === "recent"
         ? (a, b) => Date.parse(b.date) - Date.parse(a.date)
@@ -104,24 +122,36 @@ export function PulseClient({ snapshot }: PulseClientProps) {
     [selected]
   );
 
-  const freshness = snapshot.stale
-    ? { label: "Snapshot", live: false }
-    : { label: "Live", live: true };
-
   const deadSources = useMemo(
     () => snapshot.layers.filter((l) => !l.live).map((l) => l.label),
     [snapshot.layers]
   );
+
+  const allSourcesDead =
+    snapshot.layers.length > 0 && deadSources.length === snapshot.layers.length;
+
+  // A snapshot assembled a second ago out of nothing is not "Live". Without this
+  // term, a total outage with no warm cache renders a blinking green pip over an
+  // empty planet — the exact failure this feature was rebuilt to prevent.
+  const freshness =
+    snapshot.stale || allSourcesDead
+      ? { label: "Snapshot", live: false }
+      : { label: "Live", live: true };
 
   const sources = useMemo(
     () => Array.from(new Set(snapshot.events.map((e) => e.source))),
     [snapshot.events]
   );
 
-  const hazard = snapshot.layers.find((l) => l.index !== null)?.index ?? null;
+  // Only a live layer may publish an index: hazardIndex scores an empty list 0,
+  // which bands as a green "Calm" — a fabricated reading over a dead feed.
+  const hazard = snapshot.layers.find((l) => l.live && l.index !== null)?.index ?? null;
   const wildfires = counts.wildfire ?? 0;
 
-  const handlePick = useCallback((id: string | null) => setSelectedId(id), []);
+  const handlePick = useCallback((id: string | null) => {
+    focusDetailRef.current = false;
+    setSelectedId(id);
+  }, []);
 
   const handleHover = useCallback((id: string | null, x: number, y: number) => {
     // The engine emits on every pointermove, repeated nulls included. Returning
@@ -134,20 +164,70 @@ export function PulseClient({ snapshot }: PulseClientProps) {
   }, []);
 
   const handleSelect = useCallback((id: string) => {
+    focusDetailRef.current = true;
     setSelectedId(id);
     setConsoleOpen(false);
   }, []);
 
-  const toggleCategory = useCallback((category: string) => {
-    setActive((prev) => {
-      const next = new Set(prev);
+  // On selection from the console, focus follows into the panel. On mobile that
+  // is not a nicety: closing the console display:none's the very button the user
+  // just pressed, which would drop focus to <body> with no announcement.
+  useEffect(() => {
+    if (!selectedId || !focusDetailRef.current) return;
+    focusDetailRef.current = false;
+    document.getElementById(DETAIL_TITLE_ID)?.focus();
+  }, [selectedId]);
+
+  /** Dismissing must hand focus back, not drop it on <body>. */
+  const dismiss = useCallback(() => {
+    if (!selectedId) return;
+    const row = document.querySelector<HTMLElement>(
+      `[data-pulse-event="${CSS.escape(selectedId)}"]`
+    );
+    setSelectedId(null);
+    // offsetParent is null for anything the mobile breakpoint has hidden, and a
+    // hidden element silently refuses focus — fall back to the globe itself.
+    const target =
+      row && row.offsetParent !== null
+        ? row
+        : document.querySelector<HTMLElement>(".pulse-canvas");
+    target?.focus();
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      // Escape natively clears a search field; do not steal it from the input.
+      if (e.target instanceof HTMLInputElement) return;
+      dismiss();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId, dismiss]);
+
+  const toggleCategory = useCallback(
+    (category: string) => {
+      const next = new Set(active);
       if (next.has(category)) next.delete(category);
       else next.add(category);
-      return next;
-    });
-  }, []);
+      setActive(next);
+      // Otherwise the detail panel stays open over a marker that is no longer drawn.
+      if (selected && !matchesFilters(selected, next, query)) setSelectedId(null);
+    },
+    [active, query, selected]
+  );
 
   const resetCategories = useCallback(() => setActive(new Set()), []);
+
+  const handleQuery = useCallback(
+    (value: string) => {
+      setQuery(value);
+      if (selected && !matchesFilters(selected, active, value)) setSelectedId(null);
+    },
+    [active, selected]
+  );
+
   const toggleSort = useCallback(
     () => setSort((s) => (s === "recent" ? "severity" : "recent")),
     []
@@ -162,7 +242,7 @@ export function PulseClient({ snapshot }: PulseClientProps) {
         <PulseGlobe
           markers={markers}
           selectedId={selectedId}
-          spin={spin}
+          spin={spinning}
           focusOn={focusOn}
           onPick={handlePick}
           onHover={handleHover}
@@ -245,11 +325,18 @@ export function PulseClient({ snapshot }: PulseClientProps) {
         <button
           type="button"
           className="pulse-btn"
-          aria-pressed={spin}
-          aria-label={spin ? "Pause rotation" : "Resume rotation"}
-          onClick={() => setSpin((s) => !s)}
+          aria-pressed={spinning}
+          disabled={reducedMotion}
+          aria-label={
+            reducedMotion
+              ? "Rotation is off because your system asks for reduced motion"
+              : spinning
+                ? "Pause rotation"
+                : "Resume rotation"
+          }
+          onClick={() => setSpinRequested((s) => !s)}
         >
-          {spin ? "Pause" : "Rotate"}
+          {spinning ? "Pause" : "Rotate"}
         </button>
         <button
           type="button"
@@ -269,7 +356,7 @@ export function PulseClient({ snapshot }: PulseClientProps) {
         selectedId={selectedId}
         now={now}
         query={query}
-        onQuery={setQuery}
+        onQuery={handleQuery}
         sort={sort}
         onSort={toggleSort}
         onSelect={handleSelect}
@@ -291,7 +378,7 @@ export function PulseClient({ snapshot }: PulseClientProps) {
             weight: 0.6,
           }}
           now={now}
-          onClose={() => setSelectedId(null)}
+          onClose={dismiss}
         />
       )}
 

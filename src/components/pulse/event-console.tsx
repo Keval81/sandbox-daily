@@ -44,11 +44,14 @@ export function EventConsole({
           </button>
         </div>
 
-        <ul className="pulse-list">
+        {/* list-style: none strips list semantics in Safari/VoiceOver, so the
+            role is restated rather than assumed. */}
+        <ul className="pulse-list" role="list">
           {events.map((e) => (
             <li key={e.id}>
               <button
                 type="button"
+                data-pulse-event={e.id}
                 onClick={() => onSelect(e.id)}
                 aria-current={e.id === selectedId}
                 className="pulse-ev"
@@ -67,7 +70,9 @@ export function EventConsole({
           {events.length === 0 && <li className="pulse-list-empty">{emptyLabel}</li>}
         </ul>
 
-        <p className="pulse-console-foot">{footer}</p>
+        <p className="pulse-console-foot" aria-live="polite">
+          {footer}
+        </p>
       </div>
     </aside>
   );

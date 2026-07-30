@@ -360,7 +360,12 @@
 .pulse-stage {
   position: relative;
   width: 100%;
-  height: calc(100vh - 64px);   /* the root layout's pt-16 nav offset */
+  /* 64px is the root layout's pt-16 nav offset. iOS Safari's 100vh is the LARGE
+     viewport, so with the toolbar showing the bottom band — detail panel, hint,
+     the mobile console footer — sits off-screen; dvh is the real one. The vh
+     line stays as the fallback for browsers without dvh. */
+  height: calc(100vh - 64px);
+  height: calc(100dvh - 64px);
   min-height: 560px;
   background: var(--color-ink);
   overflow: hidden;
@@ -445,6 +450,8 @@
               color var(--dur-fast) var(--ease-out);
 }
 .pulse-btn:hover { border-color: var(--pulse-edge-strong); }
+.pulse-btn:disabled { opacity: 0.45; cursor: default; }
+.pulse-btn:disabled:hover { border-color: var(--pulse-edge); }
 .pulse-btn[aria-pressed="true"] {
   border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
   color: var(--color-accent);
@@ -543,8 +550,15 @@
   gap: var(--space-3);
   margin-top: var(--space-4);
 }
+/* Registered so the arc can be animated: an unregistered custom property is not
+   interpolatable, and the sweep would jump instead of move. */
+@property --pulse-pct {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
 .pulse-gauge {
-  --pulse-pct: 0;
   --pulse-band: var(--color-accent);
   position: relative;
   flex: none;
@@ -557,7 +571,12 @@
     var(--pulse-band) calc(var(--pulse-pct) * 1%),
     color-mix(in srgb, var(--color-cream) 10%, transparent) 0
   );
+  /* One quiet move on load: the arc sweeps to the score the number already
+     states. No keyframe touches the number itself. */
+  animation: pulse-gauge-sweep var(--dur-page) var(--ease-out);
 }
+
+@keyframes pulse-gauge-sweep { from { --pulse-pct: 0; } }
 .pulse-gauge::before {
   content: "";
   position: absolute;
@@ -942,7 +961,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pulse-pip { animation: none; }
+  .pulse-pip, .pulse-gauge { animation: none; }
   .pulse-canvas, .pulse-chip, .pulse-btn, .pulse-ev { transition: none; }
 }
 

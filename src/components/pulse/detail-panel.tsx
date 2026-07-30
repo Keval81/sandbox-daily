@@ -3,6 +3,9 @@
 import type { CategoryMeta, LayerEvent } from "@/lib/pulse/types";
 import { severityLabel, timeAgo } from "./format";
 
+/** Focus target when a selection arrives from the console — see PulseClient. */
+export const DETAIL_TITLE_ID = "pulse-detail-title";
+
 interface DetailPanelProps {
   event: LayerEvent;
   meta: CategoryMeta;
@@ -28,7 +31,9 @@ export function DetailPanel({ event, meta, now, onClose }: DetailPanelProps) {
         </button>
       </div>
 
-      <h2 className="pulse-detail-title">{event.title}</h2>
+      <h2 id={DETAIL_TITLE_ID} tabIndex={-1} className="pulse-detail-title">
+        {event.title}
+      </h2>
 
       <dl className="pulse-mini-grid">
         <div className="pulse-mini">

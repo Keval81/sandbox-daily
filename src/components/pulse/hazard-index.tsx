@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import type { LayerIndex } from "@/lib/pulse/types";
 
 interface HazardIndexProps {
@@ -9,30 +9,14 @@ interface HazardIndexProps {
   wildfires: number;
 }
 
-const COUNT_UP_MS = 700;
-
+/**
+ * The score is printed once and never animated. A JS count-up seeded with the
+ * true value flashes it, drops to ~0 on the first frame and climbs back — the
+ * number appears to be wrong twice before it settles. The arc sweeps instead, as
+ * a CSS animation over the registered --pulse-pct property, which reduced motion
+ * switches off without the number ever changing.
+ */
 export function HazardIndex({ index, eventCount, wildfires }: HazardIndexProps) {
-  // Starts at the true score so the server HTML, the first client render and a
-  // JavaScript-less reader all show the real number; the count-up is an
-  // enhancement layered on after mount, never the source of truth.
-  const [display, setDisplay] = useState(index.score);
-
-  useEffect(() => {
-    // Reduced motion jumps straight to the end of the same curve rather than
-    // taking a separate branch, so the two paths can never disagree on the
-    // number they land on.
-    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let raf = 0;
-    const start = performance.now();
-    const step = (t: number) => {
-      const p = reduced ? 1 : Math.min(1, (t - start) / COUNT_UP_MS);
-      setDisplay(Math.round(index.score * (1 - (1 - p) ** 3)));
-      if (p < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [index.score]);
-
   return (
     <div className="pulse-index">
       <div
@@ -40,11 +24,11 @@ export function HazardIndex({ index, eventCount, wildfires }: HazardIndexProps) 
         role="img"
         aria-label={`Global hazard index ${index.score} out of 100 — ${index.band}`}
         // Custom properties are not in CSSProperties; the cast is the standard
-        // escape hatch and keeps the value typed as a number/string.
-        style={{ "--pulse-pct": display, "--pulse-band": index.color } as CSSProperties}
+        // escape hatch and keeps the values typed as a number/string.
+        style={{ "--pulse-pct": index.score, "--pulse-band": index.color } as CSSProperties}
       >
         <span className="pulse-gauge-num">
-          <b className="font-mono">{display}</b>
+          <b className="font-mono">{index.score}</b>
           <small>/ 100</small>
         </span>
       </div>
