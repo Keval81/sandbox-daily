@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PulseGlobe } from "./pulse-globe";
 import { HazardIndex } from "./hazard-index";
 import { LayerPanel } from "./layer-panel";
@@ -8,7 +8,8 @@ import { EventConsole, type SortMode } from "./event-console";
 import { DetailPanel, DETAIL_TITLE_ID } from "./detail-panel";
 import { formatStamp } from "./format";
 import { deadSourceLabels, freshnessOf, REVALIDATE_SECONDS } from "@/lib/pulse/freshness";
-import { eventKey } from "@/lib/pulse/category-key";
+import { categoryKey, eventKey } from "@/lib/pulse/category-key";
+import { useReducedMotion } from "./use-reduced-motion";
 import type { CategoryMeta, LayerEvent, Marker, PulseSnapshot } from "@/lib/pulse/types";
 
 /** 6-digit hex, deliberately: the engine appends an alpha pair to marker colours. */
@@ -17,18 +18,6 @@ const FALLBACK_COLOR = "#98989D";
 const CONSOLE_ID = "pulse-console";
 
 const REFRESH_MINUTES = Math.round(REVALIDATE_SECONDS / 60);
-
-const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
-
-const subscribeMotion = (onChange: () => void): (() => void) => {
-  const mq = matchMedia(REDUCED_MOTION);
-  mq.addEventListener("change", onChange);
-  return () => mq.removeEventListener("change", onChange);
-};
-const getMotion = (): boolean => matchMedia(REDUCED_MOTION).matches;
-/** The server cannot know the reader's motion preference; the store corrects it
- *  on hydration, which is exactly what useSyncExternalStore is for. */
-const getServerMotion = (): boolean => false;
 
 /** One predicate for the visible list and for "did that filter just hide the
  *  selected event?" — two copies would drift. */
@@ -57,9 +46,10 @@ export function PulseClient({ snapshot }: PulseClientProps) {
   // the detail panel; a globe pick leaves focus on the canvas.
   const focusDetailRef = useRef(false);
 
-  const reducedMotion = useSyncExternalStore(subscribeMotion, getMotion, getServerMotion);
-  // The engine refuses to spin under reduced motion (engine.ts setSpin), so the
-  // button has to read the same truth or it labels a stationary globe "Pause".
+  // The engine refuses to spin under reduced motion, so the button has to read
+  // the same store or it labels a stationary globe "Pause". PulseGlobe feeds the
+  // same value straight into the engine.
+  const reducedMotion = useReducedMotion();
   const spinning = spinRequested && !reducedMotion;
 
   // Relative times are measured from the snapshot's own timestamp first, so the
@@ -150,8 +140,11 @@ export function PulseClient({ snapshot }: PulseClientProps) {
 
   // Only a live layer may publish an index: hazardIndex scores an empty list 0,
   // which bands as a green "Calm" — a fabricated reading over a dead feed.
-  const hazard = snapshot.layers.find((l) => l.live && l.index !== null)?.index ?? null;
-  const wildfires = counts.wildfire ?? 0;
+  const indexLayer = snapshot.layers.find((l) => l.live && l.index !== null) ?? null;
+  const hazard = indexLayer?.index ?? null;
+  // The gauge's sub-stat is read off the layer that published the gauge — counts
+  // are keyed by layer, so a bare "wildfire" would tally nothing.
+  const wildfires = indexLayer ? counts[categoryKey(indexLayer.id, "wildfire")] ?? 0 : 0;
 
   const handlePick = useCallback((id: string | null) => {
     focusDetailRef.current = false;
