@@ -116,6 +116,12 @@ export class GlobeEngine {
       // is the likeliest cause, so the URL in the error is the whole point.
       .catch((err: unknown) => {
         console.error("[GlobeEngine] earth textures failed to load", err);
+        if (this.destroyed) return;
+        // The canvas starts at opacity 0 and only `ready` reveals it, so without
+        // this the degraded state — stars, halo and markers, no planet — is
+        // drawn into a permanently invisible canvas. Markers over starfield is
+        // an honest picture; nothing at all is not.
+        this.canvas.classList.add("failed");
       });
 
     this.raf = requestAnimationFrame(this.tick);

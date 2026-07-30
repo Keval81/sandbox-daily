@@ -393,7 +393,10 @@
   touch-action: none;
   cursor: grab;
 }
-.pulse-canvas.ready { opacity: 1; }
+/* `failed` is the texture-load failure path: stars, halo and markers with no
+   planet. Degraded, but honest — and it has to be visible to be either. */
+.pulse-canvas.ready,
+.pulse-canvas.failed { opacity: 1; }
 .pulse-canvas.grabbing { cursor: grabbing; }
 .pulse-canvas.hot { cursor: pointer; }
 .pulse-canvas:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
@@ -980,7 +983,10 @@
   text-decoration: none;
 }
 .pulse-teaser-globe { position: relative; width: 200px; height: 200px; }
-.pulse-teaser-globe .pulse-canvas { cursor: pointer; }
+/* Compact mode binds no pointer handlers at all, so `touch-action: none` buys
+   nothing here and costs everything: on a phone a thumb-drag starting inside
+   the 200px teaser globe would neither scroll the page nor rotate anything. */
+.pulse-teaser-globe .pulse-canvas { cursor: pointer; touch-action: auto; }
 .pulse-teaser-copy {
   display: flex;
   flex-direction: column;
