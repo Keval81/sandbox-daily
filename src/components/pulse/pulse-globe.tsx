@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { GlobeEngine } from "@/lib/pulse/globe-engine";
+import { useReducedMotion } from "./use-reduced-motion";
 import type { Marker } from "@/lib/pulse/types";
 
 interface PulseGlobeProps {
@@ -20,6 +21,12 @@ export function PulseGlobe({
 }: PulseGlobeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GlobeEngine | null>(null);
+
+  // The same store the HUD's Pause button reads. The engine only takes an
+  // initial value from the media query at construction, so without this a
+  // reader turning the OS setting off mid-session gets a re-enabled "Pause"
+  // button over a globe that still refuses to move.
+  const reduceMotion = useReducedMotion();
 
   // Callbacks live in refs so a parent re-render never tears the engine down.
   // Synced in a dependency-array-less effect (runs after every render) rather
@@ -57,6 +64,9 @@ export function PulseGlobe({
 
   useEffect(() => { engineRef.current?.setMarkers(markers); }, [markers]);
   useEffect(() => { engineRef.current?.setSelected(selectedId); }, [selectedId]);
+  // Before setSpin, deliberately: effects run in declaration order, and the
+  // engine resolves the request against the preference on every frame.
+  useEffect(() => { engineRef.current?.setReduceMotion(reduceMotion); }, [reduceMotion]);
   useEffect(() => { engineRef.current?.setSpin(spin); }, [spin]);
   useEffect(() => {
     if (focusOn) engineRef.current?.focus(focusOn.lat, focusOn.lon);

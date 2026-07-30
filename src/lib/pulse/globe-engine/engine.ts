@@ -49,7 +49,8 @@ export class GlobeEngine {
   private readonly sphereCanvas: HTMLCanvasElement;
   private readonly sctx: CanvasRenderingContext2D;
   private readonly compact: boolean;
-  private readonly reduceMotion: boolean;
+  /** Not readonly: the OS setting can change mid-session, and the host tells us. */
+  private reduceMotion: boolean;
   private readonly cleanups: (() => void)[] = [];
   private readonly pickListeners = new Set<PickListener>();
   private readonly hoverListeners = new Set<HoverListener>();
@@ -63,7 +64,8 @@ export class GlobeEngine {
   private curM: Mat3 = qmat(this.orient);
   private target: Quat | null = null;
   private focusing = false;
-  private spin = true;
+  /** What the host asked for. What actually happens is `spinning`, below. */
+  private spinRequested = true;
   private zoom = 1;
   private velX = 0;
   private velY = 0;
@@ -98,8 +100,10 @@ export class GlobeEngine {
     this.sphereCanvas = sphereCanvas;
     this.sctx = sctx;
     this.compact = options.compact ?? false;
+    // An initial value only. The preference can be turned off mid-session, and
+    // a constructor read would leave the globe refusing to spin under a button
+    // the host has already re-enabled and relabelled "Pause".
     this.reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (this.reduceMotion) this.spin = false;
 
     this.resize();
     this.bindEvents();
@@ -179,7 +183,11 @@ export class GlobeEngine {
     this.velY = 0;
   }
 
-  setSpin(on: boolean): void { this.spin = on && !this.reduceMotion; }
+  setSpin(on: boolean): void { this.spinRequested = on; }
+  /** Live, not latched at construction — the OS setting can change mid-session. */
+  setReduceMotion(on: boolean): void { this.reduceMotion = on; }
+  /** The request and the preference, resolved. Reduced motion always wins. */
+  private get spin(): boolean { return this.spinRequested && !this.reduceMotion; }
   isSpinning(): boolean { return this.spin; }
 
   on(event: "pick", cb: PickListener): () => void;
