@@ -118,6 +118,10 @@ export const normaliseEonet = (
       lat: point[1],
       date: new Date(stamp).toISOString(),
       severity: severityFromWeight(categoryWeights[category] ?? 0.6),
+      // EONET reports magnitude in mutually incompatible units and often omits
+      // it, so severity here is the category's constant, not a measurement of
+      // this fire. Recorded so the UI cannot present it as one.
+      severityFrom: "category",
       magnitude,
       source: "EONET",
       url: ev.sources?.[0]?.url ?? ev.link,

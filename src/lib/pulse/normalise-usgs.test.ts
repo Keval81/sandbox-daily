@@ -105,3 +105,20 @@ test("counts an unusable epoch instead of throwing and taking the feed down", ()
   assert.deepEqual(events.map((e) => e.id), ["usgs:us-ok"]);
   assert.equal(unplottable, 2);
 });
+
+test("marks a severity derived from a reported magnitude as measured", () => {
+  const { events } = normaliseUsgs(FIXED);
+  assert.equal(events[0].severityFrom, "magnitude");
+});
+
+test("marks a quake with no magnitude as a baseline, since the floor is a constant", () => {
+  const raw = {
+    features: [{
+      id: "us-nomag",
+      properties: { place: "No magnitude", time: 1785000000000, url: "" },
+      geometry: { coordinates: [1, 2, 3] },
+    }],
+  };
+  const { events } = normaliseUsgs(raw);
+  assert.equal(events[0].severityFrom, "category");
+});

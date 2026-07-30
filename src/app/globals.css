@@ -913,6 +913,8 @@
   color: var(--pulse-fg);
 }
 .pulse-mini-v.font-mono { font-variant-numeric: tabular-nums; }
+/* "— category baseline": the provenance of a severity that was never measured. */
+.pulse-mini-note { font-size: 11px; color: var(--pulse-meta); }
 .pulse-meter {
   margin-top: var(--space-3);
   height: 6px;

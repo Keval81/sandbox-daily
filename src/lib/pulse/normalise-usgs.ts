@@ -46,6 +46,10 @@ export const normaliseUsgs = (raw: unknown): NormalisedEvents => {
       lat,
       date: new Date(stamp).toISOString(),
       severity: severityFromMagnitude(typeof mag === "number" ? mag : Number.NaN),
+      // A real reading only when a magnitude was reported; without one,
+      // severityFromMagnitude falls back to the feed's floor, which is a
+      // constant like EONET's and must not be labelled as measured.
+      severityFrom: typeof mag === "number" ? "magnitude" : "category",
       magnitude: typeof mag === "number" ? `${mag} M` : undefined,
       source: "USGS",
       url: f.properties?.url || undefined,

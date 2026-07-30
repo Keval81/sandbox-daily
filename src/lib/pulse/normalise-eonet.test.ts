@@ -116,3 +116,9 @@ test("falls back to now when a geometry carries no date at all", () => {
   assert.equal(unplottable, 0);
   assert.ok(events[0].date.endsWith("Z"));
 });
+
+test("marks every EONET severity as a category baseline, never a measurement", () => {
+  const { events } = normaliseEonet(live, WEIGHTS);
+  assert.ok(events.length > 0);
+  assert.equal(events.every((e) => e.severityFrom === "category"), true);
+});

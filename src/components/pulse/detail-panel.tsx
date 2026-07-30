@@ -15,6 +15,11 @@ interface DetailPanelProps {
 
 export function DetailPanel({ event, meta, now, onClose }: DetailPanelProps) {
   const pct = Math.round(Math.max(0, Math.min(1, event.severity)) * 100);
+  // Every EONET event carries its category's constant weight, so all 41
+  // wildfires score exactly 1.0 and would read "Severity: Extreme" — directly
+  // above "Magnitude: 500 acres". A constant is not a reading, and the panel
+  // says so rather than asserting a word it cannot support.
+  const measured = event.severityFrom !== "category";
 
   return (
     <aside
@@ -38,7 +43,15 @@ export function DetailPanel({ event, meta, now, onClose }: DetailPanelProps) {
       <dl className="pulse-mini-grid">
         <div className="pulse-mini">
           <dt className="pulse-label">Severity</dt>
-          <dd className="pulse-mini-v">{severityLabel(event.severity)}</dd>
+          <dd className="pulse-mini-v">
+            {measured ? (
+              severityLabel(event.severity)
+            ) : (
+              <>
+                — <small className="pulse-mini-note">category baseline</small>
+              </>
+            )}
+          </dd>
         </div>
         <div className="pulse-mini">
           <dt className="pulse-label">Magnitude</dt>
@@ -54,10 +67,15 @@ export function DetailPanel({ event, meta, now, onClose }: DetailPanelProps) {
         </div>
       </dl>
 
-      {/* The severity number is already stated as a word above — this is decoration. */}
-      <div className="pulse-meter" aria-hidden="true">
-        <span style={{ width: `${pct}%`, background: meta.color }} />
-      </div>
+      {/* The severity number is already stated as a word above — this is
+          decoration, and it only decorates a real reading. Over a category
+          baseline it would draw a full bar and assert the same thing the words
+          above just declined to. */}
+      {measured && (
+        <div className="pulse-meter" aria-hidden="true">
+          <span style={{ width: `${pct}%`, background: meta.color }} />
+        </div>
+      )}
 
       <div className="pulse-detail-foot">
         <span className="pulse-coords font-mono">

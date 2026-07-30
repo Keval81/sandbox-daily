@@ -8,6 +8,13 @@ export interface LayerEvent {
   lon: number;
   date: string;        // ISO 8601
   severity: number;    // 0..1
+  /**
+   * Where `severity` came from. "magnitude" means it was derived from a
+   * measurement of this event. "category" means it is the category's baseline
+   * weight — identical for every event in that category, and therefore not a
+   * reading of anything. The UI must not print a baseline as if it were one.
+   */
+  severityFrom?: "magnitude" | "category";
   magnitude?: string;  // display only: "5.3 M", "35 kts"
   source: string;      // "EONET" | "USGS"
   url?: string;        // authoritative source page
