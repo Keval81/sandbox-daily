@@ -19,7 +19,12 @@ export function DetailPanel({ event, meta, now, onClose }: DetailPanelProps) {
   // wildfires score exactly 1.0 and would read "Severity: Extreme" — directly
   // above "Magnitude: 500 acres". A constant is not a reading, and the panel
   // says so rather than asserting a word it cannot support.
-  const measured = event.severityFrom !== "category";
+  //
+  // Positive test, deliberately: severityFrom is optional, so `!== "category"`
+  // would treat an unset field as a measurement and let a future layer that
+  // forgot to declare provenance silently re-assert "Extreme" over a constant —
+  // the exact defect this exists to prevent. Undeclared reads as unmeasured.
+  const measured = event.severityFrom === "magnitude";
 
   return (
     <aside

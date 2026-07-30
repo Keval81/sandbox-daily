@@ -59,6 +59,7 @@ export class GlobeEngine {
   private textures: EarthTextures | null = null;
   private raf = 0;
   private destroyed = false;
+  private frameErrorLogged = false;
 
   private orient: Quat = qFromUnit(llToVec(8, 22), [0, 0, 1]);  // open on Africa
   private curM: Mat3 = qmat(this.orient);
@@ -359,7 +360,13 @@ export class GlobeEngine {
     try {
       this.step();
     } catch (err) {
-      console.error("[GlobeEngine] frame failed", err);
+      // Latched: a persistently throwing frame would otherwise log ~60 times a
+      // second for the whole session and bury everything else in the console.
+      // One report per engine says the same thing.
+      if (!this.frameErrorLogged) {
+        this.frameErrorLogged = true;
+        console.error("[GlobeEngine] frame failed; further frame errors suppressed", err);
+      }
     }
     if (!this.destroyed) this.raf = requestAnimationFrame(this.tick);
   };
