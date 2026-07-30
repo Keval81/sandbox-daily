@@ -78,3 +78,18 @@ test("handles an empty input", () => {
   assert.deepEqual(mergeLayers([]), []);
   assert.deepEqual(mergeLayers([[], []]), []);
 });
+
+test("an EONET/GDACS collision keeps the first-listed record — preferred() has no tiebreaker but USGS", () => {
+  // Pre-GDACS this branch of preferred() ("keep a") was structurally
+  // unreachable: EONET-vs-USGS was the only collision and USGS always won.
+  // hazards.ts merges [eonet, usgs, gdacs] in that order — pin that the
+  // first-listed group wins a collision neither side has a rule for, so a
+  // reorder there would fail loudly instead of silently flipping the winner.
+  const merged = mergeLayers([
+    [quake({ category: "wildfire", source: "EONET" })],
+    [],
+    [quake({ id: "gdacs:1029628", category: "wildfire", source: "GDACS" })],
+  ]);
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].source, "EONET");
+});

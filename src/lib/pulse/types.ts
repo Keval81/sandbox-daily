@@ -1,6 +1,6 @@
 /** One normalised event. Every layer, present and future, produces this shape. */
 export interface LayerEvent {
-  id: string;          // "eonet:EONET_6789" | "usgs:us7000t3g4"
+  id: string;          // "eonet:EONET_6789" | "usgs:us7000t3g4" | "gdacs:1029628"
   layer: string;       // "hazards"
   category: string;    // key into that layer's categories map
   title: string;
@@ -16,7 +16,7 @@ export interface LayerEvent {
    */
   severityFrom?: "magnitude" | "category";
   magnitude?: string;  // display only: "5.3 M", "35 kts"
-  source: string;      // "EONET" | "USGS"
+  source: string;      // "EONET" | "USGS" | "GDACS"
   url?: string;        // authoritative source page
 }
 

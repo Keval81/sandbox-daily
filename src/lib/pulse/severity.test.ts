@@ -5,6 +5,7 @@ import {
   severityFromWeight,
   severityFromWildfireAcres,
   severityFromStormKts,
+  severityFromAlertLevel,
   severityFor,
 } from "./severity";
 
@@ -95,6 +96,19 @@ test("clamps storm knots above the ceiling anchor rather than exceeding 1", () =
 
 test("treats a non-finite storm knot value as the floor anchor", () => {
   assert.equal(severityFromStormKts(Number.NaN), 0.3);
+});
+
+// --- GDACS alert level -------------------------------------------------------
+
+test("maps GDACS's own alert levels to their anchors: Green, Orange, Red", () => {
+  assert.equal(severityFromAlertLevel("Green"), 0.35);
+  assert.equal(severityFromAlertLevel("Orange"), 0.65);
+  assert.equal(severityFromAlertLevel("Red"), 0.95);
+});
+
+test("returns undefined for a missing or unrecognised alert level, so the caller can fall back honestly", () => {
+  assert.equal(severityFromAlertLevel(undefined), undefined);
+  assert.equal(severityFromAlertLevel("Purple"), undefined);
 });
 
 // --- severityFor: curve selection + provenance ------------------------------

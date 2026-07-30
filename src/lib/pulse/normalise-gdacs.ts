@@ -29,7 +29,10 @@ interface RawProperties {
   eventid?: number | string;
   name?: string;
   url?: RawUrl;
-  alertlevel?: string;
+  // GDACS sends a JSON null for a missing alert level, not an absent key —
+  // the trap fixture pins this. `string` alone would let TS believe a
+  // `typeof` guard below is redundant when it is load-bearing.
+  alertlevel?: string | null;
   iscurrent?: string;
   fromdate?: string;
   todate?: string;
@@ -50,7 +53,7 @@ interface RawFeature {
  * server's offset. GDACS's own values are UTC, so force it explicitly rather
  * than trust the ambient timezone.
  */
-const UTC_SUFFIX = /[Zz]|[+-]\d{2}:\d{2}$/;
+const UTC_SUFFIX = /([Zz]|[+-]\d{2}:\d{2})$/;
 const asUtc = (raw: string): string => (UTC_SUFFIX.test(raw) ? raw : `${raw}Z`);
 
 /**
@@ -125,7 +128,11 @@ export const normaliseGdacs = (
     }
 
     const category = GDACS_CATEGORY_MAP[p.eventtype ?? ""] ?? "other";
-    const alertSeverity = severityFromAlertLevel(p.alertlevel);
+    // Explicit, like normalise-usgs.ts's `typeof mag === "number"`: relying
+    // on ALERT_LEVEL_SEVERITY[null] coercing to the key "null" and missing
+    // would be correct by accident, not by a guard anyone can see.
+    const alertSeverity =
+      typeof p.alertlevel === "string" ? severityFromAlertLevel(p.alertlevel) : undefined;
     const severity = alertSeverity ?? severityFromWeight(categoryWeights[category] ?? 0.6);
     const severityFrom: "magnitude" | "category" =
       alertSeverity !== undefined ? "magnitude" : "category";
