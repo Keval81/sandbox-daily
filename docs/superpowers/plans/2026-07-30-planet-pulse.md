@@ -2352,7 +2352,7 @@ The only component that touches the engine. Everything else talks to it through 
 
 **Interfaces:**
 - Consumes: `GlobeEngine` from `@/lib/pulse/globe-engine`; `Marker` from `@/lib/pulse/types`.
-- Produces: `PulseGlobe` with props `{ markers: Marker[]; selectedId: string | null; compact?: boolean; spin?: boolean; focusOn?: { lat: number; lon: number } | null; onPick?: (id: string | null) => void; onHover?: (id: string | null, x: number, y: number) => void }`.
+- Produces: `PulseGlobe` with props `{ markers: Marker[]; selectedId?: string | null; compact?: boolean; spin?: boolean; focusOn?: { lat: number; lon: number } | null; onPick?: (id: string | null) => void; onHover?: (id: string | null, x: number, y: number) => void }`.
 
 - [ ] **Step 1: Write the component**
 
@@ -2383,10 +2383,15 @@ export function PulseGlobe({
   const engineRef = useRef<GlobeEngine | null>(null);
 
   // Callbacks live in refs so a parent re-render never tears the engine down.
+  // Synced in a no-deps effect, not during render: assigning ref.current mid-render
+  // is unsafe under concurrent React and the repo's pinned react-hooks/refs rule
+  // rejects it. The mount effect's [compact] dependency array is untouched either way.
   const onPickRef = useRef(onPick);
   const onHoverRef = useRef(onHover);
-  onPickRef.current = onPick;
-  onHoverRef.current = onHover;
+  useEffect(() => {
+    onPickRef.current = onPick;
+    onHoverRef.current = onHover;
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
