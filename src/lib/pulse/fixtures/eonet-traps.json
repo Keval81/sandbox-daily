@@ -1,0 +1,65 @@
+{
+  "title": "EONET Events",
+  "events": [
+    {
+      "id": "EONET_6001",
+      "title": "Wildfire - Attica, Greece",
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_6001",
+      "categories": [{ "id": "wildfires", "title": "Wildfires" }],
+      "sources": [{ "id": "InciWeb", "url": "https://example.test/fire" }],
+      "geometry": [
+        {
+          "magnitudeValue": 610,
+          "magnitudeUnit": "MW",
+          "date": "2026-07-26T05:00:00Z",
+          "type": "Point",
+          "coordinates": [23.9, 38.1]
+        }
+      ]
+    },
+    {
+      "id": "EONET_6002",
+      "title": "Typhoon Hinnamnor",
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_6002",
+      "categories": [{ "id": "severeStorms", "title": "Severe Storms" }],
+      "sources": [],
+      "geometry": [
+        { "date": "2026-07-22T00:00:00Z", "type": "Point", "coordinates": [140.2, 18.4] },
+        { "date": "2026-07-25T18:00:00Z", "type": "Point", "coordinates": [128.7, 26.9] },
+        { "date": "2026-07-24T06:00:00Z", "type": "Point", "coordinates": [133.1, 22.5] }
+      ]
+    },
+    {
+      "id": "EONET_6003",
+      "title": "Wildfire - Perimeter, Alberta",
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_6003",
+      "categories": [{ "id": "wildfires", "title": "Wildfires" }],
+      "sources": [],
+      "geometry": [
+        {
+          "date": "2026-07-26T02:00:00Z",
+          "type": "Polygon",
+          "coordinates": [[[-114, 54], [-112, 54], [-112, 56], [-114, 56], [-114, 54]]]
+        }
+      ]
+    },
+    {
+      "id": "EONET_6004",
+      "title": "Temperature Extreme - Sahel",
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_6004",
+      "categories": [{ "id": "tempExtremes", "title": "Temperature Extremes" }],
+      "sources": [],
+      "geometry": [
+        { "date": "2026-07-25T12:00:00Z", "type": "Point", "coordinates": [8.4, 15.2] }
+      ]
+    },
+    {
+      "id": "EONET_6005",
+      "title": "Broken Event - No Geometry",
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_6005",
+      "categories": [{ "id": "floods", "title": "Floods" }],
+      "sources": [],
+      "geometry": []
+    }
+  ]
+}
