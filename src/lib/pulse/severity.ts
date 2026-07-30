@@ -77,6 +77,28 @@ const MAGNITUDE_CURVES: Record<string, { unit: string; curve: (value: number) =>
   severeStorm: { unit: "kts", curve: severityFromStormKts },
 };
 
+const ALERT_LEVEL_SEVERITY: Record<string, number> = {
+  Green: 0.35,
+  Orange: 0.65,
+  Red: 0.95,
+};
+
+/**
+ * GDACS's Green/Orange/Red is a real per-event impact assessment (their own
+ * model, combining population exposure and hazard intensity) — comparable
+ * across all six GDACS event types the way USGS magnitude is comparable
+ * across earthquakes, unlike EONET's flat category weight. Anchors follow
+ * GDACS's own ordering; sanity-checked against the committed live fixture
+ * (79 Orange / 21 Red / 0 Green in the 100-event capture, 2026-07-30): the
+ * two observed levels land 0.30 apart, a clear separation, so no adjustment
+ * is warranted. Green never appeared in that capture but is one of exactly
+ * three values GDACS documents, so its anchor is kept for whenever it does.
+ * Returns undefined for a missing or unrecognised level so the caller can
+ * fall back to the category weight and record that honestly.
+ */
+export const severityFromAlertLevel = (level: string | undefined): number | undefined =>
+  level !== undefined ? ALERT_LEVEL_SEVERITY[level] : undefined;
+
 export interface SeverityResult {
   severity: number;
   severityFrom: "magnitude" | "category";

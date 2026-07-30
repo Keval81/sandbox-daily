@@ -1,0 +1,336 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [139.6503, 35.6762] },
+      "properties": {
+        "eventtype": "EQ",
+        "eventid": 1001,
+        "eventname": "",
+        "name": "Earthquake in Japan",
+        "description": "Earthquake in Japan",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=EQ&eventid=1001&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?eventid=1001&episodeid=1&eventtype=EQ",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=EQ&eventid=1001"
+        },
+        "alertlevel": "Red",
+        "alertscore": 3,
+        "iscurrent": "true",
+        "country": "Japan",
+        "fromdate": "2026-07-28T07:27:15",
+        "todate": "2026-07-28T07:27:15",
+        "datemodified": "2026-07-30T19:20:14",
+        "severitydata": { "severity": 6.8, "severityunit": "M", "severitytext": "Magnitude 6.8M, Depth:10km" }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [128.7, 26.9] },
+      "properties": {
+        "eventtype": "TC",
+        "eventid": 1002,
+        "eventname": "NOUL-26",
+        "name": "Tropical Cyclone NOUL-26",
+        "description": "Tropical Cyclone NOUL-26",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=TC&eventid=1002&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?eventid=1002&episodeid=1&eventtype=TC",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=TC&eventid=1002"
+        },
+        "alertlevel": "Orange",
+        "alertscore": 2,
+        "iscurrent": "true",
+        "country": "Philippines",
+        "fromdate": "2026-07-23T06:00:00",
+        "todate": "2026-07-26T00:00:00",
+        "datemodified": "2026-07-27T00:37:14",
+        "severitydata": { "severity": 157.4064, "severityunit": "km/h", "severitytext": "Hurricane/Typhoon > 74 mph (maximum wind speed of 157 km/h)" }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [113.0, 30.0] },
+      "properties": {
+        "eventtype": "FL",
+        "eventid": 1003,
+        "eventname": "",
+        "name": "Flood in China",
+        "description": "Flood in China",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=FL&eventid=1003&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?eventid=1003&episodeid=1&eventtype=FL",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=FL&eventid=1003"
+        },
+        "alertlevel": null,
+        "alertscore": 1,
+        "iscurrent": "true",
+        "country": "China",
+        "fromdate": "2026-07-25T01:00:00",
+        "todate": "2026-07-28T01:00:00",
+        "datemodified": "2026-07-28T11:02:48",
+        "severitydata": { "severity": 0.0, "severityunit": "", "severitytext": "Magnitude 0 " }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [123.685, 13.257] },
+      "properties": {
+        "eventtype": "VO",
+        "eventid": 1004,
+        "eventname": "Mayon",
+        "name": "Eruption  Mayon",
+        "description": "Eruption  Mayon",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=VO&eventid=1004&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?eventid=1004&episodeid=1&eventtype=VO",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=VO&eventid=1004"
+        },
+        "alertlevel": "Green",
+        "alertscore": 1,
+        "iscurrent": "true",
+        "country": "Philippines",
+        "fromdate": "2026-07-16T01:59:00",
+        "todate": "2026-07-16T01:59:00",
+        "datemodified": "2026-07-16T08:01:21",
+        "severitydata": { "severity": 0.0, "severityunit": "", "severitytext": "" }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [38.0, 8.0] },
+      "properties": {
+        "eventtype": "DR",
+        "eventid": 1005,
+        "eventname": "East Africa-2026",
+        "name": "Drought in Ethiopia, Kenya, Somalia",
+        "description": "Drought in Ethiopia, Kenya, Somalia",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=DR&eventid=1005&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?eventid=1005&episodeid=1&eventtype=DR",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=DR&eventid=1005"
+        },
+        "alertlevel": "Orange",
+        "alertscore": 2,
+        "iscurrent": "true",
+        "country": "Ethiopia, Kenya, Somalia",
+        "fromdate": "2026-04-21T00:00:00",
+        "todate": "2026-07-28T00:00:00",
+        "datemodified": "2026-07-30T05:57:28",
+        "severitydata": { "severity": 488851.0, "severityunit": "km2", "severitytext": "Medium impact for agricultural drought in 488851 km2" }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-1.0328, 44.8463] },
+      "properties": {
+        "eventtype": "WF",
+        "eventid": 1006,
+        "eventname": "",
+        "name": "Forest fires in France",
+        "description": "Forest fires in France",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=WF&eventid=1006&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?eventid=1006&episodeid=1&eventtype=WF",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=WF&eventid=1006"
+        },
+        "alertlevel": "Red",
+        "alertscore": 3,
+        "iscurrent": "true",
+        "country": "France",
+        "fromdate": "2026-07-22T00:00:00",
+        "todate": "2026-07-30T00:00:00",
+        "datemodified": "2026-07-30T19:20:14",
+        "severitydata": { "severity": 47885.0, "severityunit": "ha", "severitytext": "Red impact for forestfire in 47885 ha" }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [10.0, 10.0] },
+      "properties": {
+        "eventtype": "XX",
+        "eventid": 1007,
+        "eventname": "",
+        "name": "Unmapped Hazard Type",
+        "description": "Unmapped Hazard Type",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=XX&eventid=1007&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?eventid=1007&episodeid=1&eventtype=XX",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=XX&eventid=1007"
+        },
+        "alertlevel": "Orange",
+        "alertscore": 2,
+        "iscurrent": "true",
+        "country": "Nowhere",
+        "fromdate": "2026-07-29T00:00:00",
+        "todate": "2026-07-30T00:00:00",
+        "datemodified": "2026-07-30T00:00:00",
+        "severitydata": { "severity": 0.0, "severityunit": "", "severitytext": "" }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "eventtype": "EQ",
+        "eventid": 1008,
+        "eventname": "",
+        "name": "Broken Event - No Geometry",
+        "description": "Broken Event - No Geometry",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=EQ&eventid=1008&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?eventid=1008&episodeid=1&eventtype=EQ",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=EQ&eventid=1008"
+        },
+        "alertlevel": "Orange",
+        "alertscore": 2,
+        "iscurrent": "true",
+        "country": "Nowhere",
+        "fromdate": "2026-07-29T00:00:00",
+        "todate": "2026-07-30T00:00:00",
+        "datemodified": "2026-07-30T00:00:00",
+        "severitydata": { "severity": 5.0, "severityunit": "M", "severitytext": "Magnitude 5.0M" }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": ["a", "b"] },
+      "properties": {
+        "eventtype": "FL",
+        "eventid": 1009,
+        "eventname": "",
+        "name": "Broken Event - Non-numeric Coordinates",
+        "description": "Broken Event - Non-numeric Coordinates",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=FL&eventid=1009&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?eventid=1009&episodeid=1&eventtype=FL",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=FL&eventid=1009"
+        },
+        "alertlevel": "Orange",
+        "alertscore": 2,
+        "iscurrent": "true",
+        "country": "Nowhere",
+        "fromdate": "2026-07-29T00:00:00",
+        "todate": "2026-07-30T00:00:00",
+        "datemodified": "2026-07-30T00:00:00",
+        "severitydata": { "severity": 0.0, "severityunit": "", "severitytext": "" }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [5.0, 5.0] },
+      "properties": {
+        "eventtype": "WF",
+        "eventid": 1010,
+        "eventname": "",
+        "name": "Broken Event - Unparseable Dates",
+        "description": "Broken Event - Unparseable Dates",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=WF&eventid=1010&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?eventid=1010&episodeid=1&eventtype=WF",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=WF&eventid=1010"
+        },
+        "alertlevel": "Orange",
+        "alertscore": 2,
+        "iscurrent": "true",
+        "country": "Nowhere",
+        "fromdate": "not-a-date",
+        "todate": "also-not-a-date",
+        "datemodified": "still-not-a-date",
+        "severitydata": { "severity": 1000.0, "severityunit": "ha", "severitytext": "..." }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [1.0, 1.0] },
+      "properties": {
+        "eventtype": "EQ",
+        "eventname": "",
+        "name": "Broken Event - No eventid",
+        "description": "Broken Event - No eventid",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=EQ&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?episodeid=1&eventtype=EQ",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=EQ"
+        },
+        "alertlevel": "Orange",
+        "alertscore": 2,
+        "iscurrent": "true",
+        "country": "Nowhere",
+        "fromdate": "2026-07-29T00:00:00",
+        "todate": "2026-07-30T00:00:00",
+        "datemodified": "2026-07-30T00:00:00",
+        "severitydata": { "severity": 5.0, "severityunit": "M", "severitytext": "Magnitude 5.0M" }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [50.0, 50.0] },
+      "properties": {
+        "eventtype": "WF",
+        "eventid": 1012,
+        "eventname": "",
+        "name": "Closed Event - Not Current",
+        "description": "Closed Event - Not Current",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=WF&eventid=1012&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?eventid=1012&episodeid=1&eventtype=WF",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=WF&eventid=1012"
+        },
+        "alertlevel": "Red",
+        "alertscore": 3,
+        "iscurrent": "false",
+        "country": "Nowhere",
+        "fromdate": "2025-08-01T00:00:00",
+        "todate": "2025-08-12T00:00:00",
+        "datemodified": "2025-08-18T14:04:06",
+        "severitydata": { "severity": 9000.0, "severityunit": "ha", "severitytext": "..." }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [60.0, 20.0] },
+      "properties": {
+        "eventtype": "DR",
+        "eventid": 1013,
+        "eventname": "",
+        "name": "",
+        "description": "",
+        "url": {
+          "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=DR&eventid=1013&episodeid=1",
+          "report": "https://www.gdacs.org/report.aspx?eventid=1013&episodeid=1&eventtype=DR",
+          "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=DR"
+        },
+        "alertlevel": "Orange",
+        "alertscore": 2,
+        "iscurrent": "true",
+        "country": "Nowhere",
+        "fromdate": "2026-07-29T00:00:00",
+        "todate": "2026-07-30T00:00:00",
+        "datemodified": "2026-07-30T00:00:00",
+        "severitydata": { "severity": 1000.0, "severityunit": "km2", "severitytext": "..." }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [70.0, 30.0] },
+      "properties": {
+        "eventtype": "TC",
+        "eventid": 1014,
+        "eventname": "",
+        "name": "Storm With No Report Link",
+        "description": "Storm With No Report Link",
+        "url": {},
+        "alertlevel": "Orange",
+        "alertscore": 2,
+        "iscurrent": "true",
+        "country": "Nowhere",
+        "fromdate": "2026-07-29T00:00:00",
+        "todate": "2026-07-30T00:00:00",
+        "datemodified": "2026-07-30T00:00:00",
+        "severitydata": { "severity": 90.0, "severityunit": "km/h", "severitytext": "..." }
+      }
+    }
+  ]
+}
