@@ -965,6 +965,35 @@
   .pulse-canvas, .pulse-chip, .pulse-btn, .pulse-ev { transition: none; }
 }
 
+/* ---- homepage teaser ---- */
+
+.pulse-teaser {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: var(--space-8);
+  align-items: center;
+  max-width: var(--grid-max);
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6);
+  background: var(--color-ink);
+  color: var(--color-cream);
+  text-decoration: none;
+}
+.pulse-teaser-globe { position: relative; width: 200px; height: 200px; }
+.pulse-teaser-globe .pulse-canvas { cursor: pointer; }
+.pulse-teaser-eyebrow {
+  font-family: var(--font-family-mono);
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-mono-wide);
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+.pulse-teaser-cta { color: var(--color-accent); }
+
+@media (max-width: 640px) {
+  .pulse-teaser { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee,
   .animate-ping,

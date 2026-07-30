@@ -5,6 +5,8 @@ import { VerticalStrip } from "@/components/vertical-strip";
 import { TrendingBar } from "@/components/trending-bar";
 import { ArticleGrid } from "@/components/article-grid";
 import { SubscribeStrip } from "@/components/subscribe-strip";
+import { getPulseSnapshot } from "@/lib/pulse/snapshot";
+import { PulseTeaser } from "@/components/pulse/pulse-teaser";
 
 const trendingTopics = [
   { label: "Fury vs Joshua", score: 94 },
@@ -16,7 +18,13 @@ const trendingTopics = [
 
 export default async function Home() {
   const articles = getAllArticles().slice(0, 9);
-  const breakingHeadlines = await getTickerHeadlines();
+  // Independent of each other, so fetched in parallel rather than one after
+  // the other. getPulseSnapshot's own fetches are cached for 600s, shared
+  // with /pulse — this is not a second upstream request.
+  const [breakingHeadlines, pulse] = await Promise.all([
+    getTickerHeadlines(),
+    getPulseSnapshot(),
+  ]);
 
   return (
     <>
@@ -41,6 +49,7 @@ export default async function Home() {
       <BreakingTicker headlines={breakingHeadlines} />
       <VerticalStrip />
       <TrendingBar topics={trendingTopics} />
+      <PulseTeaser snapshot={pulse} />
       <ArticleGrid articles={articles} typewriterTitles />
       <SubscribeStrip />
     </>
