@@ -2610,7 +2610,10 @@ Append to `src/app/globals.css`, matching the existing `.sd-hero*` convention:
 .pulse-stage {
   position: relative;
   width: 100%;
-  height: calc(100vh - 64px);   /* the root layout's pt-16 nav offset */
+  height: calc(100vh - 64px);    /* the root layout's pt-16 nav offset; fallback */
+  height: calc(100dvh - 64px);   /* iOS Safari: 100vh is the LARGE viewport, so the
+                                    stage's bottom band — detail panel, hint, mobile
+                                    console footer — sits under the toolbar */
   min-height: 560px;
   background: var(--color-ink);
   overflow: hidden;
