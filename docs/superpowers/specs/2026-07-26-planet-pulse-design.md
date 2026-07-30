@@ -173,9 +173,60 @@ the wrong hemisphere. `properties.time` is epoch milliseconds → ISO.
 USGS magnitude maps on a clamped curve: 4.5 → 0.3, 7.0+ → 1.0, linear between,
 clamped at both ends.
 
-EONET reports magnitude in incompatible units (kts for storms, MW for fires) and
-often omits it entirely. Unitless events fall back to their category weight. The
-curve is documented here so the number is not a mystery later.
+**Correction (2026-07-30):** this section originally claimed EONET fire
+magnitudes were reported in MW, that EONET's units were "mutually
+incompatible" across categories, and that magnitude was "often omitted
+entirely." All three claims were wrong, measured against the committed
+fixture `src/lib/pulse/fixtures/eonet-live.json`:
+
+```
+wildfires      unit=acres  n=42  missing=0   min 500 · p25 890 · med 3,000 · p75 15,673 · max 280,000
+severeStorms   unit=kts    n= 4  missing=0   min  30 · p25  30 · med    80 · p75     85 · max     140
+```
+
+Fire magnitude is acres, not MW. Units are consistent *within* each category
+— which is the only place they are ever compared — so "incompatible" was
+never the actual constraint. And coverage in the live feed is 100%, not
+sparse. The result of building on the wrong claims: every wildfire's
+`severity` came from the constant category weight, so all 42 wildfires in the
+live fixture rendered as an identical severity of 1.0 — same spike height,
+same dot radius, same pulse-ring state, and the detail panel could assert
+"Severity: Extreme" for a fire that was actually one of the smallest in the
+feed. The hazard index, being computed from those same constants, inflated
+to 94 on the committed fixture as a direct consequence.
+
+The fix, in `src/lib/pulse/severity.ts`, alongside `severityFromMagnitude`
+(USGS) and `severityFromWeight` (the category-weight fallback): two new
+curves, selected per category by a `severityFor()` dispatcher, with
+`severityFromWeight` remaining the fallback for anything a curve can't cover.
+
+**Wildfire — acres, log10-linear.** `severityFromWildfireAcres`. Fire area
+spans three orders of magnitude in the live feed (500 – 280,000 acres), so a
+linear map would compress everything below ~50,000 acres into the bottom
+fifth. Anchored at 100 acres → 0.25 (near the smallest fire EONET tracks) and
+500,000 acres → 1.0 (a genuinely catastrophic burn), log10-linear between,
+clamped at both ends. Against the real distribution above: 500 acres → 0.39,
+3,000 acres → 0.55, 280,000 acres → 0.95 — a spread of 40 distinct severities
+across the 42 live wildfires, where there was previously exactly one value.
+
+**Severe storm — knots, Saffir-Simpson-shaped.** `severityFromStormKts`.
+Anchored at 30 kts (below tropical-storm force) → 0.3 and 137 kts (the
+category 5 threshold) → 1.0, linear between, clamped. Against the real
+values: 30 kts → 0.30, 80 kts → 0.63, 85 kts → 0.66, 140 kts (clamped) →
+1.0.
+
+**Everything else** — an unrecognised unit (e.g. a wildfire reported in MW
+rather than acres), a missing magnitude, or a category with no curve at all
+(volcano, earthquake, flood, drought, landslide, sea/lake ice, dust/haze,
+other) — keeps the category-weight fallback via `severityFromWeight`. This is
+not a regression; it is the honest default for something we genuinely cannot
+measure, and `severityFrom: "category"` records it as such so the UI never
+presents a baseline as if it were a reading.
+
+Measured effect on the committed fixture (`eonet-live.json` +
+`usgs-live.json`, merged): the hazard index moves from **94 → 80** — still
+"Severe" (≥75), but no longer inflated by a wall of 1.0s that were never a
+measurement of anything.
 
 ### Merge and dedupe
 
@@ -225,9 +276,14 @@ Test-first, in `src/lib/pulse/`:
 
 - `normaliseEonet()` — fixtures captured from live responses. Covers camelCase
   mapping, latest-point selection from multi-point geometry, `Polygon` centroid
-  reduction, unmapped category → `other`.
+  reduction, unmapped category → `other`. Also asserts, against the real
+  `eonet-live.json` fixture, that wildfire severities spread across the real
+  acreage distribution rather than collapsing to a single value — the
+  regression test for the flatness bug this section's correction describes.
 - `normaliseUsgs()` — `[lon, lat, depth]` ordering, epoch-ms → ISO.
-- `severityFor()` — curve, both clamps, unitless fallback.
+- `severityFor()` — both magnitude curves (wildfire acres, severe-storm
+  knots) at their anchors and clamps, plus the category-weight fallback for
+  an unrecognised unit, a missing magnitude, or a category with no curve.
 - `hazardIndex()` — scoring, band thresholds, empty input.
 - `mergeLayers()` — cross-source dedupe.
 - Engine maths — `llToVec`, quaternion normalise/slerp. Pure; no canvas needed.
@@ -253,4 +309,4 @@ Fixtures are committed so tests never hit the network.
 - Article ↔ event matching in either direction
 - Any React test runner
 
-*Last updated: 2026-07-26*
+*Last updated: 2026-07-30*
