@@ -38,11 +38,20 @@ const throwingFetch = (async () => {
   throw new Error("upstream unreachable");
 }) as typeof fetch;
 
-/** A fetch where only the named upstream answers; the other throws. */
+/** A fetch where only the named upstream answers; the others throw. */
 const onlyFetch = (liveUrlPart: string, body: unknown): typeof fetch =>
   (async (input: RequestInfo | URL) => {
     if (!String(input).includes(liveUrlPart)) throw new Error("upstream unreachable");
     return { ok: true, json: async () => body } as Response;
+  }) as typeof fetch;
+
+/** Every upstream answers except the one matching `deadUrlPart`, which throws. */
+const allLiveExcept = (deadUrlPart: string, bodies: Record<string, unknown>): typeof fetch =>
+  (async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes(deadUrlPart)) throw new Error("upstream unreachable");
+    const key = Object.keys(bodies).find((k) => url.includes(k));
+    return { ok: true, json: async () => (key ? bodies[key] : {}) } as Response;
   }) as typeof fetch;
 
 /** Drives the registered layer for real, exactly as getPulseSnapshot does. */
@@ -134,6 +143,7 @@ test("a total outage through the real layer is not live", async () => {
   assert.deepEqual(snap.layers[0].sources, [
     { id: "eonet", label: "EONET", live: false },
     { id: "usgs", label: "USGS", live: false },
+    { id: "gdacs", label: "GDACS", live: false },
   ]);
 });
 
@@ -144,11 +154,11 @@ test("a total outage publishes no hazard index, fabricated Calm included", async
   assert.equal(snap.unplottable, 0);
 });
 
-test("a total outage reads Snapshot, not Live, and names both dead feeds", async () => {
+test("a total outage reads Snapshot, not Live, and names all three dead feeds", async () => {
   const snap = await snapshotFrom(throwingFetch);
   assert.equal(everySourceDead(snap.layers), true);
   assert.deepEqual(freshnessOf(snap, AT_RENDER), { label: "Snapshot", live: false });
-  assert.deepEqual(deadSourceLabels(snap.layers), ["EONET", "USGS"]);
+  assert.deepEqual(deadSourceLabels(snap.layers), ["EONET", "USGS", "GDACS"]);
 });
 
 const USGS_ONLY = {
@@ -161,8 +171,29 @@ const USGS_ONLY = {
   }],
 };
 
+const GDACS_ONLY = {
+  features: [{
+    type: "Feature",
+    geometry: { type: "Point", coordinates: [10, 20] },
+    properties: {
+      eventtype: "FL",
+      eventid: 9001,
+      name: "Test Flood",
+      url: { report: "https://gdacs.test/9001" },
+      alertlevel: "Orange",
+      iscurrent: "true",
+      fromdate: NOW,
+      todate: NOW,
+      datemodified: NOW,
+      severitydata: { severity: 1, severityunit: "m" },
+    },
+  }],
+};
+
 test("one dead feed still reads live, and names only the feed that died", async () => {
-  const snap = await snapshotFrom(onlyFetch("usgs", USGS_ONLY));
+  const snap = await snapshotFrom(
+    allLiveExcept("eonet", { usgs: USGS_ONLY, gdacs: GDACS_ONLY })
+  );
 
   assert.equal(snap.layers[0].live, true);
   assert.deepEqual(deadSourceLabels(snap.layers), ["EONET"]);
@@ -170,7 +201,7 @@ test("one dead feed still reads live, and names only the feed that died", async 
   assert.deepEqual(freshnessOf(snap, AT_RENDER), { label: "Live", live: true });
   // A partially live layer still scores what it did get.
   assert.ok(snap.layers[0].index);
-  assert.equal(snap.events.length, 1);
+  assert.equal(snap.events.length, 2); // one from USGS, one from GDACS
 });
 
 // ---- last-good cache ------------------------------------------------------

@@ -1,6 +1,7 @@
 import type { CategoryMeta, LayerFetchResult, LayerSource, SourceStatus } from "../types";
 import { normaliseEonet } from "../normalise-eonet";
 import { normaliseUsgs } from "../normalise-usgs";
+import { normaliseGdacs } from "../normalise-gdacs";
 import { mergeLayers } from "../merge";
 import { hazardIndex } from "../hazard-index";
 import { REVALIDATE_SECONDS } from "../freshness";
@@ -8,6 +9,15 @@ import { REVALIDATE_SECONDS } from "../freshness";
 const EONET_URL = "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&days=7";
 const USGS_URL =
   "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson";
+// EONET's wildfires come from IRWIN (US interagency) and its typhoons from
+// JTWC (US Navy) — the only two providers EONET's open events actually carry
+// right now, so every wildfire on the globe was a US state and eight of its
+// ten categories returned nothing. GDACS (the EU/UN Global Disaster Alert
+// and Coordination System) is a genuinely global, keyless feed that covers
+// the same six hazard types with real non-US events: see
+// docs/superpowers/specs/2026-07-26-planet-pulse-design.md.
+const GDACS_URL =
+  "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?fromDate=&toDate=&alertlevel=&eventlist=EQ;TC;FL;VO;DR;WF";
 
 // REVALIDATE_SECONDS — ten minutes: EONET updates on the order of hours, and a
 // news globe does not need per-second earthquake data. Upstream sees one request
@@ -51,6 +61,7 @@ const getJson = async (fetchImpl: typeof fetch, url: string): Promise<unknown> =
 
 const EONET_SOURCE = { id: "eonet", label: "EONET" };
 const USGS_SOURCE = { id: "usgs", label: "USGS" };
+const GDACS_SOURCE = { id: "gdacs", label: "GDACS" };
 
 /**
  * The layer swallows a feed's rejection so one dead source cannot blank the
@@ -78,12 +89,17 @@ export const createHazardsLayer = (fetchImpl: typeof fetch): LayerSource => ({
   async fetch(): Promise<LayerFetchResult> {
     // allSettled, not all: one dead source degrades to partial data, never a
     // blank page.
-    const [eonet, usgs] = await Promise.allSettled([
+    const [eonet, usgs, gdacs] = await Promise.allSettled([
       getJson(fetchImpl, EONET_URL),
       getJson(fetchImpl, USGS_URL),
+      getJson(fetchImpl, GDACS_URL),
     ]);
 
-    const sources = [statusOf(EONET_SOURCE, eonet), statusOf(USGS_SOURCE, usgs)];
+    const sources = [
+      statusOf(EONET_SOURCE, eonet),
+      statusOf(USGS_SOURCE, usgs),
+      statusOf(GDACS_SOURCE, gdacs),
+    ];
 
     const a = eonet.status === "fulfilled"
       ? normaliseEonet(eonet.value, WEIGHTS)
@@ -91,10 +107,20 @@ export const createHazardsLayer = (fetchImpl: typeof fetch): LayerSource => ({
     const b = usgs.status === "fulfilled"
       ? normaliseUsgs(usgs.value)
       : { events: [], unplottable: 0 };
+    // GDACS quakes overlapping USGS, and GDACS wildfires overlapping EONET's
+    // IRWIN fires, both collapse through mergeLayers' existing 50km/2h rule.
+    // USGS wins a quake collapse (preferred() rule — it carries a precise
+    // magnitude); a wildfire collapse has no such tiebreaker, so whichever
+    // of EONET/GDACS is listed first wins arbitrarily. Acceptable: it drops
+    // a duplicate marker, not real coverage — the surviving record still
+    // plots the same fire.
+    const c = gdacs.status === "fulfilled"
+      ? normaliseGdacs(gdacs.value, WEIGHTS)
+      : { events: [], unplottable: 0 };
 
     return {
-      events: mergeLayers([a.events, b.events]),
-      unplottable: a.unplottable + b.unplottable,
+      events: mergeLayers([a.events, b.events, c.events]),
+      unplottable: a.unplottable + b.unplottable + c.unplottable,
       sources,
     };
   },
