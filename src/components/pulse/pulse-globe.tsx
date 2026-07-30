@@ -22,16 +22,15 @@ export function PulseGlobe({
   const engineRef = useRef<GlobeEngine | null>(null);
 
   // Callbacks live in refs so a parent re-render never tears the engine down.
-  // Assigned during render (not an effect) so the ref is current before the
-  // mount effect's listeners can fire. `react-hooks/refs` flags ref writes
-  // during render on principle, but this write is idempotent per commit and
-  // read only from async engine event callbacks, never during render itself.
+  // Synced in a dependency-array-less effect (runs after every render) rather
+  // than during render itself, so the ref is current before the mount
+  // effect's listeners can fire without writing to a ref mid-render.
   const onPickRef = useRef(onPick);
   const onHoverRef = useRef(onHover);
-  // eslint-disable-next-line react-hooks/refs -- intentional: see comment above
-  onPickRef.current = onPick;
-  // eslint-disable-next-line react-hooks/refs -- intentional: see comment above
-  onHoverRef.current = onHover;
+  useEffect(() => {
+    onPickRef.current = onPick;
+    onHoverRef.current = onHover;
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
