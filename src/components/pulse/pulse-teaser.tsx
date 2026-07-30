@@ -44,7 +44,11 @@ export function PulseTeaser({ snapshot }: { snapshot: PulseSnapshot }) {
   const hasEvents = snapshot.events.length > 0;
 
   return (
-    <Link href="/pulse" className="pulse-teaser" aria-label="Planet Pulse — the live hazard globe">
+    // No aria-label: the visible copy (count, index, "Open the globe →") is
+    // exactly what the accessible name should be — a static override here
+    // would swallow it and defeat the reason plain text was chosen over the
+    // gauge component in the first place (WCAG 2.5.3 Label in Name).
+    <Link href="/pulse" className="pulse-teaser">
       <div className="pulse-teaser-globe">
         <PulseGlobe markers={markers} compact spin />
       </div>
