@@ -101,7 +101,7 @@ Every layer, present and future, produces this:
 
 ```ts
 interface LayerEvent {
-  id: string;          // "eonet:EONET_6789" | "usgs:us7000t3g4"
+  id: string;          // "eonet:EONET_6789" | "usgs:us7000t3g4" | "gdacs:1029628"
   layer: string;       // "hazards"
   category: string;    // key into that layer's categories map
   title: string;
@@ -110,7 +110,7 @@ interface LayerEvent {
   date: string;        // ISO 8601
   severity: number;    // 0..1
   magnitude?: string;  // display only: "5.3 M", "35 kts"
-  source: string;      // "EONET" | "USGS"
+  source: string;      // "EONET" | "USGS" | "GDACS"
   url?: string;        // authoritative source page
 }
 ```
@@ -142,7 +142,8 @@ Textures move from base64 to `/public/pulse/{day,topo,clouds}.jpg`.
 
 ## Data sources
 
-Both verified live and keyless on 2026-07-26.
+EONET and USGS verified live and keyless on 2026-07-26. GDACS verified live and
+keyless on 2026-07-30.
 
 ### NASA EONET v3
 
@@ -161,12 +162,85 @@ Three shape traps, each with a test:
 
 Coordinates are `[lon, lat]`.
 
+**Coverage gap, and why GDACS exists (added 2026-07-30):** EONET's open events
+come from exactly two providers — IRWIN (US interagency wildland fire) and
+JTWC (US Navy typhoon centre). Every wildfire EONET returns is therefore a US
+state, and EONET's other eight categories (volcano, flood, drought, landslide,
+sea/lake ice, dust/haze included) return zero, all the time, everywhere — not
+a temporary lull, a structural property of which two US agencies happen to
+feed this particular NASA aggregator. The globe read as "America on fire and
+little else." See GDACS below.
+
 ### USGS
 
 `https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson`
 
 Coordinates are `[lon, lat, depth]` — inverting lon/lat silently plots events in
 the wrong hemisphere. `properties.time` is epoch milliseconds → ISO.
+
+### GDACS
+
+`https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?fromDate=&toDate=&alertlevel=&eventlist=EQ;TC;FL;VO;DR;WF`
+
+The EU/UN Global Disaster Alert and Coordination System. Genuinely global and
+keyless, covering six hazard types (earthquake, tropical cyclone, flood,
+volcano, drought, wildfire) with real non-US events — the live capture
+(`src/lib/pulse/fixtures/gdacs-live.json`, 100 features) includes France,
+Spain, Tunisia, Ethiopia, Kenya, Somalia, Madagascar, the Balkans, DRC,
+Bangladesh, and Mozambique alongside the US and China.
+
+Coordinates are `[lon, lat]`, confirmed against named places in the capture
+(an "Earthquake in Japan" record plots at `[130.72, 32.69]`, in Kyushu — not
+inverted into the sea of Japan or the Atlantic).
+
+Two findings from the capture reshaped the normaliser (`normalise-gdacs.ts`),
+neither anticipated going in:
+
+1. **The endpoint is not "100 current events."** `SEARCH` with no date bounds
+   returns a rolling window of roughly a year — `fromdate` in the capture
+   spans 2025-05-16 to 2026-07-28. Every feature carries `iscurrent`, a
+   string `"true"`/`"false"`, and only **8 of the 100** captured features are
+   `"true"`; the other 92 include disasters GDACS itself closed up to eleven
+   months before the capture. Plotting all 100 on a page whose entire premise
+   is "live" would misrepresent it more badly than the US-only wildfire gap
+   this source exists to fix — a flood that closed in August 2025 pulsing on
+   the globe today reads as active. The normaliser filters to `iscurrent ===
+   "true"` and does **not** count a filtered event as `unplottable` (its
+   geometry is fine; it is simply not current). The 8 that pass, by category:
+   4 wildfire (France, Spain ×2, Tunisia), 3 earthquake (Japan, China ×2), 1
+   flood (China) — pinned in `normalise-gdacs.test.ts`.
+2. **Date fields carry no timezone.** `fromdate`, `todate`, and
+   `datemodified` are all bare `"2026-07-30T19:20:14"` — no `Z`, no offset.
+   Per the ES Date Time String Format, a date-time string with no offset
+   parses as the **host's local time**, not UTC. On this repo's own dev
+   machine (Europe/London, UTC+1 in July) `new Date("2026-07-30T19:20:14")`
+   silently resolves to `18:20:14Z` — an hour off — and the error scales with
+   however far the deploy host's TZ sits from UTC. GDACS's values are UTC;
+   the normaliser appends `Z` before parsing rather than trusting the ambient
+   timezone. `todate` is used as the canonical date (closest analogue to
+   EONET's latest-track-point convention — the most recent report on an
+   ongoing event, not when it started), falling back to `fromdate` then
+   `datemodified` only when a field is silently absent; a field that is
+   *present but unparseable* is counted as unplottable, not papered over by
+   trying the next one.
+
+Other traps pinned in the trap fixture (`gdacs-traps.json`) and its test:
+an unmapped `eventtype` files under `other` rather than being dropped; an
+event with `geometry: null` or non-numeric coordinates counts as
+`unplottable`; a missing `eventid` counts as `unplottable` (nothing to
+namespace); a blank `name` falls back to `"Untitled event"`; a missing
+`url.report` leaves `url` undefined rather than fabricating one.
+
+**Magnitude display:** built from `properties.severitydata`, in whatever unit
+the feed itself reports (`M`, `ha`, `km2`, `km/h`) — never a fabricated unit.
+Flood and volcano report `severity: 0` with an empty `severityunit` in the
+live capture (nothing measured), so an empty unit means *omit*, not *zero*.
+Earthquake magnitude arrives with one clean decimal already (`6.8`), used
+unrounded like USGS's own `"5.3 M"`; wildfire, drought, and severe-storm
+values round to the nearest whole unit for display — storm `km/h` in
+particular carries floating-point noise from GDACS's own kt→km/h conversion
+(`157.4064` for what is an 85kt storm), which is a formatting concern, not a
+different value.
 
 ### Severity normalisation
 
@@ -228,6 +302,21 @@ Measured effect on the committed fixture (`eonet-live.json` +
 "Severe" (≥75), but no longer inflated by a wall of 1.0s that were never a
 measurement of anything.
 
+**GDACS — alert level, added 2026-07-30.** `severityFromAlertLevel` in
+`severity.ts`. GDACS's own Green/Orange/Red is a real per-event impact
+assessment (their published model, combining population exposure and hazard
+intensity) — comparable across all six GDACS event types the same way USGS
+magnitude is comparable across earthquakes, unlike EONET's flat category
+weight. Proposed anchors Green → 0.35, Orange → 0.65, Red → 0.95, checked
+against the live capture's actual distribution: **79 Orange / 21 Red / 0
+Green** across all 100 features (8 Orange / 0 Red among the 8 current ones).
+No adjustment made — the two levels that do appear land 0.30 apart, a clean
+separation, and Green is kept at its anchor because it is one of exactly
+three levels GDACS documents, even though this capture happened not to
+contain one. A missing or unrecognised `alertlevel` falls back to the
+category weight via the existing `severityFromWeight`, recorded as
+`severityFrom: "category"` — the same honesty convention as EONET and USGS.
+
 ### Merge and dedupe
 
 A significant earthquake can appear in **both** EONET and USGS. Without dedupe,
@@ -238,6 +327,14 @@ share a category **and** are within **50 km** great-circle distance **and**
 within **2 hours** of each other. The USGS record wins, as it carries a precise
 magnitude. These thresholds are the initial values and may be tuned against real
 data; the test asserts the rule, not a tuned constant.
+
+**GDACS overlaps, added 2026-07-30.** The same rule now also catches GDACS
+quakes overlapping USGS (USGS wins, unchanged — it still carries the precise
+magnitude) and GDACS wildfires overlapping EONET's IRWIN fires. A wildfire
+collapse has no equivalent tiebreaker: `preferred()` only special-cases USGS,
+so whichever of EONET or GDACS is listed first in the merge simply survives.
+Accepted as-is — a collapse here drops a duplicate marker for the same fire,
+not real coverage, since both sources are reporting the same event.
 
 ## Visual design
 
@@ -281,9 +378,14 @@ Test-first, in `src/lib/pulse/`:
   acreage distribution rather than collapsing to a single value — the
   regression test for the flatness bug this section's correction describes.
 - `normaliseUsgs()` — `[lon, lat, depth]` ordering, epoch-ms → ISO.
+- `normaliseGdacs()` — event-code mapping, `[lon, lat]` ordering verified
+  against named places, the `iscurrent` filter, the bare-date UTC fix,
+  unit-honest magnitude formatting. Fixtures captured 2026-07-30.
 - `severityFor()` — both magnitude curves (wildfire acres, severe-storm
   knots) at their anchors and clamps, plus the category-weight fallback for
   an unrecognised unit, a missing magnitude, or a category with no curve.
+- `severityFromAlertLevel()` — GDACS's Green/Orange/Red anchors, and the
+  category-weight fallback for a missing or unrecognised level.
 - `hazardIndex()` — scoring, band thresholds, empty input.
 - `mergeLayers()` — cross-source dedupe.
 - Engine maths — `llToVec`, quaternion normalise/slerp. Pure; no canvas needed.
@@ -292,9 +394,10 @@ Fixtures are committed so tests never hit the network.
 
 ## Failure handling
 
-- `Promise.allSettled` per source. One dead source degrades to partial data,
-  never a blank page. HUD lists which sources are live.
-- Both sources dead → last good cache with `stale: true`. HUD switches "Live" to
+- `Promise.allSettled` per source (EONET, USGS, GDACS). One dead source
+  degrades to partial data, never a blank page. HUD lists which sources are
+  live.
+- All sources dead → last good cache with `stale: true`. HUD switches "Live" to
   "Snapshot" and shows the real timestamp. **The UI can never claim freshness it
   does not have** — the originating artifact's failure, not repeated.
 - Events with unusable geometry are dropped rather than plotted at `NaN`, and
