@@ -1,32 +1,38 @@
 import type { LayerFetchResult, LayerSource, PulseSnapshot } from "./types";
 import { PULSE_LAYERS } from "./layers/registry";
 import { mergeLayers } from "./merge";
+import { everySourceDead } from "./freshness";
 
 export const buildSnapshot = (
   layers: LayerSource[],
   results: PromiseSettledResult<LayerFetchResult>[],
   nowIso: string
 ): PulseSnapshot => {
-  const groups = results.map((r) => (r.status === "fulfilled" ? r.value.events : []));
-  const unplottable = results.reduce(
-    (sum, r) => sum + (r.status === "fulfilled" ? r.value.unplottable : 0),
-    0
-  );
+  const settled = results.map((r) => (r.status === "fulfilled" ? r.value : null));
+  const unplottable = settled.reduce((sum, v) => sum + (v?.unplottable ?? 0), 0);
 
   return {
     generatedAt: nowIso,
     stale: false,
-    events: mergeLayers(groups),
+    events: mergeLayers(settled.map((v) => v?.events ?? [])),
     unplottable,
     layers: layers.map((layer, i) => {
-      const result = results[i];
-      const events = result.status === "fulfilled" ? result.value.events : [];
+      const value = settled[i];
+      const events = value?.events ?? [];
+      // A layer that catches its own feed failures always settles fulfilled, so
+      // promise state says nothing about whether the data is real. Only the
+      // per-source records do. No sources reported = the layer told us nothing.
+      const sources = value?.sources ?? [];
+      const live = sources.some((s) => s.live);
       return {
         id: layer.id,
         label: layer.label,
         categories: layer.categories,
-        live: result.status === "fulfilled",
-        index: layer.index ? layer.index(events) : null,
+        sources,
+        live,
+        // hazardIndex scores an empty list 0, which bands as a green "Calm" — a
+        // fabricated reading over a dead feed. A dead layer publishes no index.
+        index: live && layer.index ? layer.index(events) : null,
       };
     }),
   };
@@ -44,15 +50,18 @@ export const __resetPulseCache = (): void => {
   lastGood = null;
 };
 
-export const getPulseSnapshot = async (): Promise<PulseSnapshot> => {
-  const results = await Promise.allSettled(PULSE_LAYERS.map((l) => l.fetch()));
-  const snapshot = buildSnapshot(PULSE_LAYERS, results, new Date().toISOString());
+/** `layers` is a test seam, like __resetPulseCache — application code passes nothing. */
+export const getPulseSnapshot = async (
+  layers: LayerSource[] = PULSE_LAYERS
+): Promise<PulseSnapshot> => {
+  const results = await Promise.allSettled(layers.map((l) => l.fetch()));
+  const snapshot = buildSnapshot(layers, results, new Date().toISOString());
 
-  const everySourceDead = snapshot.layers.every((l) => !l.live);
-  if (everySourceDead && lastGood) {
+  const dead = everySourceDead(snapshot.layers);
+  if (dead && lastGood) {
     return { ...lastGood, stale: true };
   }
 
-  if (!everySourceDead) lastGood = snapshot;
+  if (!dead) lastGood = snapshot;
   return snapshot;
 };

@@ -1,4 +1,4 @@
-import type { LayerEvent, LayerFetchResult } from "./types";
+import type { LayerEvent, NormalisedEvents } from "./types";
 import { severityFromMagnitude } from "./severity";
 
 interface RawFeature {
@@ -7,7 +7,7 @@ interface RawFeature {
   geometry?: { coordinates?: unknown } | null;
 }
 
-export const normaliseUsgs = (raw: unknown): LayerFetchResult => {
+export const normaliseUsgs = (raw: unknown): NormalisedEvents => {
   const payload = raw as { features?: RawFeature[] } | null;
   const features = payload?.features;
   if (!Array.isArray(features)) return { events: [], unplottable: 0 };

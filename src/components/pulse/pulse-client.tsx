@@ -7,6 +7,7 @@ import { LayerPanel } from "./layer-panel";
 import { EventConsole, type SortMode } from "./event-console";
 import { DetailPanel, DETAIL_TITLE_ID } from "./detail-panel";
 import { formatStamp } from "./format";
+import { deadSourceLabels, freshnessOf } from "@/lib/pulse/freshness";
 import type { CategoryMeta, LayerEvent, Marker, PulseSnapshot } from "@/lib/pulse/types";
 
 /** 6-digit hex, deliberately: the engine appends an alpha pair to marker colours. */
@@ -122,21 +123,11 @@ export function PulseClient({ snapshot }: PulseClientProps) {
     [selected]
   );
 
-  const deadSources = useMemo(
-    () => snapshot.layers.filter((l) => !l.live).map((l) => l.label),
-    [snapshot.layers]
-  );
+  // The dead *feeds*, named one by one — "EONET unavailable" tells a reader
+  // which half of the picture is missing; "Natural hazards unavailable" does not.
+  const deadSources = useMemo(() => deadSourceLabels(snapshot.layers), [snapshot.layers]);
 
-  const allSourcesDead =
-    snapshot.layers.length > 0 && deadSources.length === snapshot.layers.length;
-
-  // A snapshot assembled a second ago out of nothing is not "Live". Without this
-  // term, a total outage with no warm cache renders a blinking green pip over an
-  // empty planet — the exact failure this feature was rebuilt to prevent.
-  const freshness =
-    snapshot.stale || allSourcesDead
-      ? { label: "Snapshot", live: false }
-      : { label: "Live", live: true };
+  const freshness = freshnessOf(snapshot);
 
   const sources = useMemo(
     () => Array.from(new Set(snapshot.events.map((e) => e.source))),

@@ -15,6 +15,17 @@ const stubFetch = (byUrl: Record<string, unknown>, fail?: string): typeof fetch 
     } as Response;
   }) as typeof fetch;
 
+/** The layer logs each dead feed; these tests assert behaviour, not console noise. */
+const quiet = async <T>(fn: () => Promise<T>): Promise<T> => {
+  const real = console.error;
+  console.error = () => {};
+  try {
+    return await fn();
+  } finally {
+    console.error = real;
+  }
+};
+
 test("every ordered category has metadata, and every category is ordered", () => {
   for (const key of CATEGORY_ORDER) assert.ok(HAZARD_CATEGORIES[key], `${key} missing metadata`);
   assert.equal(CATEGORY_ORDER.length, Object.keys(HAZARD_CATEGORIES).length);
@@ -33,24 +44,38 @@ test("fetches both sources and merges them into one event list", async () => {
       geometry: { coordinates: [10, 20, 5] },
     }] },
   }));
-  const { events, unplottable } = await layer.fetch();
+  const { events, unplottable, sources } = await layer.fetch();
   assert.ok(events.some((e) => e.source === "EONET"));
   assert.ok(events.some((e) => e.source === "USGS"));
   assert.equal(unplottable, 1); // the geometry-less EONET event
+  assert.deepEqual(sources.map((s) => s.live), [true, true]);
 });
 
 test("one dead source degrades to partial data instead of throwing", async () => {
   const layer = createHazardsLayer(stubFetch({ eonet: eonetTraps }, "usgs"));
-  const { events } = await layer.fetch();
+  const { events, sources } = await quiet(() => layer.fetch());
   assert.ok(events.length > 0);
   assert.equal(events.every((e) => e.source === "EONET"), true);
+  assert.deepEqual(sources, [
+    { id: "eonet", label: "EONET", live: true },
+    { id: "usgs", label: "USGS", live: false },
+  ]);
 });
 
 test("both sources dead yields an empty result, not a rejection", async () => {
   const layer = createHazardsLayer(stubFetch({}, "http"));
-  const { events, unplottable } = await layer.fetch();
+  const { events, unplottable, sources } = await quiet(() => layer.fetch());
   assert.deepEqual(events, []);
   assert.equal(unplottable, 0);
+  // The result the caller sees is indistinguishable from "a calm planet" —
+  // only these records tell it apart, which is why they exist.
+  assert.deepEqual(sources.map((s) => s.live), [false, false]);
+});
+
+test("reports each feed's outcome so the HUD can name the one that died", async () => {
+  const layer = createHazardsLayer(stubFetch({ usgs: { features: [] } }, "eonet"));
+  const { sources } = await quiet(() => layer.fetch());
+  assert.deepEqual(sources.filter((s) => !s.live).map((s) => s.label), ["EONET"]);
 });
 
 test("the layer scores its own events", async () => {

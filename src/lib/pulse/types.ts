@@ -34,10 +34,27 @@ export interface LayerIndex {
   color: string;
 }
 
-export interface LayerFetchResult {
+/** What a normaliser produces: the events it could plot, and the count it could not. */
+export interface NormalisedEvents {
   events: LayerEvent[];
   /** Events dropped because their geometry was unusable. Surfaced, never silent. */
   unplottable: number;
+}
+
+/**
+ * One upstream feed's outcome for this round. A layer that wraps several feeds
+ * in allSettled never rejects, so promise state cannot tell anyone whether the
+ * data is real — liveness has to travel with the data instead.
+ */
+export interface SourceStatus {
+  id: string;          // "eonet" | "usgs"
+  label: string;       // "EONET" — what the HUD names when it is down
+  live: boolean;
+}
+
+export interface LayerFetchResult extends NormalisedEvents {
+  /** One record per feed the layer consulted. Empty means the layer told us nothing. */
+  sources: SourceStatus[];
 }
 
 export interface LayerSource {
@@ -52,7 +69,14 @@ export interface PulseLayerSummary {
   id: string;
   label: string;
   categories: Record<string, CategoryMeta>;
-  /** false when this layer's fetch rejected — the HUD says which sources are live. */
+  /** Per-feed liveness, so the HUD names the dead feed rather than the whole layer. */
+  sources: SourceStatus[];
+  /**
+   * true when at least one of this layer's feeds answered this round. Derived
+   * from `sources`, never from promise state: a layer that catches its own feed
+   * failures always settles fulfilled, so promise state would read "live" over a
+   * total outage.
+   */
   live: boolean;
   index: LayerIndex | null;
 }

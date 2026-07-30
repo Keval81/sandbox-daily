@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { PulseGlobe } from "./pulse-globe";
+import { everySourceDead } from "@/lib/pulse/freshness";
 import type { Marker, PulseSnapshot } from "@/lib/pulse/types";
 
 /** 6-digit hex, deliberately: the engine appends an alpha pair to marker colours. */
@@ -31,14 +32,12 @@ export function PulseTeaser({ snapshot }: { snapshot: PulseSnapshot }) {
   // every source is dead right now both mean "we don't actually know" — the
   // safer move is not to advertise the feature with data that might be wrong,
   // not to invent a second, smaller HUD to caveat it.
-  const allSourcesDead = snapshot.layers.length > 0 && snapshot.layers.every((l) => !l.live);
-  if (snapshot.stale || allSourcesDead) return null;
+  if (snapshot.stale || everySourceDead(snapshot.layers)) return null;
 
-  // Only a live layer's index counts. hazardIndex still scores a dead layer's
-  // (empty) event list 0/"Calm" inside buildSnapshot — a fabricated reading,
-  // not an honest one. allSourcesDead above already rules that out for the
-  // single registered layer today, but this guard is what actually encodes
-  // the rule, the same one PulseClient applies to the full HUD.
+  // Only a live layer's index counts. buildSnapshot already withholds the index
+  // from a dead layer, and everySourceDead above rules out a total outage for
+  // the single registered layer today — but this guard is what encodes the rule
+  // per layer, the same one PulseClient applies to the full HUD.
   const hazard = layer?.live ? layer.index : null;
 
   const hasEvents = snapshot.events.length > 0;

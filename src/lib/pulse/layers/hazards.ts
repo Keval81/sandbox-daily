@@ -1,4 +1,4 @@
-import type { CategoryMeta, LayerFetchResult, LayerSource } from "../types";
+import type { CategoryMeta, LayerFetchResult, LayerSource, SourceStatus } from "../types";
 import { normaliseEonet } from "../normalise-eonet";
 import { normaliseUsgs } from "../normalise-usgs";
 import { mergeLayers } from "../merge";
@@ -41,6 +41,25 @@ const getJson = async (fetchImpl: typeof fetch, url: string): Promise<unknown> =
   return res.json();
 };
 
+const EONET_SOURCE = { id: "eonet", label: "EONET" };
+const USGS_SOURCE = { id: "usgs", label: "USGS" };
+
+/**
+ * The layer swallows a feed's rejection so one dead source cannot blank the
+ * page — but swallowing it silently is how "Live" ended up over nothing. The
+ * outcome becomes a SourceStatus the HUD can read, and the reason is logged
+ * once so an outage is diagnosable from the server log.
+ */
+const statusOf = (
+  source: { id: string; label: string },
+  result: PromiseSettledResult<unknown>
+): SourceStatus => {
+  if (result.status === "rejected") {
+    console.error(`[pulse] ${source.id} feed unavailable`, result.reason);
+  }
+  return { ...source, live: result.status === "fulfilled" };
+};
+
 /** Injectable fetch so the layer is testable without touching the network. */
 export const createHazardsLayer = (fetchImpl: typeof fetch): LayerSource => ({
   id: "hazards",
@@ -55,6 +74,8 @@ export const createHazardsLayer = (fetchImpl: typeof fetch): LayerSource => ({
       getJson(fetchImpl, USGS_URL),
     ]);
 
+    const sources = [statusOf(EONET_SOURCE, eonet), statusOf(USGS_SOURCE, usgs)];
+
     const a = eonet.status === "fulfilled"
       ? normaliseEonet(eonet.value, WEIGHTS)
       : { events: [], unplottable: 0 };
@@ -65,6 +86,7 @@ export const createHazardsLayer = (fetchImpl: typeof fetch): LayerSource => ({
     return {
       events: mergeLayers([a.events, b.events]),
       unplottable: a.unplottable + b.unplottable,
+      sources,
     };
   },
 

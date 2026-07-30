@@ -1,4 +1,4 @@
-import type { LayerEvent, LayerFetchResult } from "./types";
+import type { LayerEvent, NormalisedEvents } from "./types";
 import { severityFromWeight } from "./severity";
 
 /**
@@ -74,7 +74,7 @@ const latestGeometry = (geometry: RawGeometry[]): RawGeometry | null => {
 export const normaliseEonet = (
   raw: unknown,
   categoryWeights: Record<string, number>
-): LayerFetchResult => {
+): NormalisedEvents => {
   const payload = raw as { events?: RawEvent[] } | null;
   const rawEvents = payload?.events;
   if (!Array.isArray(rawEvents)) return { events: [], unplottable: 0 };
