@@ -84,6 +84,12 @@ let cached: Promise<EarthTextures> | null = null;
 export const loadEarthTextures = (
   urls: typeof DEFAULT_TEXTURE_URLS = DEFAULT_TEXTURE_URLS
 ): Promise<EarthTextures> => {
-  cached ??= build(urls);
+  // Memoise the success, never the failure: a cached rejection would mean one
+  // bad asset path leaves the planet missing for the lifetime of the page,
+  // Fast Refresh included, with no way to retry.
+  cached ??= build(urls).catch((err: unknown) => {
+    cached = null;
+    throw err;
+  });
   return cached;
 };

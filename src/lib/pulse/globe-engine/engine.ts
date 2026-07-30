@@ -104,12 +104,19 @@ export class GlobeEngine {
     this.resize();
     this.bindEvents();
 
-    void loadEarthTextures(options.textures).then((t) => {
-      if (this.destroyed) return;
-      this.textures = t;
-      this.sphereDirty = true;
-      this.canvas.classList.add("ready");
-    });
+    void loadEarthTextures(options.textures)
+      .then((t) => {
+        if (this.destroyed) return;
+        this.textures = t;
+        this.sphereDirty = true;
+        this.canvas.classList.add("ready");
+      })
+      // Without this the rejection is silent and the globe just draws stars,
+      // halo and markers with no planet and no explanation. A wrong asset path
+      // is the likeliest cause, so the URL in the error is the whole point.
+      .catch((err: unknown) => {
+        console.error("[GlobeEngine] earth textures failed to load", err);
+      });
 
     this.raf = requestAnimationFrame(this.tick);
   }
@@ -272,7 +279,10 @@ export class GlobeEngine {
     }, { passive: true });
 
     this.listen("touchmove", (e) => {
-      if (e.touches.length !== 2 || pinch === null) return;
+      // Truthiness, not a null check — the prototype's guard rejected a zero
+      // pinch distance too, and it must: d/0 is Infinity or NaN, and a NaN zoom
+      // poisons R, then the raster size, then createImageData, permanently.
+      if (e.touches.length !== 2 || !pinch) return;
       const d = dist2(e.touches);
       this.zoom = clamp(this.zoom * (d / pinch), 0.7, 2.8);
       pinch = d;
