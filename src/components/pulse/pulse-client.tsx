@@ -8,6 +8,7 @@ import { EventConsole, type SortMode } from "./event-console";
 import { DetailPanel, DETAIL_TITLE_ID } from "./detail-panel";
 import { formatStamp } from "./format";
 import { deadSourceLabels, freshnessOf } from "@/lib/pulse/freshness";
+import { eventKey } from "@/lib/pulse/category-key";
 import type { CategoryMeta, LayerEvent, Marker, PulseSnapshot } from "@/lib/pulse/types";
 
 /** 6-digit hex, deliberately: the engine appends an alpha pair to marker colours. */
@@ -32,7 +33,7 @@ const getServerMotion = (): boolean => false;
 const matchesFilters = (e: LayerEvent, active: Set<string>, query: string): boolean => {
   const q = query.trim().toLowerCase();
   return (
-    (active.size === 0 || active.has(e.category)) &&
+    (active.size === 0 || active.has(eventKey(e))) &&
     (q === "" || e.title.toLowerCase().includes(q))
   );
 };
@@ -76,11 +77,19 @@ export function PulseClient({ snapshot }: PulseClientProps) {
     };
   }, []);
 
-  const categories = useMemo(() => {
-    const all: Record<string, CategoryMeta> = {};
-    for (const layer of snapshot.layers) Object.assign(all, layer.categories);
-    return all;
+  // Category metadata is looked up by the event's own layer. Flattening every
+  // layer's map into one would let a later layer's colliding key silently
+  // overwrite this one's colour and label.
+  const metaByLayer = useMemo(() => {
+    const map = new Map<string, Record<string, CategoryMeta>>();
+    for (const layer of snapshot.layers) map.set(layer.id, layer.categories);
+    return map;
   }, [snapshot.layers]);
+
+  const metaOf = useCallback(
+    (e: LayerEvent): CategoryMeta | undefined => metaByLayer.get(e.layer)?.[e.category],
+    [metaByLayer]
+  );
 
   const byId = useMemo(
     () => new Map<string, LayerEvent>(snapshot.events.map((e) => [e.id, e])),
@@ -89,7 +98,10 @@ export function PulseClient({ snapshot }: PulseClientProps) {
 
   const counts = useMemo(() => {
     const tally: Record<string, number> = {};
-    for (const e of snapshot.events) tally[e.category] = (tally[e.category] ?? 0) + 1;
+    for (const e of snapshot.events) {
+      const key = eventKey(e);
+      tally[key] = (tally[key] ?? 0) + 1;
+    }
     return tally;
   }, [snapshot.events]);
 
@@ -108,10 +120,10 @@ export function PulseClient({ snapshot }: PulseClientProps) {
         id: e.id,
         lat: e.lat,
         lon: e.lon,
-        color: categories[e.category]?.color ?? FALLBACK_COLOR,
+        color: metaOf(e)?.color ?? FALLBACK_COLOR,
         weight: e.severity,
       })),
-    [visible, categories]
+    [visible, metaOf]
   );
 
   const selected = (selectedId && byId.get(selectedId)) || null;
@@ -198,10 +210,10 @@ export function PulseClient({ snapshot }: PulseClientProps) {
   }, [selectedId, dismiss]);
 
   const toggleCategory = useCallback(
-    (category: string) => {
+    (key: string) => {
       const next = new Set(active);
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       setActive(next);
       // Otherwise the detail panel stays open over a marker that is no longer drawn.
       if (selected && !matchesFilters(selected, next, query)) setSelectedId(null);
@@ -242,7 +254,7 @@ export function PulseClient({ snapshot }: PulseClientProps) {
           <div className="pulse-tip" style={{ left: hover.x, top: hover.y }} aria-hidden="true">
             <span
               className="pulse-tip-dot"
-              style={{ background: categories[hovered.category]?.color ?? FALLBACK_COLOR }}
+              style={{ background: metaOf(hovered)?.color ?? FALLBACK_COLOR }}
             />
             <span className="pulse-tip-name">{hovered.title}</span>
           </div>
@@ -343,7 +355,7 @@ export function PulseClient({ snapshot }: PulseClientProps) {
       <EventConsole
         id={CONSOLE_ID}
         events={visible}
-        categories={categories}
+        metaOf={metaOf}
         selectedId={selectedId}
         now={now}
         query={query}
@@ -363,7 +375,7 @@ export function PulseClient({ snapshot }: PulseClientProps) {
       {selected && (
         <DetailPanel
           event={selected}
-          meta={categories[selected.category] ?? {
+          meta={metaOf(selected) ?? {
             label: "Other",
             color: FALLBACK_COLOR,
             weight: 0.6,

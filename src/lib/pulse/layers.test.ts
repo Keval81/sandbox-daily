@@ -86,6 +86,16 @@ test("the layer scores its own events", async () => {
   assert.ok(typeof index?.band === "string");
 });
 
+test("the layer carries its own category ordering, so no panel imports it", () => {
+  const layer = createHazardsLayer(stubFetch({}));
+  assert.deepEqual(layer.categoryOrder, CATEGORY_ORDER);
+  // Every registered layer must supply one, or the panel renders it empty.
+  for (const l of PULSE_LAYERS) {
+    assert.ok(Array.isArray(l.categoryOrder) && l.categoryOrder.length > 0, `${l.id} has no order`);
+    for (const key of l.categoryOrder) assert.ok(l.categories[key], `${l.id}:${key} has no metadata`);
+  }
+});
+
 test("the registry exposes the hazards layer", () => {
   assert.equal(PULSE_LAYERS.length, 1);
   assert.equal(PULSE_LAYERS[0].id, "hazards");

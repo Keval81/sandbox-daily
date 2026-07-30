@@ -61,6 +61,12 @@ export interface LayerSource {
   id: string;
   label: string;
   categories: Record<string, CategoryMeta>;
+  /**
+   * Display order for this layer's own category keys. It lives on the layer
+   * because category keys are only unique within a layer — a generic panel that
+   * imported one layer's ordering would render every other layer as empty.
+   */
+  categoryOrder: string[];
   fetch(): Promise<LayerFetchResult>;
   index?(events: LayerEvent[]): LayerIndex;
 }
@@ -69,6 +75,7 @@ export interface PulseLayerSummary {
   id: string;
   label: string;
   categories: Record<string, CategoryMeta>;
+  categoryOrder: string[];
   /** Per-feed liveness, so the HUD names the dead feed rather than the whole layer. */
   sources: SourceStatus[];
   /**

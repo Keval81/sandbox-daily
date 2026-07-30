@@ -1,14 +1,15 @@
 "use client";
 
-import { CATEGORY_ORDER } from "@/lib/pulse/layers/hazards";
+import { categoryKey } from "@/lib/pulse/category-key";
 import type { PulseLayerSummary } from "@/lib/pulse/types";
 
 interface LayerPanelProps {
   /** Only registered layers reach here — there are no "coming soon" rows. */
   layers: PulseLayerSummary[];
+  /** Keyed by categoryKey(layer, category), not by category alone. */
   counts: Record<string, number>;
   active: Set<string>;
-  onToggle: (category: string) => void;
+  onToggle: (key: string) => void;
   onReset: () => void;
 }
 
@@ -25,9 +26,12 @@ export function LayerPanel({ layers, counts, active, onToggle, onReset }: LayerP
       </div>
 
       {layers.map((layer) => {
-        // A category only belongs to the layer that declares it, so a second
-        // layer added later cannot borrow this one's chips.
-        const present = CATEGORY_ORDER.filter((c) => layer.categories[c] && counts[c] > 0);
+        // The ordering comes off the layer. A panel that imported one specific
+        // layer's ordering would match nothing for every other layer and render
+        // it as "Nothing reported" while it had plenty to report.
+        const present = layer.categoryOrder.filter(
+          (c) => layer.categories[c] && (counts[categoryKey(layer.id, c)] ?? 0) > 0
+        );
         return (
           <fieldset key={layer.id} className="pulse-group">
             <legend className="pulse-group-label">{layer.label}</legend>
@@ -36,14 +40,15 @@ export function LayerPanel({ layers, counts, active, onToggle, onReset }: LayerP
                 <span className="pulse-group-empty">Nothing reported</span>
               )}
               {present.map((c) => {
+                const key = categoryKey(layer.id, c);
                 const meta = layer.categories[c];
-                const on = active.size === 0 || active.has(c);
+                const on = active.size === 0 || active.has(key);
                 return (
                   <button
-                    key={c}
+                    key={key}
                     type="button"
                     aria-pressed={on}
-                    onClick={() => onToggle(c)}
+                    onClick={() => onToggle(key)}
                     className="pulse-chip"
                     style={{ borderColor: on ? `${meta.color}88` : "transparent" }}
                   >
@@ -52,7 +57,7 @@ export function LayerPanel({ layers, counts, active, onToggle, onReset }: LayerP
                       style={{ background: meta.color, opacity: on ? 1 : 0.4 }}
                     />
                     {meta.label}
-                    <span className="font-mono">{counts[c]}</span>
+                    <span className="font-mono">{counts[key]}</span>
                   </button>
                 );
               })}

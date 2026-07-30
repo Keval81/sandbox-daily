@@ -33,6 +33,7 @@ export const buildSnapshot = (
         id: layer.id,
         label: layer.label,
         categories: layer.categories,
+        categoryOrder: layer.categoryOrder,
         sources,
         live,
         // hazardIndex scores an empty list 0, which bands as a green "Calm" — a

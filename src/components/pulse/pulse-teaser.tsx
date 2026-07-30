@@ -14,17 +14,18 @@ export function PulseTeaser({ snapshot }: { snapshot: PulseSnapshot }) {
 
   // Hooks run before any early return below, so this stays unconditional even
   // on the dead-sources / stale path where the component ends up rendering nothing.
-  const markers: Marker[] = useMemo(
-    () =>
-      snapshot.events.map((e) => ({
-        id: e.id,
-        lat: e.lat,
-        lon: e.lon,
-        color: layer?.categories[e.category]?.color ?? FALLBACK_COLOR,
-        weight: e.severity,
-      })),
-    [snapshot.events, layer]
-  );
+  const markers: Marker[] = useMemo(() => {
+    // Colour comes from the event's OWN layer. Reading layers[0] would paint a
+    // second layer's events in the first layer's palette, or grey.
+    const byLayer = new Map(snapshot.layers.map((l) => [l.id, l.categories]));
+    return snapshot.events.map((e) => ({
+      id: e.id,
+      lat: e.lat,
+      lon: e.lon,
+      color: byLayer.get(e.layer)?.[e.category]?.color ?? FALLBACK_COLOR,
+      weight: e.severity,
+    }));
+  }, [snapshot.events, snapshot.layers]);
 
   // The teaser has no HUD to say "Snapshot" the way /pulse does, so it has no
   // honest way to show numbers it doesn't currently trust. A stale snapshot

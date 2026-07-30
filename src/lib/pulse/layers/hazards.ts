@@ -65,6 +65,7 @@ export const createHazardsLayer = (fetchImpl: typeof fetch): LayerSource => ({
   id: "hazards",
   label: "Natural hazards",
   categories: HAZARD_CATEGORIES,
+  categoryOrder: CATEGORY_ORDER,
 
   async fetch(): Promise<LayerFetchResult> {
     // allSettled, not all: one dead source degrades to partial data, never a

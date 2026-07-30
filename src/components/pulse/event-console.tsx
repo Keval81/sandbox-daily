@@ -8,7 +8,9 @@ export type SortMode = "recent" | "severity";
 interface EventConsoleProps {
   id: string;
   events: LayerEvent[];
-  categories: Record<string, CategoryMeta>;
+  /** Category metadata is resolved per event, because a category key only means
+   *  something inside the layer that declared it. */
+  metaOf: (event: LayerEvent) => CategoryMeta | undefined;
   selectedId: string | null;
   now: number;
   query: string;
@@ -24,7 +26,7 @@ interface EventConsoleProps {
 }
 
 export function EventConsole({
-  id, events, categories, selectedId, now, query, onQuery, sort, onSort,
+  id, events, metaOf, selectedId, now, query, onQuery, sort, onSort,
   onSelect, open, footer, emptyLabel,
 }: EventConsoleProps) {
   return (
@@ -47,26 +49,26 @@ export function EventConsole({
         {/* list-style: none strips list semantics in Safari/VoiceOver, so the
             role is restated rather than assumed. */}
         <ul className="pulse-list" role="list">
-          {events.map((e) => (
-            <li key={e.id}>
-              <button
-                type="button"
-                data-pulse-event={e.id}
-                onClick={() => onSelect(e.id)}
-                aria-current={e.id === selectedId}
-                className="pulse-ev"
-              >
-                <span
-                  className="pulse-ev-dot"
-                  style={{ background: categories[e.category]?.color }}
-                />
-                <span className="pulse-ev-title">{e.title}</span>
-                <span className="pulse-ev-meta">
-                  {categories[e.category]?.label} · {timeAgo(e.date, now)}
-                </span>
-              </button>
-            </li>
-          ))}
+          {events.map((e) => {
+            const meta = metaOf(e);
+            return (
+              <li key={e.id}>
+                <button
+                  type="button"
+                  data-pulse-event={e.id}
+                  onClick={() => onSelect(e.id)}
+                  aria-current={e.id === selectedId}
+                  className="pulse-ev"
+                >
+                  <span className="pulse-ev-dot" style={{ background: meta?.color }} />
+                  <span className="pulse-ev-title">{e.title}</span>
+                  <span className="pulse-ev-meta">
+                    {meta?.label} · {timeAgo(e.date, now)}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
           {events.length === 0 && <li className="pulse-list-empty">{emptyLabel}</li>}
         </ul>
 
