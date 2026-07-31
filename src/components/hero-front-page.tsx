@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import Link from "next/link";
 import { PulseGlobe } from "@/components/pulse/pulse-globe";
 import { formatStamp } from "@/components/pulse/format";
+import { FolioRow } from "@/components/folio-row";
 import {
   deriveHeroStatus,
   markersFromSnapshot,
@@ -13,12 +14,18 @@ import {
   GHOST_CHIPS,
 } from "@/lib/pulse/hero";
 import type { Marker, PulseSnapshot } from "@/lib/pulse/types";
+import type { WeatherReading } from "@/lib/folio/weather";
 import type { Vertical } from "@/lib/types";
 
 export interface HeroArticle {
   href: string;
   section: Vertical;
   title: string;
+  /** Only read for the lead (index 0 of `articles`) — the plain-English dek
+   *  set in two columns beneath the lead headline. See
+   *  article-standfirst.tsx / src/lib/articles.ts for how it's stored
+   *  upstream; page.tsx is what decides only the lead carries one through. */
+  standfirst?: string;
 }
 
 const SECTION_COLOR: Record<Vertical, string> = {
@@ -60,7 +67,32 @@ interface Anchor {
   viewportX: number;
 }
 
-export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot; articles: HeroArticle[] }) {
+/**
+ * The front-page client root (Task 4 restructure). Owns every piece of front-
+ * page state — clock, hover/sticky cards, chip toggles — in one place, per
+ * the controller's "ONE client owner" decision: a client component can't
+ * render a server component inline, so `nameplate` and `wire` arrive as
+ * already-rendered ReactNode props from NightHero (server) rather than as
+ * components this file imports and calls itself. That keeps Nameplate and
+ * the PRESS WIRE ticker's own data fetch/markup server-rendered straight
+ * through the client boundary — the standard Next "pass server output as
+ * children/props" pattern, not a client-side re-render of server content.
+ */
+export function HeroFrontPage({
+  snapshot,
+  articles,
+  weather,
+  seedEpochMs,
+  nameplate,
+  wire,
+}: {
+  snapshot: PulseSnapshot;
+  articles: HeroArticle[];
+  weather: WeatherReading | null;
+  seedEpochMs: number;
+  nameplate: ReactNode;
+  wire: ReactNode;
+}) {
   const globeRef = useRef<HTMLDivElement>(null);
   // Fallback anchor for a touch tap that never fired a preceding hover — a
   // stationary tap on a touchscreen goes pointerdown -> pointerup with no
@@ -87,7 +119,11 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
   // line has already flipped to Snapshot. Mirrors the retired hero stat
   // clock's seed/tick pattern (seeded from generatedAt so server and first
   // client render agree; deferred setTimeout before the wall clock takes over).
-  const [now, setNow] = useState(() => Date.parse(snapshot.generatedAt));
+  // Seeded from the prop, not a fresh Date.parse(snapshot.generatedAt) here —
+  // NightHero derives the same seedEpochMs for the folio row / nameplate
+  // edition, so every honest-clock consumer on the front page agrees on
+  // "now" at render time by construction, not by coincidence.
+  const [now, setNow] = useState(() => seedEpochMs);
   useEffect(() => {
     // Deferred rather than synchronous: the first client render has to match
     // the server HTML, and only then does the wall clock take over.
@@ -219,108 +255,15 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
     cardStyle = { top, left: clampedViewportLeft - containerLeft };
   }
 
+  // Front-page body split: articles[0] is THE LEAD (headline + standfirst),
+  // the rest render as the existing colour-keyed headline list underneath it
+  // — same three-article shape page.tsx has always sent, just read
+  // positionally instead of as one flat list.
+  const [lead, ...restArticles] = articles;
+
   return (
     <>
-      <div className="night-hero-mast">
-        <h1 className="night-hero-masthead">
-          Sandbox <em>Daily</em>
-        </h1>
-        <p className="night-hero-strapline">THE PLANET, FACT-CHECKED DAILY</p>
-      </div>
-
-      <div className="night-hero-planet" ref={globeRef} onPointerDown={trackPointerOnDown}>
-        <img src="/images/pulse-globe-poster.webp" alt="" className="night-hero-poster" />
-        <PulseGlobe
-          markers={markers}
-          ambient
-          spin={!activeCard}
-          onHover={handleHover}
-          onPick={handlePick}
-        />
-
-        {/* Persistent live region: a node that mounts AND gains content in the
-            same DOM update is not reliably announced (most screen readers need
-            the aria-live element to already exist before its content changes).
-            The wrapper always stays in the DOM; only the card inside it is
-            conditional. */}
-        <div className="night-hero-card-region" aria-live="polite">
-          {activeCard && (
-            <div
-              className="night-hero-card"
-              data-sticky={sticky ? "true" : undefined}
-              style={{ ...cardStyle, borderLeftColor: activeCard.color }}
-            >
-              {sticky && (
-                <button
-                  type="button"
-                  className="night-hero-card-close"
-                  aria-label="Close"
-                  onClick={() => setSticky(null)}
-                >
-                  ✕
-                </button>
-              )}
-              <span className="night-hero-card-eyebrow" style={{ color: activeCard.color }}>
-                {activeCard.eyebrow}
-              </span>
-              <p className="night-hero-card-title">{activeCard.title}</p>
-              {activeCard.magnitude && (
-                <p className="night-hero-card-magnitude">{activeCard.magnitude}</p>
-              )}
-              <div className="night-hero-card-meter" aria-hidden="true">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <span
-                    key={i}
-                    className="night-hero-card-seg"
-                    style={i < activeCard.segments ? { background: activeCard.color } : undefined}
-                  />
-                ))}
-                {activeCard.severityWord && (
-                  <span className="night-hero-card-severity">
-                    {activeCard.severityWord} {activeCard.severity.toFixed(1)}
-                  </span>
-                )}
-              </div>
-              <Link href="/pulse" className="night-hero-card-link">
-                open in pulse →
-              </Link>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="night-hero-live">
-        {status.mode === "live" ? (
-          <p className="night-hero-live-line">
-            <span className="night-hero-pip" data-live>● LIVE</span>{" "}
-            <span className="font-mono">{status.totalEvents} events</span>
-            {" · "}
-            <span>↓ today&rsquo;s stories</span>
-          </p>
-        ) : (
-          <p className="night-hero-live-line">
-            <span className="night-hero-pip">◌ SNAPSHOT</span>{" "}
-            <span className="font-mono">last checked {formatStamp(status.generatedAt)}</span>
-          </p>
-        )}
-      </div>
-
-      <div className="night-hero-rest">
-        <ul className="night-hero-headlines">
-          {articles.map((article) => (
-            <li key={article.href}>
-              <Link href={article.href} className="night-hero-headline">
-                <span
-                  className="night-hero-headline-bar"
-                  style={{ background: SECTION_COLOR[article.section] }}
-                  aria-hidden
-                />
-                {article.title}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
+      <FolioRow seedEpochMs={seedEpochMs} weather={weather}>
         <div className="night-hero-chips" role="group" aria-label="Layers">
           {chips.map((chip) =>
             status.mode === "snapshot" || !chip.live ? (
@@ -351,6 +294,125 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
               {label} <span className="night-hero-chip-soon">·soon</span>
             </span>
           ))}
+        </div>
+      </FolioRow>
+
+      {nameplate}
+      {wire}
+
+      <div className="night-hero-body">
+        <div className="night-hero-lead-col">
+          {lead && (
+            <>
+              <p className="night-hero-kicker">THE LEAD</p>
+              <Link href={lead.href} className="night-hero-lead-headline">
+                {lead.title}
+              </Link>
+              {lead.standfirst && (
+                <div className="night-hero-standfirst">{lead.standfirst}</div>
+              )}
+            </>
+          )}
+
+          <ul className="night-hero-headlines">
+            {restArticles.map((article) => (
+              <li key={article.href}>
+                <Link href={article.href} className="night-hero-headline">
+                  <span
+                    className="night-hero-headline-bar"
+                    style={{ background: SECTION_COLOR[article.section] }}
+                    aria-hidden
+                  />
+                  {article.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="night-hero-plate-col">
+          <div className="plate-frame">
+            <span className="plate-frame-caption">
+              PLATE 1 — THE WORLD, LIVE &amp; UNRETOUCHED
+            </span>
+
+            <div className="night-hero-planet" ref={globeRef} onPointerDown={trackPointerOnDown}>
+              <img src="/images/pulse-globe-poster.webp" alt="" className="night-hero-poster" />
+              <PulseGlobe
+                markers={markers}
+                ambient
+                spin={!activeCard}
+                onHover={handleHover}
+                onPick={handlePick}
+              />
+
+              {/* Persistent live region: a node that mounts AND gains content in the
+                  same DOM update is not reliably announced (most screen readers need
+                  the aria-live element to already exist before its content changes).
+                  The wrapper always stays in the DOM; only the card inside it is
+                  conditional. */}
+              <div className="night-hero-card-region" aria-live="polite">
+                {activeCard && (
+                  <div
+                    className="night-hero-card"
+                    data-sticky={sticky ? "true" : undefined}
+                    style={{ ...cardStyle, borderLeftColor: activeCard.color }}
+                  >
+                    {sticky && (
+                      <button
+                        type="button"
+                        className="night-hero-card-close"
+                        aria-label="Close"
+                        onClick={() => setSticky(null)}
+                      >
+                        ✕
+                      </button>
+                    )}
+                    <span className="night-hero-card-eyebrow" style={{ color: activeCard.color }}>
+                      {activeCard.eyebrow}
+                    </span>
+                    <p className="night-hero-card-title">{activeCard.title}</p>
+                    {activeCard.magnitude && (
+                      <p className="night-hero-card-magnitude">{activeCard.magnitude}</p>
+                    )}
+                    <div className="night-hero-card-meter" aria-hidden="true">
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <span
+                          key={i}
+                          className="night-hero-card-seg"
+                          style={i < activeCard.segments ? { background: activeCard.color } : undefined}
+                        />
+                      ))}
+                      {activeCard.severityWord && (
+                        <span className="night-hero-card-severity">
+                          {activeCard.severityWord} {activeCard.severity.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+                    <Link href="/pulse" className="night-hero-card-link">
+                      open in pulse →
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="night-hero-live">
+            {status.mode === "live" ? (
+              <p className="night-hero-live-line">
+                <span className="night-hero-pip" data-live>● LIVE</span>{" "}
+                <span className="font-mono">{status.totalEvents} events</span>
+                {" · "}
+                <span>↓ today&rsquo;s stories</span>
+              </p>
+            ) : (
+              <p className="night-hero-live-line">
+                <span className="night-hero-pip">◌ SNAPSHOT</span>{" "}
+                <span className="font-mono">last checked {formatStamp(status.generatedAt)}</span>
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </>

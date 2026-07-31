@@ -1,11 +1,11 @@
 import { getAllArticles } from "@/lib/articles";
-import { BreakingTicker } from "@/components/breaking-ticker";
 import { getTickerHeadlines } from "@/lib/radar/ticker";
 import { VerticalStrip } from "@/components/vertical-strip";
 import { TrendingBar } from "@/components/trending-bar";
 import { ArticleGrid } from "@/components/article-grid";
 import { SubscribeStrip } from "@/components/subscribe-strip";
 import { getPulseSnapshot } from "@/lib/pulse/snapshot";
+import { getLondonWeather } from "@/lib/folio/weather";
 import { NightHero, type HeroArticle } from "@/components/night-hero";
 
 /** Must match REVALIDATE_SECONDS in @/lib/pulse/freshness — Next statically
@@ -24,31 +24,48 @@ export default async function Home() {
   const articles = getAllArticles().slice(0, 9);
   // Same fields ArticleGrid's own cards build their hrefs from (article-card.tsx:
   // `/${article.category}/${article.slug}`) — kept in sync by construction, not
-  // by convention, since both read off the same Article shape.
-  const heroArticles: HeroArticle[] = articles.slice(0, 3).map((a) => ({
+  // by convention, since both read off the same Article shape. Only the lead
+  // (index 0) carries its standfirst through — HeroFrontPage renders it as
+  // THE LEAD's two-column dek; the other two are the plain headline list.
+  const heroArticles: HeroArticle[] = articles.slice(0, 3).map((a, i) => ({
     href: `/${a.category}/${a.slug}`,
     section: a.category,
     title: a.title,
+    standfirst: i === 0 ? a.standfirst : undefined,
   }));
   // Independent of each other, so fetched in parallel rather than one after
   // the other. getPulseSnapshot's own fetches are cached for 600s, shared
-  // with /pulse — this is not a second upstream request.
-  const [breakingHeadlines, pulse] = await Promise.all([
+  // with /pulse — this is not a second upstream request. getLondonWeather is
+  // its own 30-minute in-process cache (src/lib/folio/weather.ts); a keyless
+  // third-party fetch that must never block or fail the page — null (segment
+  // omitted downstream) is a legitimate result, not an error to handle here.
+  const [breakingHeadlines, pulse, weather] = await Promise.all([
     getTickerHeadlines(),
     getPulseSnapshot(),
+    getLondonWeather(),
   ]);
 
   return (
     <>
-      {/* Top of the stack, above the hero — Task 4 slots this under the
-         nameplate when the full front-page stack is assembled. */}
-      <BreakingTicker headlines={breakingHeadlines} wire />
-
-      <NightHero snapshot={pulse} articles={heroArticles} />
+      <NightHero
+        snapshot={pulse}
+        articles={heroArticles}
+        weather={weather}
+        wireHeadlines={breakingHeadlines}
+      />
+      {/* The broadsheet fold: a perforated seam into the cream inside pages
+         (spec §v3). Decorative only — nothing here needs a live region or a
+         role, just a visual break between the front page and what follows. */}
+      <div className="fold-perforation" aria-hidden />
 
       <VerticalStrip />
       <TrendingBar topics={trendingTopics} />
-      <ArticleGrid articles={articles} typewriterTitles />
+      <ArticleGrid
+        articles={articles}
+        title="INSIDE THE EDITION ▾"
+        titleColor="text-orange"
+        typewriterTitles
+      />
       <SubscribeStrip />
     </>
   );

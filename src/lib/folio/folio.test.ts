@@ -85,3 +85,15 @@ test("tempC is null when weather is null (segment omitted, never fabricated)", (
   const { tempC } = deriveFolio(JULY_EPOCH_MS, null);
   assert.equal(tempC, null);
 });
+
+test("dateLine follows London's calendar day, not UTC's, past London midnight (carried from Task 2 review)", () => {
+  // 2026-07-30T23:30:00Z is already 2026-07-31 00:30 in Europe/London (BST,
+  // UTC+1) — half an hour into the next London day while UTC's calendar
+  // date is still the 30th. dateLine/clock are spec'd as London-local (see
+  // the TZ-proof test above), so dateLine must read the 31st here — a
+  // deliberate split from `edition`, which stays on the UTC calendar day on
+  // purpose (see the test directly above this one, same epoch, asserting
+  // edition 211, not 212).
+  const { dateLine } = deriveFolio(Date.UTC(2026, 6, 30, 23, 30, 0), null);
+  assert.equal(dateLine, "FRIDAY 31 JULY 2026");
+});
