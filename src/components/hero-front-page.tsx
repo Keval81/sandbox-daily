@@ -6,6 +6,7 @@ import Link from "next/link";
 import { PulseGlobe } from "@/components/pulse/pulse-globe";
 import { formatStamp } from "@/components/pulse/format";
 import { FolioRow } from "@/components/folio-row";
+import { BreakingTicker } from "@/components/breaking-ticker";
 import {
   deriveHeroStatus,
   markersFromSnapshot,
@@ -36,12 +37,16 @@ const SECTION_COLOR: Record<Vertical, string> = {
 };
 
 // The card's own footprint (globals.css: `.night-hero-card { width: min(78vw, 220px); }`,
-// offset 12px from the pin) plus a small viewport margin. The clamp below has
-// to be viewport-relative, not container-relative: the globe container
-// deliberately bleeds past the viewport's right edge (the whole point of the
-// "bleed" composition), so a pin can sit comfortably inside the CONTAINER's
-// bounds while the card drawn beside it would still be clipped by
-// .night-hero's overflow: hidden well before reaching the container's edge.
+// offset 12px from the pin) plus a small viewport margin. The clamp below is
+// viewport-relative, not container-relative — a superset of what the
+// container alone would guarantee: the globe now stays fully inside
+// .plate-frame (Task 4 removed the old bleed-past-the-viewport composition),
+// but a card drawn beside a pin near the frame's edge can still extend past
+// the CONTAINER's own bounds into the lead column beside it. That's
+// harmless (nothing there clips it, it just visually overlaps), whereas
+// under-clamping against the real viewport edge would let a card run off
+// the actual screen — so the viewport, not the container, stays the
+// correct thing to clamp against.
 const CARD_MAX_WIDTH_PX = 220;
 const CARD_WIDTH_VW_FRACTION = 0.78;
 const CARD_OFFSET_PX = 12;
@@ -58,25 +63,30 @@ interface Anchor {
   x: number;
   y: number;
   /** Container-local snapshot, for positioning math relative to
-   *  .night-hero-planet (the card's actual CSS containing block — bleed
-   *  doesn't affect this, it's pure container geometry). */
+   *  .night-hero-planet (the card's actual CSS containing block — pure
+   *  container geometry, independent of where the container itself sits
+   *  on the page). */
   containerHeight: number;
   /** Viewport-relative X of the pin at the moment this anchor was set — the
-   *  edge-flip decision (Important 1) has to compare against the viewport,
-   *  not the container, since the container itself can extend past it. */
+   *  edge-flip decision (Important 1) has to compare against the true
+   *  viewport bounds, not just the container's, since the card drawn beside
+   *  the pin can be wider than the room left inside the container (it may
+   *  spill into the lead column beside it — harmless — but must never spill
+   *  off the actual screen edge). */
   viewportX: number;
 }
 
 /**
  * The front-page client root (Task 4 restructure). Owns every piece of front-
  * page state — clock, hover/sticky cards, chip toggles — in one place, per
- * the controller's "ONE client owner" decision: a client component can't
- * render a server component inline, so `nameplate` and `wire` arrive as
- * already-rendered ReactNode props from NightHero (server) rather than as
- * components this file imports and calls itself. That keeps Nameplate and
- * the PRESS WIRE ticker's own data fetch/markup server-rendered straight
- * through the client boundary — the standard Next "pass server output as
- * children/props" pattern, not a client-side re-render of server content.
+ * the controller's "ONE client owner" decision. `nameplate` arrives as an
+ * already-rendered ReactNode prop from NightHero (server) because Nameplate
+ * itself IS a server component — a client component can't render a server
+ * component inline, so this is the standard Next "pass server output as
+ * children/props" pattern. BreakingTicker, by contrast, is a Client
+ * Component ("use client" in breaking-ticker.tsx) — there's no boundary to
+ * cross, so this file imports and renders it directly off the plain
+ * `wireHeadlines` string array, the same way it renders everything else.
  */
 export function HeroFrontPage({
   snapshot,
@@ -84,14 +94,14 @@ export function HeroFrontPage({
   weather,
   seedEpochMs,
   nameplate,
-  wire,
+  wireHeadlines,
 }: {
   snapshot: PulseSnapshot;
   articles: HeroArticle[];
   weather: WeatherReading | null;
   seedEpochMs: number;
   nameplate: ReactNode;
-  wire: ReactNode;
+  wireHeadlines: string[];
 }) {
   const globeRef = useRef<HTMLDivElement>(null);
   // Fallback anchor for a touch tap that never fired a preceding hover — a
@@ -298,16 +308,16 @@ export function HeroFrontPage({
       </FolioRow>
 
       {nameplate}
-      {wire}
+      <BreakingTicker headlines={wireHeadlines} wire />
 
       <div className="night-hero-body">
         <div className="night-hero-lead-col">
           {lead && (
             <>
               <p className="night-hero-kicker">THE LEAD</p>
-              <Link href={lead.href} className="night-hero-lead-headline">
-                {lead.title}
-              </Link>
+              <h2 className="night-hero-lead-headline">
+                <Link href={lead.href}>{lead.title}</Link>
+              </h2>
               {lead.standfirst && (
                 <div className="night-hero-standfirst">{lead.standfirst}</div>
               )}

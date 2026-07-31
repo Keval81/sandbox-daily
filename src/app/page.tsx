@@ -53,10 +53,8 @@ export default async function Home() {
         weather={weather}
         wireHeadlines={breakingHeadlines}
       />
-      {/* The broadsheet fold: a perforated seam into the cream inside pages
-         (spec §v3). Decorative only — nothing here needs a live region or a
-         role, just a visual break between the front page and what follows. */}
-      <div className="fold-perforation" aria-hidden />
+      {/* The perforated fold itself is inside NightHero now — nested in
+         .night-hero so the ink background paints behind its dashes. */}
 
       <VerticalStrip />
       <TrendingBar topics={trendingTopics} />

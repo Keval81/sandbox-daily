@@ -1000,9 +1000,6 @@ body:has(.night-hero) > main#main-content {
    though the lead stays first in the DOM/tab order. */
 .night-hero-body {
   flex: 1 1 auto;
-  min-height: 0;      /* lets the row settle to its content height inside the
-                          flex column instead of being forced to fill
-                          min-height: 100dvh when that would overflow it */
   display: grid;
   grid-template-columns: minmax(280px, 1fr) min(36vw, 560px);
   grid-template-areas: "lead plate";
@@ -1076,6 +1073,14 @@ body:has(.night-hero) > main#main-content {
   border-radius: 2px;
 }
 
+/* Shared with .folio-row-chips (folio-row.tsx's own wrapper, further down
+   this file) — the chip buttons this class holds are nested one level
+   inside that wrapper (.folio-row-chips > .night-hero-chips), and both
+   needed the identical flex/wrap/gap layout, so the properties live here
+   once instead of twice. .folio-row-chips keeps its own rule for the one
+   property it alone needs (align-items, to centre the chip group against
+   the dateline text beside it). */
+.folio-row-chips,
 .night-hero-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .night-hero-chip {
   display: inline-flex;
@@ -1158,10 +1163,16 @@ body:has(.night-hero) > main#main-content {
      globe is the one element allowed to scale when a viewport is tight,
      never the folio/nameplate/wire chrome above it. The vw/px terms cap the
      common, width-bound case (mirrors the old bleed composition's own
-     scale); the dvh term is what actually protects a short 800px-tall
-     desktop viewport from the plate pushing the front page past the fold —
-     min() takes whichever constraint binds. */
-  width: min(36vw, 560px, 56dvh);
+     scale). The third term is the height budget BY CONSTRUCTION, not a
+     rough vh guess: the fixed chrome above the globe (folio row + nameplate
+     + wire) runs ~231px, plus .night-hero-body's own padding, the plate
+     frame's border/padding, the caption tab, the gap to the live line below,
+     and the live line's own height — ~330px of non-globe vertical demand
+     total. 100dvh minus that is exactly the tallest the globe can be before
+     it — not the chrome — is what pushes the front page past the fold.
+     Verified rendered at a short 1366×700 desktop viewport (review
+     break-even ≈ 743px) with the live line still landing above the fold. */
+  width: min(36vw, 560px, calc(100dvh - 330px));
   aspect-ratio: 1;
 }
 .night-hero-poster {
@@ -1369,12 +1380,7 @@ body:has(.night-hero) > main#main-content {
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
 }
-.folio-row-chips {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
+.folio-row-chips { align-items: center; }
 
 .nameplate {
   display: flex;
@@ -1398,27 +1404,29 @@ body:has(.night-hero) > main#main-content {
   color: color-mix(in srgb, var(--color-cream) 55%, transparent);
 }
 
-/* The perforated fold: a torn-edge seam between the front page (.night-hero,
-   ink) and the cream inside pages that follow (VerticalStrip's own tile
-   colours vary — news/tech/sport/features aren't uniformly cream — so this
-   is deliberately transparent rather than filled, a dashed rule floating at
-   the seam rather than a box with its own background). Cream at reduced
-   opacity reads against every one of those tile colours and against the
-   dark hero above it. */
+/* The perforated fold: a torn-edge seam printed at the front page's own
+   trailing edge. Nested inside .night-hero (night-hero.tsx) so its ink
+   background paints behind the dashes — a sibling div sitting between
+   .night-hero and VerticalStrip instead sat on the document body's own
+   default background (--bg-page, cream), which made cream-tinted dashes on
+   a cream backdrop functionally invisible (caught in review; no rendered
+   screenshot had covered the seam itself). Cream reads clearly against the
+   .night-hero ink it now actually sits on top of. */
 .fold-perforation {
   border-top: 2px dashed color-mix(in srgb, var(--color-cream) 45%, transparent);
 }
 
 .sd-nav { transition: background-color 240ms ease; }
 .sd-nav--solid { background: var(--color-ink); }
-/* Task 4 fix: pre-scroll on `/`, nav.tsx unmounts every interactive child
-   (wordmark link, desktop links, hamburger — see nav.tsx's own a11y note),
-   but the fixed bar's own box still occupies the top ~64px and, being
-   position: fixed with a positive z-index, still intercepted pointer events
-   meant for the folio row underneath it (its chips are the front page's own
-   top edge now — see .night-hero's comment). Safe to disable entirely in
-   this state: there is nothing left inside `.sd-nav--overlay` to click.
-   `.sd-nav--solid` (and the mobile menu, which only opens once solid) are
-   untouched, so this never affects a state where the bar has real content. */
-.sd-nav--overlay { pointer-events: none; }
-.sd-nav--overlay { background: transparent; }
+/* background: transparent is the original nav-rides-over-the-hero rule.
+   pointer-events: none is a Task 4 fix: pre-scroll on `/`, nav.tsx unmounts
+   every interactive child (wordmark link, desktop links, hamburger — see
+   nav.tsx's own a11y note), but the fixed bar's own box still occupies the
+   top ~64px and, being position: fixed with a positive z-index, still
+   intercepted pointer events meant for the folio row underneath it (its
+   chips are the front page's own top edge now — see .night-hero's comment).
+   Safe to disable entirely in this state: there is nothing left inside
+   `.sd-nav--overlay` to click. `.sd-nav--solid` (and the mobile menu, which
+   only opens once solid) are untouched, so this never affects a state
+   where the bar has real content. */
+.sd-nav--overlay { background: transparent; pointer-events: none; }
