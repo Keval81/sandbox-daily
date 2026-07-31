@@ -141,13 +141,12 @@
   body:has([data-admin-shell]) > main#main-content {
     padding-top: 0;
   }
-
-  /* .night-hero is full-bleed and pads itself for the fixed nav (72px, see
-     below) — the shared 64px main#main-content padding would double up and
-     push the hero (and its hamburger) down over a strip of cream. */
-  body:has(.night-hero) > main#main-content {
-    padding-top: 0;
-  }
+  /* NOTE (found on re-review): this rule has the same latent defect as the
+     .night-hero one below — Tailwind v4's `pt-16` compiles into the later
+     `utilities` layer, which beats anything in `@layer base` regardless of
+     specificity, so this padding-top:0 is inert too. Left alone: the admin
+     shell is dark-on-dark, so the stray 64px band doesn't show. Out of
+     scope for this pass. */
 
   ::selection {
     background-color: var(--color-orange);
@@ -162,6 +161,17 @@
     outline-offset: 2px;
     border-radius: var(--radius-sharp, 4px);
   }
+}
+
+/* Deliberately UNLAYERED (not inside @layer base): Tailwind v4's `pt-16`
+   utility compiles into the `utilities` layer, which is declared AFTER
+   `base` and so wins regardless of selector specificity — the same rule
+   placed inside @layer base above is inert (see the NOTE on the
+   admin-shell version). Unlayered author styles beat every layered rule
+   outright, layer order and specificity both, so this is the only
+   position from which padding-top:0 can actually reach main#main-content. */
+body:has(.night-hero) > main#main-content {
+  padding-top: 0;
 }
 
 /* =========================================================
@@ -900,10 +910,11 @@
 @media (prefers-reduced-motion: reduce) {
   .pulse-pip, .pulse-gauge { animation: none; }
   .pulse-canvas, .pulse-chip, .pulse-btn, .pulse-ev { transition: none; }
-  /* .night-hero-globe .pulse-canvas's own 400ms opacity transition (below)
-     out-specifies the bare .pulse-canvas reset above — repeat the selector
-     here so reduced motion actually wins. */
-  .night-hero-globe .pulse-canvas { transition: none; }
+  /* .night-hero-globe .pulse-canvas's own 400ms opacity transition rule
+     lives further down this file (with .night-hero) and ties this
+     selector on specificity (0,2,0) — a repeat here would still LOSE
+     because it comes earlier in source. The actual override sits right
+     after that rule instead; see the comment there. */
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -960,6 +971,18 @@
 .night-hero-globe .pulse-canvas { opacity: 0; transition: opacity 400ms ease; }
 .night-hero-globe .pulse-canvas.ready,
 .night-hero-globe .pulse-canvas.failed { opacity: 1; }
+
+/* SOURCE ORDER IS LOAD-BEARING — do not move this block above the rule it
+   overrides. This selector ties the 400ms rule above on specificity
+   (0,2,0 each); with no @layer involved (neither rule is layered), the tie
+   is broken by source order, and later wins. A reduced-motion override
+   with the same selector placed earlier in the file (as it originally was,
+   inside the shared .pulse-canvas reduced-motion block near the top of this
+   Planet Pulse section) silently loses to this rule. */
+@media (prefers-reduced-motion: reduce) {
+  .night-hero-globe .pulse-canvas { transition: none; }
+}
+
 .night-hero-stat { font-size: 0.85rem; text-align: center; }
 .night-hero-pip { color: color-mix(in srgb, var(--color-cream) 55%, var(--color-ink)); }
 .night-hero-pip[data-live] { color: var(--color-accent); }
