@@ -57,11 +57,13 @@ dark.
 
 ## Architecture
 
-- **`NightHero`** — client component + server-fetched snapshot. Reuses
+- **`NightHero`** — server component + a thin client globe wrapper. Reuses
   `PulseGlobe` via a new **ambient mode prop**: current `compact spin`
-  behaviour + drag-to-rotate + marker pulse, tap-to-select disabled. Engine
-  (`GlobeEngine`) untouched — ambient is UI-layer, honouring the engine/UI
-  split.
+  behaviour + drag-to-rotate + marker pulse, tap-to-select disabled.
+  *Corrected at planning:* the engine disables all input in compact mode
+  (engine.ts "picture, not an instrument" gate), so ambient requires a small
+  engine option (`dragOnly`) — drag binds, pick/hover/zoom/keys stay off. The
+  engine/UI split holds: the engine still knows only markers, never hazards.
 - **Data:** `getPulseSnapshot()` as the page calls it today — same 600s cache
   shared with `/pulse`; zero new upstream requests.
 - **Poster fallback:** one pre-rendered globe still captured from the real
