@@ -84,9 +84,9 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
 
   // Shared clock: the live line and the event cards must age together, or a
   // tab left open could keep showing a "live" card over a hero whose stat
-  // line has already flipped to Snapshot. Mirrors night-hero-stat's old
-  // seed/tick pattern (seeded from generatedAt so server and first client
-  // render agree; deferred setTimeout before the wall clock takes over).
+  // line has already flipped to Snapshot. Mirrors the retired hero stat
+  // clock's seed/tick pattern (seeded from generatedAt so server and first
+  // client render agree; deferred setTimeout before the wall clock takes over).
   const [now, setNow] = useState(() => Date.parse(snapshot.generatedAt));
   useEffect(() => {
     // Deferred rather than synchronous: the first client render has to match
@@ -230,7 +230,13 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
 
       <div className="night-hero-planet" ref={globeRef} onPointerDown={trackPointerOnDown}>
         <img src="/images/pulse-globe-poster.webp" alt="" className="night-hero-poster" />
-        <PulseGlobe markers={markers} ambient spin onHover={handleHover} onPick={handlePick} />
+        <PulseGlobe
+          markers={markers}
+          ambient
+          spin={!activeCard}
+          onHover={handleHover}
+          onPick={handlePick}
+        />
 
         {/* Persistent live region: a node that mounts AND gains content in the
             same DOM update is not reliably announced (most screen readers need
@@ -317,7 +323,7 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
 
         <div className="night-hero-chips" role="group" aria-label="Layers">
           {chips.map((chip) =>
-            status.mode === "snapshot" ? (
+            status.mode === "snapshot" || !chip.live ? (
               <span key={chip.id} className="night-hero-chip" aria-disabled="true">
                 {chip.label}
               </span>

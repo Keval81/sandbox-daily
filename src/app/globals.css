@@ -1190,6 +1190,9 @@ body:has(.night-hero) > main#main-content {
   bottom: clamp(20px, 4vh, 40px);
   right: clamp(20px, 5vw, 56px);
   text-align: right;
+  /* This overlays the globe's bottom-right bleed and contains no links —
+     without this, it eats drag-starts intended for the globe underneath. */
+  pointer-events: none;
 }
 .night-hero-live-line { font-size: 0.8rem; }
 .night-hero-live-line .font-mono { font-variant-numeric: tabular-nums; }
