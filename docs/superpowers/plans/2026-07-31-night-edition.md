@@ -690,7 +690,9 @@ Expected: all green — the build catches anything grep can't.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add -A
+# Explicit paths, never -A: the working tree carries untracked pipeline
+# output (article images/markdown) that must not ride along.
+git add src/app/page.tsx src/app/globals.css src/components/pulse/pulse-teaser.tsx
 git commit -m "refactor: retire the video hero styles and the pulse teaser — the hero does their jobs now"
 ```
 
