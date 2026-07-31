@@ -1,4 +1,4 @@
-import { freshnessOf } from "./freshness";
+import { everySourceDead, freshnessOf } from "./freshness";
 import type { Marker, PulseSnapshot } from "./types";
 
 export interface IndexChip { layerId: string; label: string; score: number; band: string; color: string }
@@ -103,3 +103,65 @@ export const deriveHeroStatus = (snapshot: PulseSnapshot, now: number): HeroStat
   return { mode: "live", generatedAt: snapshot.generatedAt,
            totalEvents: events.length, indexChips, whisper, aside: asideFor(indexChips, events.length, snapshot.generatedAt) };
 };
+
+export interface EventCard {
+  id: string;
+  eyebrow: string;          // category label from the event's owning layer, uppercased
+  title: string;            // event.title verbatim
+  magnitude: string | null;
+  severity: number;         // 0..1
+  /** Band word ONLY when severity is a real reading (severityFrom === "magnitude"); a
+   *  category baseline is not a measurement, so the hero must not print a band for it. */
+  severityWord: string | null;
+  segments: number;         // 0..5 — Math.round(severity * 5), clamped
+  color: string;            // category colour from the OWNING layer
+  url: string | null;
+}
+
+const severityWordFor = (severity: number): string => {
+  if (severity >= 0.75) return "SEVERE";
+  if (severity >= 0.5) return "HIGH";
+  if (severity >= 0.25) return "ELEVATED";
+  return "LOW";
+};
+
+const clampSegments = (n: number): number => Math.min(5, Math.max(0, n));
+
+/**
+ * One card per plottable event, keyed by id for the hero's hover/tap lookup.
+ * Mirrors markersFromSnapshot's live-layer filter (dead layers contribute no
+ * card, same as no marker) and deriveHeroStatus's liveness gate (a snapshot
+ * the reader can't trust gets no cards, same as it gets no totals) — reusing
+ * `everySourceDead` rather than re-deriving that check here.
+ */
+export const eventCardsById = (snapshot: PulseSnapshot): Map<string, EventCard> => {
+  if (snapshot.stale || everySourceDead(snapshot.layers)) return new Map();
+
+  const byLayer = new Map(snapshot.layers.map((l) => [l.id, l.categories]));
+  const liveLayerIds = new Set(snapshot.layers.filter((l) => l.live).map((l) => l.id));
+  const events = snapshot.events.filter((e) => liveLayerIds.has(e.layer));
+
+  return new Map(events.map((e) => {
+    const meta = byLayer.get(e.layer)?.[e.category];
+    const card: EventCard = {
+      id: e.id,
+      eyebrow: (meta?.label ?? e.category).toUpperCase(),
+      title: e.title,
+      magnitude: e.magnitude ?? null,
+      severity: e.severity,
+      severityWord: e.severityFrom === "magnitude" ? severityWordFor(e.severity) : null,
+      segments: clampSegments(Math.round(e.severity * 5)),
+      color: meta?.color ?? FALLBACK_COLOR,
+      url: e.url ?? null,
+    };
+    return [e.id, card];
+  }));
+};
+
+export interface LayerChip { id: string; label: string; live: boolean }
+
+/** Hardcoded ghost copy for layers not yet registered — never derived from data. */
+export const GHOST_CHIPS = ["CONFLICT", "UNREST"] as const;
+
+export const chipsFromLayers = (snapshot: PulseSnapshot): LayerChip[] =>
+  snapshot.layers.map((l) => ({ id: l.id, label: l.label, live: l.live }));

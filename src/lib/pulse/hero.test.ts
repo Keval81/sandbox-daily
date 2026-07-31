@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deriveHeroStatus, markersFromSnapshot } from "./hero";
+import { GHOST_CHIPS, chipsFromLayers, deriveHeroStatus, eventCardsById, markersFromSnapshot } from "./hero";
 import { buildSnapshot } from "./snapshot";
 import type { LayerEvent, LayerSource, PulseLayerSummary, PulseSnapshot } from "./types";
 
@@ -158,4 +158,101 @@ test("REGRESSION: both feeds throwing drives the hero to snapshot mode", async (
   assert.equal(h.mode, "snapshot");
   assert.equal(h.totalEvents, null);
   assert.deepEqual(h.indexChips, []);
+});
+
+test("eventCardsById: a magnitude event carries severityWord + segments + owning-layer colour", () => {
+  const s = snap([hazards()], [
+    event({ id: "a", category: "earthquake", severity: 0.8, severityFrom: "magnitude", magnitude: "6.1 M" }),
+  ]);
+  const cards = eventCardsById(s);
+  const card = cards.get("a");
+  assert.ok(card);
+  assert.equal(card?.eyebrow, "EARTHQUAKE");
+  assert.equal(card?.title, "Somewhere");
+  assert.equal(card?.magnitude, "6.1 M");
+  assert.equal(card?.severity, 0.8);
+  assert.equal(card?.severityWord, "SEVERE");
+  assert.equal(card?.segments, 4);
+  assert.equal(card?.color, "#E75D31");
+});
+
+test("eventCardsById: a category-baseline event has severityWord null but still segments", () => {
+  const s = snap([hazards()], [
+    event({ id: "b", category: "flood", severity: 0.6, severityFrom: "category" }),
+  ]);
+  const withProvenance = eventCardsById(s).get("b");
+  assert.equal(withProvenance?.severityWord, null);
+  assert.equal(withProvenance?.segments, 3);
+
+  const noProvenance = eventCardsById(snap([hazards()], [
+    event({ id: "c", category: "flood", severity: 0.6 }),
+  ])).get("c");
+  assert.equal(noProvenance?.severityWord, null);
+});
+
+test("eventCardsById: events from both layers present in the map keyed by id", () => {
+  const s = snap([hazards(), unrest()], [
+    event({ id: "a" }),
+    event({ id: "c", layer: "unrest", category: "protest" }),
+  ]);
+  const cards = eventCardsById(s);
+  assert.equal(cards.size, 2);
+  assert.ok(cards.has("a"));
+  assert.ok(cards.has("c"));
+  assert.equal(cards.get("c")?.color, "#FFD60A");
+  assert.equal(cards.get("c")?.eyebrow, "PROTEST");
+});
+
+test("eventCardsById: a dead layer's events are excluded, mirroring markersFromSnapshot", () => {
+  const deadUnrest = unrest({ live: false, sources: [{ id: "radar", label: "Radar", live: false }], index: null });
+  const s = snap([hazards(), deadUnrest], [
+    event({ id: "a" }),
+    event({ id: "c", layer: "unrest", category: "protest" }),
+  ]);
+  const cards = eventCardsById(s);
+  assert.deepEqual([...cards.keys()], ["a"]);
+});
+
+test("eventCardsById: stale snapshot returns an empty map (no cards in snapshot mode)", () => {
+  const s = snap([hazards()], [event({ id: "a" })], true);
+  assert.equal(eventCardsById(s).size, 0);
+});
+
+test("eventCardsById: every source dead returns an empty map even when not marked stale", () => {
+  const dead = hazards({ live: false, sources: [{ id: "usgs", label: "USGS", live: false }], index: null });
+  const s = snap([dead], [event({ id: "a" })]);
+  assert.equal(eventCardsById(s).size, 0);
+});
+
+test("eventCardsById: segments rounds severity*5, clamped 0..5 (0.9 -> 5, 0.09 -> 0)", () => {
+  const s = snap([hazards()], [
+    event({ id: "hi", severity: 0.9 }),
+    event({ id: "lo", severity: 0.09 }),
+  ]);
+  const cards = eventCardsById(s);
+  assert.equal(cards.get("hi")?.segments, 5);
+  assert.equal(cards.get("lo")?.segments, 0);
+});
+
+test("eventCardsById: url passes through, null when absent", () => {
+  const s = snap([hazards()], [
+    event({ id: "withUrl", url: "https://example.com/a" }),
+    event({ id: "noUrl" }),
+  ]);
+  const cards = eventCardsById(s);
+  assert.equal(cards.get("withUrl")?.url, "https://example.com/a");
+  assert.equal(cards.get("noUrl")?.url, null);
+});
+
+test("chipsFromLayers: one chip per snapshot layer, in order, with live flags", () => {
+  const deadUnrest = unrest({ live: false, sources: [{ id: "radar", label: "Radar", live: false }], index: null });
+  const s = snap([hazards(), deadUnrest], []);
+  assert.deepEqual(chipsFromLayers(s), [
+    { id: "hazards", label: "hazard", live: true },
+    { id: "unrest", label: "unrest", live: false },
+  ]);
+});
+
+test("GHOST_CHIPS: hardcoded ghost copy, not derived from layers", () => {
+  assert.deepEqual(GHOST_CHIPS, ["CONFLICT", "UNREST"]);
 });
