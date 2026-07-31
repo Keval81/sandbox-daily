@@ -58,41 +58,57 @@ export function Nav() {
           )}
         </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => {
-            const isActive = pathname.startsWith(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`font-mono text-meta-sm uppercase tracking-mono-wide cursor-pointer border-b-2 pb-1 transition-colors duration-200 ${
-                  isActive
-                    ? `text-cream ${link.indicator}`
-                    : "text-grey border-transparent hover:text-cream"
-                }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </div>
+        {/* Desktop nav. Pre-scroll on `/` the whole bar has no nav bar at
+            all — the folio row owns the top edge (Night Edition v3) — so
+            the links render only once `solid` (mirrors the wordmark's own
+            `{solid && ...}` above, same threshold, same instant).
+            CONSTRAINT (a11y tradeoff, accepted): unmounting rather than
+            visually hiding means these links leave the tab order entirely
+            pre-scroll, not just off-screen. A keyboard user landing on `/`
+            reaches every section via the footer instead; the links return
+            to the tab order the moment the bar solidifies (on scroll, or
+            via `open`/mobile menu once the hamburger itself is mounted). */}
+        {solid && (
+          <div className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => {
+              const isActive = pathname.startsWith(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`font-mono text-meta-sm uppercase tracking-mono-wide cursor-pointer border-b-2 pb-1 transition-colors duration-200 ${
+                    isActive
+                      ? `text-cream ${link.indicator}`
+                      : "text-grey border-transparent hover:text-cream"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
-        {/* Mobile hamburger */}
-        <button
-          type="button"
-          className="md:hidden text-cream cursor-pointer p-2"
-          onClick={() => setOpen(!open)}
-          aria-label={open ? "Close menu" : "Open menu"}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            {open ? (
-              <path d="M6 6l12 12M6 18L18 6" />
-            ) : (
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
-        </button>
+        {/* Mobile hamburger — same pre-scroll unmount as the desktop links
+            above (see the a11y note there); with the trigger gone, `open`
+            can never flip true before the bar solidifies, so the mobile
+            menu block below never needs its own guard. */}
+        {solid && (
+          <button
+            type="button"
+            className="md:hidden text-cream cursor-pointer p-2"
+            onClick={() => setOpen(!open)}
+            aria-label={open ? "Close menu" : "Open menu"}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              {open ? (
+                <path d="M6 6l12 12M6 18L18 6" />
+              ) : (
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Mobile menu */}

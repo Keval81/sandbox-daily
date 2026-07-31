@@ -1233,6 +1233,61 @@ body:has(.night-hero) > main#main-content {
   }
 }
 
+/* =========================================================
+   Night Edition v3 — Folio row + Nameplate (broadsheet front page)
+   Reality Window register: print chrome (hairline / double rules, mono
+   stamps) on night stock — the globe stays the one unstyled plate. Neither
+   component is wired into a page yet (Task 4 assembles the front-page
+   anatomy in order); each carries its own ink background so it reads
+   correctly whether nested in an existing dark section or rendered alone.
+   ========================================================= */
+
+.folio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-3) clamp(20px, 5vw, 56px);
+  background: var(--color-ink);
+  color: color-mix(in srgb, var(--color-cream) 75%, transparent);
+  border-bottom: var(--border-hairline) solid color-mix(in srgb, var(--color-cream) 25%, transparent);
+}
+.folio-row-line {
+  font-size: 11px;
+  letter-spacing: var(--tracking-mono);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+.folio-row-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.nameplate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) clamp(20px, 5vw, 56px) var(--space-4);
+  background: var(--color-ink);
+  color: var(--color-cream);
+  text-align: center;
+  /* The print-masthead double rule. `double` needs >= 3px to render as two
+     visible lines in every engine (2px collapses to a single line in some),
+     so the border box is 3px even though the visual weight matches the
+     brief's "2px double" call-out. */
+  border-bottom: 3px double color-mix(in srgb, var(--color-cream) 50%, transparent);
+}
+.nameplate-stamp {
+  font-size: 10px;
+  letter-spacing: var(--tracking-mono-wide);
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-cream) 55%, transparent);
+}
+
 .sd-nav { transition: background-color 240ms ease; }
 .sd-nav--solid { background: var(--color-ink); }
 .sd-nav--overlay { background: transparent; }
