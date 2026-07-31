@@ -1,5 +1,5 @@
 import { freshnessOf } from "./freshness";
-import type { PulseSnapshot } from "./types";
+import type { Marker, PulseSnapshot } from "./types";
 
 export interface IndexChip { layerId: string; label: string; score: number; band: string; color: string }
 export interface WhisperEntry { label: string; count: number }
@@ -15,6 +15,45 @@ export interface HeroStatus {
 }
 
 const WHISPER_MAX = 4;
+
+/** 6-digit hex, deliberately: the engine appends an alpha pair to marker colours. */
+const FALLBACK_COLOR = "#98989D";
+const DIM_COLOR = "#98989D";
+const DIM_WEIGHT = 0.6;
+
+export const markersFromSnapshot = (snapshot: PulseSnapshot, dimmed: boolean): Marker[] => {
+  const byLayer = new Map(snapshot.layers.map((l) => [l.id, l.categories]));
+  return snapshot.events.map((e) => ({
+    id: e.id, lat: e.lat, lon: e.lon,
+    color: dimmed ? DIM_COLOR : byLayer.get(e.layer)?.[e.category]?.color ?? FALLBACK_COLOR,
+    weight: dimmed ? e.severity * DIM_WEIGHT : e.severity,
+  }));
+};
+
+/** Worst first. Bands come from each layer's own index model. */
+const BAND_ORDER = ["Severe", "High", "Elevated", "Calm"];
+
+const ASIDES: Record<string, string[]> = {
+  Calm: ["— a quiet day, mostly", "— the planet, behaving itself", "— all things considered, calm"],
+  Elevated: ["— a restless day out there", "— the planet has notes today", "— some grumbling underfoot"],
+  High: ["— a rough day in places", "— parts of the planet are having a day", "— not everywhere is having a good day"],
+  Severe: ["— a hard day for the planet", "— the planet is shouting today", "— rough out there, genuinely"],
+  none: ["— nothing to report. enjoy it", "— all quiet, genuinely", "— the planet took the day off"],
+};
+
+/** Deterministic (varies by day, stable within one): no Math.random — the
+ *  server render and hydration must agree, and tests must too. */
+const pickAside = (pool: string[], generatedAt: string): string => {
+  const day = Math.floor(Date.parse(generatedAt) / 86_400_000);
+  return pool[day % pool.length];
+};
+
+const asideFor = (chips: IndexChip[], totalEvents: number, generatedAt: string): string | null => {
+  if (totalEvents === 0) return pickAside(ASIDES.none, generatedAt);
+  const worst = BAND_ORDER.find((b) => chips.some((c) => c.band === b));
+  if (!worst) return null;                       // no band → no aside, never invent
+  return pickAside(ASIDES[worst], generatedAt);
+};
 
 /**
  * Everything the hero is allowed to say, derived once. Layer-agnostic by
@@ -50,5 +89,5 @@ export const deriveHeroStatus = (snapshot: PulseSnapshot, now: number): HeroStat
     .slice(0, WHISPER_MAX);
 
   return { mode: "live", generatedAt: snapshot.generatedAt,
-           totalEvents: events.length, indexChips, whisper, aside: null };
+           totalEvents: events.length, indexChips, whisper, aside: asideFor(indexChips, events.length, snapshot.generatedAt) };
 };

@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deriveHeroStatus } from "./hero";
-import type { LayerEvent, PulseLayerSummary, PulseSnapshot } from "./types";
+import { deriveHeroStatus, markersFromSnapshot } from "./hero";
+import { buildSnapshot } from "./snapshot";
+import type { LayerEvent, LayerSource, PulseLayerSummary, PulseSnapshot } from "./types";
 
 const GENERATED = "2026-07-31T12:00:00.000Z";
 const NOW = Date.parse(GENERATED);
@@ -95,4 +96,51 @@ test("every source dead: mode snapshot even when the snapshot is not stale", () 
 test("an aged snapshot left open goes snapshot mode (freshnessOf rule)", () => {
   const h = deriveHeroStatus(snap([hazards()], [event({})]), NOW + 21 * 60 * 1000);
   assert.equal(h.mode, "snapshot");
+});
+
+test("aside comes from the worst live band's pool, deterministically by day", () => {
+  const h = deriveHeroStatus(snap([hazards(), unrest()], [event({})]), NOW);
+  // worst band across chips is Severe (84); same generatedAt → same line
+  const again = deriveHeroStatus(snap([hazards(), unrest()], [event({})]), NOW);
+  assert.equal(typeof h.aside, "string");
+  assert.equal(h.aside, again.aside);
+});
+
+test("zero events with live feeds gets a real 'nothing to report' aside", () => {
+  const calm = hazards({ index: { score: 0, band: "Calm", color: "#56A077" } });
+  const h = deriveHeroStatus(snap([calm], []), NOW);
+  assert.equal(h.totalEvents, 0);
+  assert.match(h.aside ?? "", /quiet|nothing|day off/i);
+});
+
+test("no live band → no aside (asides never fabricate)", () => {
+  const noIndex = hazards({ index: null });
+  const h = deriveHeroStatus(snap([noIndex], [event({})]), NOW);
+  assert.equal(h.aside, null);
+});
+
+test("markers colour by the event's OWN layer; dimming greys and shrinks", () => {
+  const s = snap([hazards(), unrest()], [
+    event({ id: "a" }),
+    event({ id: "c", layer: "unrest", category: "protest" }),
+  ]);
+  const [a, c] = markersFromSnapshot(s, false);
+  assert.equal(a.color, "#E75D31");
+  assert.equal(c.color, "#FFD60A");
+  const [dimA] = markersFromSnapshot(s, true);
+  assert.equal(dimA.color, "#98989D");
+  assert.ok(dimA.weight < a.weight);
+});
+
+test("REGRESSION: both feeds throwing drives the hero to snapshot mode", async () => {
+  const throwing: LayerSource = {
+    id: "hazards", label: "hazard", categories: {}, categoryOrder: [],
+    fetch: async () => { throw new Error("feed down"); },
+  };
+  const results = await Promise.allSettled([throwing.fetch()]);
+  const s = buildSnapshot([throwing], results, GENERATED);
+  const h = deriveHeroStatus(s, Date.parse(s.generatedAt));
+  assert.equal(h.mode, "snapshot");
+  assert.equal(h.totalEvents, null);
+  assert.deepEqual(h.indexChips, []);
 });
