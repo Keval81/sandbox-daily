@@ -1,0 +1,98 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { deriveHeroStatus } from "./hero";
+import type { LayerEvent, PulseLayerSummary, PulseSnapshot } from "./types";
+
+const GENERATED = "2026-07-31T12:00:00.000Z";
+const NOW = Date.parse(GENERATED);
+
+const event = (over: Partial<LayerEvent>): LayerEvent => ({
+  id: "usgs:x1", layer: "hazards", category: "earthquake", title: "Somewhere",
+  lat: 10, lon: 20, date: GENERATED, severity: 0.5, source: "USGS", ...over,
+});
+
+// Two layers, deliberately: pins the wars/unrest future as a data change.
+const hazards = (over: Partial<PulseLayerSummary> = {}): PulseLayerSummary => ({
+  id: "hazards", label: "hazard",
+  categories: {
+    earthquake: { label: "Earthquake", color: "#E75D31", weight: 0.8 },
+    flood: { label: "Flood", color: "#56A077", weight: 0.6 },
+  },
+  categoryOrder: ["earthquake", "flood"],
+  sources: [{ id: "usgs", label: "USGS", live: true }],
+  live: true,
+  index: { score: 84, band: "Severe", color: "#FF2D55" },
+  ...over,
+});
+const unrest = (over: Partial<PulseLayerSummary> = {}): PulseLayerSummary => ({
+  id: "unrest", label: "unrest",
+  categories: { protest: { label: "Protest", color: "#FFD60A", weight: 0.5 } },
+  categoryOrder: ["protest"],
+  sources: [{ id: "radar", label: "Radar", live: true }],
+  live: true,
+  index: { score: 30, band: "Elevated", color: "#FFD60A" },
+  ...over,
+});
+const snap = (layers: PulseLayerSummary[], events: LayerEvent[], stale = false): PulseSnapshot =>
+  ({ generatedAt: GENERATED, stale, events, unplottable: 0, layers });
+
+test("live snapshot: totals count all live layers' events, layer-agnostic", () => {
+  const s = snap([hazards(), unrest()], [
+    event({ id: "a" }), event({ id: "b", category: "flood" }),
+    event({ id: "c", layer: "unrest", category: "protest" }),
+  ]);
+  const h = deriveHeroStatus(s, NOW);
+  assert.equal(h.mode, "live");
+  assert.equal(h.totalEvents, 3);
+});
+
+test("index chips: one per live layer with an index, never a combined score", () => {
+  const h = deriveHeroStatus(snap([hazards(), unrest()], [event({})]), NOW);
+  assert.deepEqual(h.indexChips.map((c) => c.layerId), ["hazards", "unrest"]);
+  assert.equal(h.indexChips[0].score, 84);
+  assert.equal(h.indexChips[1].band, "Elevated");
+});
+
+test("a dead layer contributes no chip and no events to the total", () => {
+  const deadUnrest = unrest({ live: false, sources: [{ id: "radar", label: "Radar", live: false }], index: null });
+  const s = snap([hazards(), deadUnrest], [
+    event({ id: "a" }), event({ id: "c", layer: "unrest", category: "protest" }),
+  ]);
+  const h = deriveHeroStatus(s, NOW);
+  assert.equal(h.mode, "live");           // one live layer keeps the pip green
+  assert.equal(h.totalEvents, 1);         // the dead layer's event is not counted
+  assert.deepEqual(h.indexChips.map((c) => c.layerId), ["hazards"]);
+});
+
+test("whisper: top 4 category labels by count across live layers", () => {
+  const events = [
+    event({ id: "1" }), event({ id: "2" }), event({ id: "3", category: "flood" }),
+    event({ id: "4", layer: "unrest", category: "protest" }),
+  ];
+  const h = deriveHeroStatus(snap([hazards(), unrest()], events), NOW);
+  assert.deepEqual(h.whisper, [
+    { label: "Earthquake", count: 2 },
+    { label: "Flood", count: 1 },
+    { label: "Protest", count: 1 },
+  ]);
+});
+
+test("stale snapshot: mode snapshot, everything withheld", () => {
+  const h = deriveHeroStatus(snap([hazards()], [event({})], true), NOW);
+  assert.equal(h.mode, "snapshot");
+  assert.equal(h.totalEvents, null);
+  assert.deepEqual(h.indexChips, []);
+  assert.deepEqual(h.whisper, []);
+});
+
+test("every source dead: mode snapshot even when the snapshot is not stale", () => {
+  const dead = hazards({ live: false, sources: [{ id: "usgs", label: "USGS", live: false }], index: null });
+  const h = deriveHeroStatus(snap([dead], [event({})]), NOW);
+  assert.equal(h.mode, "snapshot");
+  assert.equal(h.totalEvents, null);
+});
+
+test("an aged snapshot left open goes snapshot mode (freshnessOf rule)", () => {
+  const h = deriveHeroStatus(snap([hazards()], [event({})]), NOW + 21 * 60 * 1000);
+  assert.equal(h.mode, "snapshot");
+});
