@@ -152,8 +152,10 @@ from three designed mockups (`.superpowers/brainstorm/63457-*/content/`).
 
 **Decisions overturned from v1:**
 - ~~Ambient + drag only~~ → the hero globe gains **hover/tap event cards**:
-  hovering a pin pops a floating card — category · place eyebrow, title with
-  magnitude, and a **severity meter** (5-segment bar + band word + value).
+  hovering a pin pops a floating card — eyebrow is the category label alone
+  (uppercased), not a "category · place" compound; the place lives in the
+  title (`event.title` verbatim), matching the built model in
+  `eventCardsById` — plus a **severity meter** (5-segment bar + band word + value).
   Severity words render only when `severityFrom === "magnitude"` (the
   provenance rule); category-baseline severities show the bar unlabelled.
   Touch: tap a pin shows the card, tap elsewhere dismisses; the card carries

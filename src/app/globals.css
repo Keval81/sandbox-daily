@@ -943,6 +943,14 @@ body:has(.night-hero) > main#main-content {
   color: var(--color-cream);
   overflow: hidden;
   padding: 96px clamp(20px, 5vw, 56px) 40px;   /* clears the fixed nav */
+  /* Without this, .night-hero-card's z-index: var(--z-overlay) (40) competes
+     directly against the fixed nav's z-index: 30 at the SAME stacking level
+     (neither .night-hero nor its ancestors otherwise create a stacking
+     context), so the card could paint over the nav at short viewports.
+     isolation: isolate traps the card's z-index inside .night-hero's own
+     context; the hero as a whole then stacks by its own z-index (auto),
+     which loses to the nav's explicit positive z-index every time. */
+  isolation: isolate;
 }
 .night-hero-grain {
   position: absolute; inset: 0; pointer-events: none; opacity: 0.06;
@@ -1028,8 +1036,19 @@ body:has(.night-hero) > main#main-content {
   background: color-mix(in srgb, var(--color-accent) 18%, transparent);
 }
 .night-hero-chip[aria-pressed="false"] { opacity: 0.5; }
-.night-hero-chip[aria-disabled="true"] { cursor: default; }
-.night-hero-chip--ghost { border-style: dashed; opacity: 0.4; cursor: default; }
+/* :not(--ghost), deliberately: a ghost chip is ALSO aria-disabled, and this
+   selector's specificity (class + attribute) would otherwise beat the plain
+   .night-hero-chip--ghost rule below regardless of source order, overwriting
+   its own (lighter, dashed) 0.4 opacity with this one. Real chips in
+   Snapshot mode need real disabled affordance beyond a cursor change — no
+   hover/press feedback, visibly dimmed, matching the honesty-in-UI stance
+   the rest of the hero already takes on Snapshot mode. */
+.night-hero-chip[aria-disabled="true"]:not(.night-hero-chip--ghost) {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.5;
+}
+.night-hero-chip--ghost { border-style: dashed; opacity: 0.4; cursor: default; pointer-events: none; }
 .night-hero-chip-soon { opacity: 0.75; }
 
 .night-hero-planet {
@@ -1085,7 +1104,17 @@ body:has(.night-hero) > main#main-content {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  /* A hover-only (non-sticky) card sits on top of the canvas at the pin's own
+     position — with pointer-events: auto (the default), moving the mouse from
+     the pin toward the card crosses onto this box, the canvas fires
+     pointerleave -> hover(null), and the card unmounts out from under the
+     cursor before it can be reached. /pulse's .pulse-tip has the identical
+     problem and solves it the same way: transparent to the pointer unless
+     the card is pinned (tapped/clicked), in which case its content — notably
+     the "open in pulse" link and the close button — needs to be reachable. */
+  pointer-events: none;
 }
+.night-hero-card[data-sticky] { pointer-events: auto; }
 .night-hero-card-close {
   position: absolute;
   top: 4px; right: 6px;
@@ -1159,7 +1188,13 @@ body:has(.night-hero) > main#main-content {
 .night-hero-pip { color: color-mix(in srgb, var(--color-cream) 55%, var(--color-ink)); }
 .night-hero-pip[data-live] { color: var(--color-accent); }
 
-@media (max-width: 719px) {
+/* minmax(300px,1fr) + column-gap + the globe track (min(52vw,640px)) exceeds
+   the content box below ~882px (e.g. at 768px/iPad portrait, roughly a
+   quarter of the globe was clipped) — the two-column composition simply
+   doesn't fit until there's enough room for a 300px-floor left column beside
+   it, so the single-column breakpoint sits above that overflow point rather
+   than at it. */
+@media (max-width: 899px) {
   .night-hero {
     grid-template-columns: 1fr;
     grid-template-areas:

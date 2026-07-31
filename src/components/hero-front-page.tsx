@@ -28,20 +28,36 @@ const SECTION_COLOR: Record<Vertical, string> = {
   features: "var(--color-orange)",
 };
 
-/** Matches the brief's clamp: a card whose pin sits within this many px of the
- *  globe container's right edge renders to the LEFT of the point instead, or
- *  it would draw itself straight off the bled (and clipped) edge. */
-const EDGE_CLEARANCE_PX = 180;
+// The card's own footprint (globals.css: `.night-hero-card { width: min(78vw, 220px); }`,
+// offset 12px from the pin) plus a small viewport margin. The flip decision has
+// to be viewport-relative, not container-relative: the globe container
+// deliberately bleeds past the viewport's right edge (the whole point of the
+// "bleed" composition), so a pin can sit comfortably inside the CONTAINER's
+// bounds while the card drawn to its right would still be clipped by
+// .night-hero's overflow: hidden well before reaching the container's edge.
+const CARD_WIDTH_PX = 220;
+const CARD_OFFSET_PX = 12;
+const VIEWPORT_EDGE_MARGIN_PX = 8;
+// Best-effort estimate, not measured: the card's content is dynamic (title
+// wraps, magnitude line is optional), so this is a defensive upper bound for
+// the bottom-clamp, not a precise height. Generous enough to cover a 2-line
+// title + magnitude + meter + link without under-clamping.
+const CARD_HEIGHT_ESTIMATE_PX = 180;
+const CARD_VERTICAL_MARGIN_PX = 8;
 
 interface Anchor {
   id: string;
   x: number;
   y: number;
-  /** Snapshot of the globe container's width at the moment this anchor was
-   *  set. Read from the ref inside the event handler that produced it — refs
-   *  may not be read during render (react-hooks/refs), so the edge-clamp math
-   *  below works off this stored number instead of a live ref read. */
+  /** Container-local snapshot, for positioning math relative to
+   *  .night-hero-planet (the card's actual CSS containing block — bleed
+   *  doesn't affect this, it's pure container geometry). */
   containerWidth: number;
+  containerHeight: number;
+  /** Viewport-relative X of the pin at the moment this anchor was set — the
+   *  edge-flip decision (Important 1) has to compare against the viewport,
+   *  not the container, since the container itself can extend past it. */
+  viewportX: number;
 }
 
 export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot; articles: HeroArticle[] }) {
@@ -54,8 +70,14 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
   // canvas and this div's own listeners both see every event; neither calls
   // stopPropagation, so they coexist) — it's the only way to have a position
   // to fall back to when hover didn't already supply one.
+  //
+  // Only bound to pointerdown, not pointermove: this fallback is only ever
+  // consulted for a tap (pointerdown -> pointerup with no hover in between),
+  // so the tap's own down-coordinate IS the position — there is no need to
+  // keep re-reading getBoundingClientRect() on every pointermove just to keep
+  // a value this path never uses updated.
   const lastPointerRef = useRef({ x: 0, y: 0 });
-  const trackPointer = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+  const trackPointerOnDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     lastPointerRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }, []);
@@ -95,13 +117,13 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
   );
 
   const [hiddenLayers, setHiddenLayers] = useState<Set<string>>(() => new Set());
-  const markers: Marker[] = useMemo(
-    () =>
-      hiddenLayers.size === 0
-        ? allMarkers
-        : allMarkers.filter((m) => !hiddenLayers.has(layerOf.get(m.id) ?? "")),
-    [allMarkers, hiddenLayers, layerOf]
-  );
+  const markers: Marker[] = useMemo(() => {
+    // Chips go non-interactive in snapshot mode, so a layer hidden while live
+    // has no way back — showing every dimmed marker regardless of a prior
+    // toggle is the only honest reading once the chips can't be un-toggled.
+    if (status.mode === "snapshot" || hiddenLayers.size === 0) return allMarkers;
+    return allMarkers.filter((m) => !hiddenLayers.has(layerOf.get(m.id) ?? ""));
+  }, [allMarkers, hiddenLayers, layerOf, status.mode]);
 
   const [hover, setHover] = useState<Anchor | null>(null);
   const [sticky, setSticky] = useState<Anchor | null>(null);
@@ -114,11 +136,14 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
   const handleHover = useCallback((id: string | null, x: number, y: number) => {
     // Read here, in the event handler — not in the render body, where
     // reading a ref's .current is disallowed (react-hooks/refs).
-    const containerWidth = globeRef.current?.clientWidth ?? 0;
+    const rect = globeRef.current?.getBoundingClientRect();
+    const containerWidth = rect?.width ?? 0;
+    const containerHeight = rect?.height ?? 0;
+    const viewportX = (rect?.left ?? 0) + x;
     setHover((prev) => {
       if (id === null) return prev === null ? prev : null;
       if (prev && prev.id === id && prev.x === x && prev.y === y) return prev;
-      return { id, x, y, containerWidth };
+      return { id, x, y, containerWidth, containerHeight, viewportX };
     });
   }, []);
 
@@ -128,9 +153,12 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
         setSticky(null);
         return;
       }
-      const containerWidth = globeRef.current?.clientWidth ?? 0;
+      const rect = globeRef.current?.getBoundingClientRect();
+      const containerWidth = rect?.width ?? 0;
+      const containerHeight = rect?.height ?? 0;
       const pos = hover && hover.id === id ? { x: hover.x, y: hover.y } : lastPointerRef.current;
-      setSticky({ id, x: pos.x, y: pos.y, containerWidth });
+      const viewportX = (rect?.left ?? 0) + pos.x;
+      setSticky({ id, x: pos.x, y: pos.y, containerWidth, containerHeight, viewportX });
     },
     [hover]
   );
@@ -144,11 +172,31 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
     });
   }, []);
 
-  const flip = active ? active.x > active.containerWidth - EDGE_CLEARANCE_PX : false;
+  // Viewport-relative: would the card's right edge (pin's viewport X + its own
+  // width + the pin offset) cross past the viewport, minus a small margin?
+  // window is only touched once `active` is truthy, which requires a prior
+  // user interaction (post-mount) — never reached during SSR/first render.
+  const flip = active
+    ? active.viewportX + CARD_WIDTH_PX + CARD_OFFSET_PX > window.innerWidth - VIEWPORT_EDGE_MARGIN_PX
+    : false;
+
+  // Container-local positioning (the card's actual CSS containing block is
+  // .night-hero-planet, unaffected by the container's own viewport bleed).
+  // Top AND bottom are clamped so the card stays inside the globe container
+  // regardless of where on it the pin sits.
   const cardStyle = active
-    ? flip
-      ? { top: Math.max(8, active.y - 8), right: Math.max(8, active.containerWidth - active.x + 12) }
-      : { top: Math.max(8, active.y - 8), left: active.x + 12 }
+    ? {
+        top: Math.min(
+          Math.max(CARD_VERTICAL_MARGIN_PX, active.y - CARD_VERTICAL_MARGIN_PX),
+          Math.max(
+            CARD_VERTICAL_MARGIN_PX,
+            active.containerHeight - CARD_HEIGHT_ESTIMATE_PX - CARD_VERTICAL_MARGIN_PX
+          )
+        ),
+        ...(flip
+          ? { right: Math.max(8, active.containerWidth - active.x + CARD_OFFSET_PX) }
+          : { left: active.x + CARD_OFFSET_PX }),
+      }
     : undefined;
 
   return (
@@ -160,57 +208,59 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
         <p className="night-hero-strapline">THE PLANET, FACT-CHECKED DAILY</p>
       </div>
 
-      <div
-        className="night-hero-planet"
-        ref={globeRef}
-        onPointerDown={trackPointer}
-        onPointerMove={trackPointer}
-      >
+      <div className="night-hero-planet" ref={globeRef} onPointerDown={trackPointerOnDown}>
         <img src="/images/pulse-globe-poster.webp" alt="" className="night-hero-poster" />
         <PulseGlobe markers={markers} ambient spin onHover={handleHover} onPick={handlePick} />
 
-        {activeCard && (
-          <div
-            className="night-hero-card"
-            aria-live="polite"
-            style={{ ...cardStyle, borderLeftColor: activeCard.color }}
-          >
-            {sticky && (
-              <button
-                type="button"
-                className="night-hero-card-close"
-                aria-label="Close"
-                onClick={() => setSticky(null)}
-              >
-                ✕
-              </button>
-            )}
-            <span className="night-hero-card-eyebrow" style={{ color: activeCard.color }}>
-              {activeCard.eyebrow}
-            </span>
-            <p className="night-hero-card-title">{activeCard.title}</p>
-            {activeCard.magnitude && (
-              <p className="night-hero-card-magnitude">{activeCard.magnitude}</p>
-            )}
-            <div className="night-hero-card-meter" aria-hidden="true">
-              {Array.from({ length: 5 }, (_, i) => (
-                <span
-                  key={i}
-                  className="night-hero-card-seg"
-                  style={i < activeCard.segments ? { background: activeCard.color } : undefined}
-                />
-              ))}
-              {activeCard.severityWord && (
-                <span className="night-hero-card-severity">
-                  {activeCard.severityWord} {activeCard.severity.toFixed(1)}
-                </span>
+        {/* Persistent live region: a node that mounts AND gains content in the
+            same DOM update is not reliably announced (most screen readers need
+            the aria-live element to already exist before its content changes).
+            The wrapper always stays in the DOM; only the card inside it is
+            conditional. */}
+        <div className="night-hero-card-region" aria-live="polite">
+          {activeCard && (
+            <div
+              className="night-hero-card"
+              data-sticky={sticky ? "true" : undefined}
+              style={{ ...cardStyle, borderLeftColor: activeCard.color }}
+            >
+              {sticky && (
+                <button
+                  type="button"
+                  className="night-hero-card-close"
+                  aria-label="Close"
+                  onClick={() => setSticky(null)}
+                >
+                  ✕
+                </button>
               )}
+              <span className="night-hero-card-eyebrow" style={{ color: activeCard.color }}>
+                {activeCard.eyebrow}
+              </span>
+              <p className="night-hero-card-title">{activeCard.title}</p>
+              {activeCard.magnitude && (
+                <p className="night-hero-card-magnitude">{activeCard.magnitude}</p>
+              )}
+              <div className="night-hero-card-meter" aria-hidden="true">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <span
+                    key={i}
+                    className="night-hero-card-seg"
+                    style={i < activeCard.segments ? { background: activeCard.color } : undefined}
+                  />
+                ))}
+                {activeCard.severityWord && (
+                  <span className="night-hero-card-severity">
+                    {activeCard.severityWord} {activeCard.severity.toFixed(1)}
+                  </span>
+                )}
+              </div>
+              <Link href="/pulse" className="night-hero-card-link">
+                open in pulse →
+              </Link>
             </div>
-            <Link href="/pulse" className="night-hero-card-link">
-              open in pulse →
-            </Link>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="night-hero-live">
