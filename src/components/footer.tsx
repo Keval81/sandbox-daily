@@ -1,6 +1,14 @@
 import Link from "next/link";
+import { getPulseSnapshot } from "@/lib/pulse/snapshot";
+import { deriveHeroStatus } from "@/lib/pulse/hero";
 
-export function Footer() {
+export async function Footer() {
+  // Same 600s in-process cache as /pulse and the homepage hero — no new
+  // upstream traffic. deriveHeroStatus is reused rather than re-derived so
+  // the footer can never state a number the hero would refuse to show.
+  const snapshot = await getPulseSnapshot();
+  const status = deriveHeroStatus(snapshot, Date.parse(snapshot.generatedAt));
+
   return (
     <footer className="bg-ink py-16">
       <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-12 px-6 md:grid-cols-3">
@@ -11,6 +19,19 @@ export function Footer() {
           <p className="font-mono text-meta uppercase tracking-mono text-grey mt-2">
             News · Tech · Sport
           </p>
+          {status.indexChips.length > 0 && (
+            <p className="font-mono text-meta uppercase tracking-mono mt-2">
+              <Link href="/pulse" className="text-grey hover:text-accent transition-colors">
+                planet pulse:{" "}
+                {status.indexChips.map((c, i) => (
+                  <span key={c.layerId}>
+                    {i > 0 && " · "}{c.label} index{" "}
+                    <span style={{ color: c.color }}>{c.score}</span>
+                  </span>
+                ))}
+              </Link>
+            </p>
+          )}
         </div>
         <div>
           <p className="font-mono text-meta uppercase tracking-mono-wide text-grey mb-4">
