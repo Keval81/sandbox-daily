@@ -23,14 +23,26 @@ const DIM_WEIGHT = 0.6;
 
 export const markersFromSnapshot = (snapshot: PulseSnapshot, dimmed: boolean): Marker[] => {
   const byLayer = new Map(snapshot.layers.map((l) => [l.id, l.categories]));
-  return snapshot.events.map((e) => ({
+  const liveLayerIds = new Set(snapshot.layers.filter((l) => l.live).map((l) => l.id));
+  // Full-colour mode must not paint a dead layer's events as live — the stat
+  // line's totalEvents already excludes them (deriveHeroStatus above), and a
+  // marker on the globe is itself a claim of liveness. Dimmed (stale-snapshot)
+  // mode greys the *whole* snapshot instead, so it keeps every event as-is.
+  const events = dimmed ? snapshot.events : snapshot.events.filter((e) => liveLayerIds.has(e.layer));
+  return events.map((e) => ({
     id: e.id, lat: e.lat, lon: e.lon,
     color: dimmed ? DIM_COLOR : byLayer.get(e.layer)?.[e.category]?.color ?? FALLBACK_COLOR,
     weight: dimmed ? e.severity * DIM_WEIGHT : e.severity,
   }));
 };
 
-/** Worst first. Bands come from each layer's own index model. */
+/**
+ * Worst first. Bands come from each layer's own index model — the canonical
+ * vocabulary is hazard-index.ts's `scoreBand` (Severe/High/Elevated/Calm).
+ * This module stays layer-agnostic on purpose: a future layer's index must
+ * reuse these exact band names for its aside weighting to slot in here
+ * without a redesign.
+ */
 const BAND_ORDER = ["Severe", "High", "Elevated", "Calm"];
 
 const ASIDES: Record<string, string[]> = {

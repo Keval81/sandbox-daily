@@ -132,6 +132,21 @@ test("markers colour by the event's OWN layer; dimming greys and shrinks", () =>
   assert.ok(dimA.weight < a.weight);
 });
 
+test("dead layer's events are skipped by the globe in non-dimmed mode; dimmed mode keeps them, greyed", () => {
+  const deadUnrest = unrest({ live: false, sources: [{ id: "radar", label: "Radar", live: false }], index: null });
+  const s = snap([hazards(), deadUnrest], [
+    event({ id: "a" }),
+    event({ id: "c", layer: "unrest", category: "protest" }),
+  ]);
+
+  const live = markersFromSnapshot(s, false);
+  assert.deepEqual(live.map((m) => m.id), ["a"]); // dead layer's marker is gone, not just greyed
+
+  const dimmed = markersFromSnapshot(s, true);
+  assert.deepEqual(dimmed.map((m) => m.id), ["a", "c"]); // stale-snapshot mode still greys everything
+  assert.equal(dimmed.find((m) => m.id === "c")?.color, "#98989D");
+});
+
 test("REGRESSION: both feeds throwing drives the hero to snapshot mode", async () => {
   const throwing: LayerSource = {
     id: "hazards", label: "hazard", categories: {}, categoryOrder: [],
