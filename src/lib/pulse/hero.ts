@@ -1,4 +1,4 @@
-import { everySourceDead, freshnessOf } from "./freshness";
+import { freshnessOf } from "./freshness";
 import type { Marker, PulseSnapshot } from "./types";
 
 export interface IndexChip { layerId: string; label: string; score: number; band: string; color: string }
@@ -21,9 +21,15 @@ const FALLBACK_COLOR = "#98989D";
 const DIM_COLOR = "#98989D";
 const DIM_WEIGHT = 0.6;
 
+/** Shared by markersFromSnapshot and eventCardsById so the two never drift on
+ *  what "this layer's category metadata" or "this layer is live" means. */
+const layerLookup = (snapshot: PulseSnapshot) => ({
+  byLayer: new Map(snapshot.layers.map((l) => [l.id, l.categories])),
+  liveLayerIds: new Set(snapshot.layers.filter((l) => l.live).map((l) => l.id)),
+});
+
 export const markersFromSnapshot = (snapshot: PulseSnapshot, dimmed: boolean): Marker[] => {
-  const byLayer = new Map(snapshot.layers.map((l) => [l.id, l.categories]));
-  const liveLayerIds = new Set(snapshot.layers.filter((l) => l.live).map((l) => l.id));
+  const { byLayer, liveLayerIds } = layerLookup(snapshot);
   // Full-colour mode must not paint a dead layer's events as live — the stat
   // line's totalEvents already excludes them (deriveHeroStatus above), and a
   // marker on the globe is itself a claim of liveness. Dimmed (stale-snapshot)
@@ -130,15 +136,16 @@ const clampSegments = (n: number): number => Math.min(5, Math.max(0, n));
 /**
  * One card per plottable event, keyed by id for the hero's hover/tap lookup.
  * Mirrors markersFromSnapshot's live-layer filter (dead layers contribute no
- * card, same as no marker) and deriveHeroStatus's liveness gate (a snapshot
- * the reader can't trust gets no cards, same as it gets no totals) — reusing
- * `everySourceDead` rather than re-deriving that check here.
+ * card, same as no marker) and delegates to the exact same `freshnessOf` gate
+ * `deriveHeroStatus` uses — all three legs (stale, every source dead, aged
+ * past STALE_AFTER_MS), not a hand-rolled subset. A tab left open past the
+ * stale window must not keep serving cards for a stat line that has already
+ * flipped to Snapshot; only `deriveHeroStatus` gets to decide liveness.
  */
-export const eventCardsById = (snapshot: PulseSnapshot): Map<string, EventCard> => {
-  if (snapshot.stale || everySourceDead(snapshot.layers)) return new Map();
+export const eventCardsById = (snapshot: PulseSnapshot, now: number): Map<string, EventCard> => {
+  if (!freshnessOf(snapshot, now).live) return new Map();
 
-  const byLayer = new Map(snapshot.layers.map((l) => [l.id, l.categories]));
-  const liveLayerIds = new Set(snapshot.layers.filter((l) => l.live).map((l) => l.id));
+  const { byLayer, liveLayerIds } = layerLookup(snapshot);
   const events = snapshot.events.filter((e) => liveLayerIds.has(e.layer));
 
   return new Map(events.map((e) => {

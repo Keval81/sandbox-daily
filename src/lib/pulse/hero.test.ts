@@ -164,7 +164,7 @@ test("eventCardsById: a magnitude event carries severityWord + segments + owning
   const s = snap([hazards()], [
     event({ id: "a", category: "earthquake", severity: 0.8, severityFrom: "magnitude", magnitude: "6.1 M" }),
   ]);
-  const cards = eventCardsById(s);
+  const cards = eventCardsById(s, NOW);
   const card = cards.get("a");
   assert.ok(card);
   assert.equal(card?.eyebrow, "EARTHQUAKE");
@@ -180,13 +180,13 @@ test("eventCardsById: a category-baseline event has severityWord null but still 
   const s = snap([hazards()], [
     event({ id: "b", category: "flood", severity: 0.6, severityFrom: "category" }),
   ]);
-  const withProvenance = eventCardsById(s).get("b");
+  const withProvenance = eventCardsById(s, NOW).get("b");
   assert.equal(withProvenance?.severityWord, null);
   assert.equal(withProvenance?.segments, 3);
 
   const noProvenance = eventCardsById(snap([hazards()], [
     event({ id: "c", category: "flood", severity: 0.6 }),
-  ])).get("c");
+  ]), NOW).get("c");
   assert.equal(noProvenance?.severityWord, null);
 });
 
@@ -195,7 +195,7 @@ test("eventCardsById: events from both layers present in the map keyed by id", (
     event({ id: "a" }),
     event({ id: "c", layer: "unrest", category: "protest" }),
   ]);
-  const cards = eventCardsById(s);
+  const cards = eventCardsById(s, NOW);
   assert.equal(cards.size, 2);
   assert.ok(cards.has("a"));
   assert.ok(cards.has("c"));
@@ -209,19 +209,24 @@ test("eventCardsById: a dead layer's events are excluded, mirroring markersFromS
     event({ id: "a" }),
     event({ id: "c", layer: "unrest", category: "protest" }),
   ]);
-  const cards = eventCardsById(s);
+  const cards = eventCardsById(s, NOW);
   assert.deepEqual([...cards.keys()], ["a"]);
 });
 
 test("eventCardsById: stale snapshot returns an empty map (no cards in snapshot mode)", () => {
   const s = snap([hazards()], [event({ id: "a" })], true);
-  assert.equal(eventCardsById(s).size, 0);
+  assert.equal(eventCardsById(s, NOW).size, 0);
 });
 
 test("eventCardsById: every source dead returns an empty map even when not marked stale", () => {
   const dead = hazards({ live: false, sources: [{ id: "usgs", label: "USGS", live: false }], index: null });
   const s = snap([dead], [event({ id: "a" })]);
-  assert.equal(eventCardsById(s).size, 0);
+  assert.equal(eventCardsById(s, NOW).size, 0);
+});
+
+test("eventCardsById: an aged snapshot left open goes empty, matching deriveHeroStatus's snapshot mode", () => {
+  const s = snap([hazards()], [event({ id: "a" })]);
+  assert.equal(eventCardsById(s, NOW + 21 * 60 * 1000).size, 0);
 });
 
 test("eventCardsById: segments rounds severity*5, clamped 0..5 (0.9 -> 5, 0.09 -> 0)", () => {
@@ -229,7 +234,7 @@ test("eventCardsById: segments rounds severity*5, clamped 0..5 (0.9 -> 5, 0.09 -
     event({ id: "hi", severity: 0.9 }),
     event({ id: "lo", severity: 0.09 }),
   ]);
-  const cards = eventCardsById(s);
+  const cards = eventCardsById(s, NOW);
   assert.equal(cards.get("hi")?.segments, 5);
   assert.equal(cards.get("lo")?.segments, 0);
 });
@@ -239,7 +244,7 @@ test("eventCardsById: url passes through, null when absent", () => {
     event({ id: "withUrl", url: "https://example.com/a" }),
     event({ id: "noUrl" }),
   ]);
-  const cards = eventCardsById(s);
+  const cards = eventCardsById(s, NOW);
   assert.equal(cards.get("withUrl")?.url, "https://example.com/a");
   assert.equal(cards.get("noUrl")?.url, null);
 });
