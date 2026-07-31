@@ -283,6 +283,15 @@ export class GlobeEngine {
       this.canvas.classList.remove("grabbing");
     });
 
+    // The ambient hero's canvas is touch-action: pan-y (the scroller has to be
+    // able to claim a vertical gesture) — the OS can steal a drag mid-motion
+    // and fire pointercancel instead of pointerup, leaving `dragging` (and the
+    // cursor) stuck if this isn't reset the same way. Applies to both modes.
+    this.listen("pointercancel", () => {
+      this.dragging = false;
+      this.canvas.classList.remove("grabbing");
+    });
+
     this.listen("pointerleave", () => {
       this.canvas.classList.remove("hot");
       this.emitHover(null, 0, 0);

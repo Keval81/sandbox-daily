@@ -24,6 +24,7 @@ export function NightHeroGlobe({ markers }: { markers: Marker[] }) {
           router.push("/pulse");
         }
       }}
+      onPointerCancel={() => { down.current = null; }}
     >
       <img src="/images/pulse-globe-poster.webp" alt="" className="night-hero-poster" />
       <PulseGlobe markers={markers} ambient spin />
