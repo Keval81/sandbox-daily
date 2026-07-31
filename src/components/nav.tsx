@@ -42,6 +42,12 @@ export function Nav() {
           aria-label="Sandbox Daily — home"
           className="flex items-center"
           onClick={() => setOpen(false)}
+          // Pre-scroll on the hero the wordmark is visually empty (the masthead
+          // does that job) — keep the Link mounted for layout, but a sighted
+          // zero-size link left tabbable/announced is a trap for keyboard and
+          // screen-reader users. Restored the moment it has content (solid).
+          tabIndex={solid ? undefined : -1}
+          aria-hidden={solid ? undefined : true}
         >
           {solid && (
             <TypewriterText
