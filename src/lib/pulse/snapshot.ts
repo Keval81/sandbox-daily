@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { LayerFetchResult, LayerSource, PulseSnapshot } from "./types";
 import { PULSE_LAYERS } from "./layers/registry";
 import { everySourceDead } from "./freshness";
@@ -57,7 +58,7 @@ export const __resetPulseCache = (): void => {
 };
 
 /** `layers` is a test seam, like __resetPulseCache — application code passes nothing. */
-export const getPulseSnapshot = async (
+const getPulseSnapshotUncached = async (
   layers: LayerSource[] = PULSE_LAYERS
 ): Promise<PulseSnapshot> => {
   const results = await Promise.allSettled(layers.map((l) => l.fetch()));
@@ -71,3 +72,13 @@ export const getPulseSnapshot = async (
   if (!dead) lastGood = snapshot;
   return snapshot;
 };
+
+/**
+ * Wrapped in React's cache() so one render pass = one snapshot: the hero and
+ * the footer each call this independently, and without request-scoped
+ * memoization a cold-start feed flap between the two calls could show a
+ * LIVE hero over a SNAPSHOT footer on the same page. cache() dedupes by
+ * argument identity within a single Next.js request/render; it does not
+ * replace `lastGood` above, which is the cross-request fallback.
+ */
+export const getPulseSnapshot = cache(getPulseSnapshotUncached);
