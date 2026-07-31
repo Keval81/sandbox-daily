@@ -8,6 +8,10 @@ import { SubscribeStrip } from "@/components/subscribe-strip";
 import { getPulseSnapshot } from "@/lib/pulse/snapshot";
 import { NightHero } from "@/components/night-hero";
 
+/** Must match REVALIDATE_SECONDS in @/lib/pulse/freshness — Next statically
+ *  analyses this segment export, so it has to be a literal, not an import. */
+export const revalidate = 600;
+
 const trendingTopics = [
   { label: "Fury vs Joshua", score: 94 },
   { label: "Iran Strait", score: 87 },
