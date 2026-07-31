@@ -11,8 +11,14 @@ import {
 export interface GlobeEngineOptions {
   /** Compact mode: auto-spin, no picking, no hover, no keyboard rotation. */
   compact?: boolean;
-  /** Compact + drag-to-rotate (the landing hero): pick/hover/zoom/keys stay off. */
-  dragOnly?: boolean;
+  /**
+   * What the pointer/keyboard can do. Defaults to "none" when `compact` else
+   * "full" — so a bare `{ compact: true }` (a picture) and a bare `{}`
+   * (today's /pulse) both keep their pre-this-option behaviour unchanged.
+   * "ambient" (the landing hero): drag, hover and tap-pick bind; wheel,
+   * pinch and keyboard stay off.
+   */
+  interaction?: "full" | "none" | "ambient";
   textures?: typeof DEFAULT_TEXTURE_URLS;
 }
 
@@ -51,7 +57,7 @@ export class GlobeEngine {
   private readonly sphereCanvas: HTMLCanvasElement;
   private readonly sctx: CanvasRenderingContext2D;
   private readonly compact: boolean;
-  private readonly dragOnly: boolean;
+  private readonly interaction: "full" | "none" | "ambient";
   /** Not readonly: the OS setting can change mid-session, and the host tells us. */
   private reduceMotion: boolean;
   private readonly cleanups: (() => void)[] = [];
@@ -104,7 +110,7 @@ export class GlobeEngine {
     this.sphereCanvas = sphereCanvas;
     this.sctx = sctx;
     this.compact = options.compact ?? false;
-    this.dragOnly = options.dragOnly ?? false;
+    this.interaction = options.interaction ?? (options.compact ? "none" : "full");
     // An initial value only. The preference can be turned off mid-session, and
     // a constructor read would leave the globe refusing to spin under a button
     // the host has already re-enabled and relabelled "Pause".
@@ -232,9 +238,8 @@ export class GlobeEngine {
   }
 
   private bindEvents(): void {
-    // Compact mode is a picture, not an instrument — unless the host asks for
-    // dragOnly (the landing hero): drag binds, pick/hover/zoom/keys stay off.
-    if (this.compact && !this.dragOnly) return;
+    // "none" (a plain compact picture) binds nothing at all.
+    if (this.interaction === "none") return;
 
     let moved = false;
     let lastX = 0;
@@ -267,7 +272,7 @@ export class GlobeEngine {
         this.applySpin(this.velX, this.velY);
         return;
       }
-      if (this.dragOnly) return;   // no hover emit, no hot cursor
+      // "full" and "ambient" both hover — the hero uses it to show a card.
       const local = this.toLocal(e.clientX, e.clientY);
       const hit = this.pickAt(local[0], local[1]);
       this.canvas.classList.toggle("hot", !!hit);
@@ -275,7 +280,10 @@ export class GlobeEngine {
     });
 
     this.listen("pointerup", (e) => {
-      if (!this.dragOnly && this.dragging && !moved) {
+      // "full" and "ambient" both tap-pick — a stationary pointerup emits
+      // whatever's under it, including null on empty space, which the hero
+      // uses to dismiss its card.
+      if (this.dragging && !moved) {
         const local = this.toLocal(e.clientX, e.clientY);
         this.emitPick(this.pickAt(local[0], local[1]));
       }
@@ -297,8 +305,8 @@ export class GlobeEngine {
       this.emitHover(null, 0, 0);
     });
 
-    // Drag-only stops here: no wheel zoom, no pinch, no keyboard rotation.
-    if (this.dragOnly) return;
+    // Ambient stops here: no wheel zoom, no pinch, no keyboard rotation.
+    if (this.interaction !== "full") return;
 
     this.listen("wheel", (e) => {
       e.preventDefault();

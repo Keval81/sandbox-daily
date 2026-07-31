@@ -9,7 +9,7 @@ interface PulseGlobeProps {
   markers: Marker[];
   selectedId?: string | null;
   compact?: boolean;
-  /** Compact layout + drag-to-rotate, everything else off — the landing hero. */
+  /** Compact layout + drag/hover/tap-pick, wheel/pinch/keys off — the landing hero. */
   ambient?: boolean;
   spin?: boolean;
   focusOn?: { lat: number; lon: number } | null;
@@ -45,7 +45,10 @@ export function PulseGlobe({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = new GlobeEngine(canvas, { compact: compact || ambient, dragOnly: ambient });
+    const engine = new GlobeEngine(canvas, {
+      compact: compact || ambient,
+      interaction: ambient ? "ambient" : undefined,
+    });
     engineRef.current = engine;
 
     const offPick = engine.on("pick", (id) => onPickRef.current?.(id));
