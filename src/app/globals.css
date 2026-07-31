@@ -142,6 +142,13 @@
     padding-top: 0;
   }
 
+  /* .night-hero is full-bleed and pads itself for the fixed nav (72px, see
+     below) — the shared 64px main#main-content padding would double up and
+     push the hero (and its hamburger) down over a strip of cream. */
+  body:has(.night-hero) > main#main-content {
+    padding-top: 0;
+  }
+
   ::selection {
     background-color: var(--color-orange);
     color: var(--color-cream);
@@ -893,6 +900,10 @@
 @media (prefers-reduced-motion: reduce) {
   .pulse-pip, .pulse-gauge { animation: none; }
   .pulse-canvas, .pulse-chip, .pulse-btn, .pulse-ev { transition: none; }
+  /* .night-hero-globe .pulse-canvas's own 400ms opacity transition (below)
+     out-specifies the bare .pulse-canvas reset above — repeat the selector
+     here so reduced motion actually wins. */
+  .night-hero-globe .pulse-canvas { transition: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
