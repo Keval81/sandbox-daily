@@ -29,13 +29,14 @@ const SECTION_COLOR: Record<Vertical, string> = {
 };
 
 // The card's own footprint (globals.css: `.night-hero-card { width: min(78vw, 220px); }`,
-// offset 12px from the pin) plus a small viewport margin. The flip decision has
+// offset 12px from the pin) plus a small viewport margin. The clamp below has
 // to be viewport-relative, not container-relative: the globe container
 // deliberately bleeds past the viewport's right edge (the whole point of the
 // "bleed" composition), so a pin can sit comfortably inside the CONTAINER's
-// bounds while the card drawn to its right would still be clipped by
+// bounds while the card drawn beside it would still be clipped by
 // .night-hero's overflow: hidden well before reaching the container's edge.
-const CARD_WIDTH_PX = 220;
+const CARD_MAX_WIDTH_PX = 220;
+const CARD_WIDTH_VW_FRACTION = 0.78;
 const CARD_OFFSET_PX = 12;
 const VIEWPORT_EDGE_MARGIN_PX = 8;
 // Best-effort estimate, not measured: the card's content is dynamic (title
@@ -172,32 +173,48 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
     });
   }, []);
 
-  // Viewport-relative: would the card's right edge (pin's viewport X + its own
-  // width + the pin offset) cross past the viewport, minus a small margin?
-  // window is only touched once `active` is truthy, which requires a prior
-  // user interaction (post-mount) — never reached during SSR/first render.
-  const flip = active
-    ? active.viewportX + CARD_WIDTH_PX + CARD_OFFSET_PX > window.innerWidth - VIEWPORT_EDGE_MARGIN_PX
-    : false;
+  // A binary left/right flip can't satisfy both viewport edges once the card
+  // is a large fraction of the viewport (at 390px the card is 56% of it) —
+  // there's a band near the right edge where "flip left" itself overshoots
+  // the LEFT edge. Clamp instead: pick a starting side (mirrors the old flip
+  // logic — prefer beside the pin, to its right unless that would overflow),
+  // then clamp the result into [8, innerWidth - cardWidth - 8] so it can
+  // never leave the viewport on EITHER side. On a narrow phone this means the
+  // card parks at a stable x rather than tracking the pin exactly — correct,
+  // not a compromise: the alternative is a card partly off-screen.
+  //
+  // cardWidth is computed from the same formula as the CSS
+  // (`width: min(78vw, 220px)`) rather than hardcoded, so the two can't drift
+  // apart. window is only touched once `active` is truthy, which requires a
+  // prior user interaction (post-mount) — never reached during SSR/first render.
+  let cardStyle: { top: number; left: number } | undefined;
+  if (active) {
+    const cardWidth = Math.min(window.innerWidth * CARD_WIDTH_VW_FRACTION, CARD_MAX_WIDTH_PX);
+    const rightTight =
+      active.viewportX + cardWidth + CARD_OFFSET_PX > window.innerWidth - VIEWPORT_EDGE_MARGIN_PX;
+    const desiredViewportLeft = rightTight
+      ? active.viewportX - cardWidth - CARD_OFFSET_PX
+      : active.viewportX + CARD_OFFSET_PX;
+    const clampedViewportLeft = Math.min(
+      Math.max(desiredViewportLeft, VIEWPORT_EDGE_MARGIN_PX),
+      window.innerWidth - cardWidth - VIEWPORT_EDGE_MARGIN_PX
+    );
+    // Convert back to container-local: the card's actual CSS containing
+    // block is .night-hero-planet (position: absolute resolves against it),
+    // not the viewport. containerLeft is derived from values already on the
+    // anchor (viewportX = containerLeft + x) rather than re-reading a ref.
+    const containerLeft = active.viewportX - active.x;
 
-  // Container-local positioning (the card's actual CSS containing block is
-  // .night-hero-planet, unaffected by the container's own viewport bleed).
-  // Top AND bottom are clamped so the card stays inside the globe container
-  // regardless of where on it the pin sits.
-  const cardStyle = active
-    ? {
-        top: Math.min(
-          Math.max(CARD_VERTICAL_MARGIN_PX, active.y - CARD_VERTICAL_MARGIN_PX),
-          Math.max(
-            CARD_VERTICAL_MARGIN_PX,
-            active.containerHeight - CARD_HEIGHT_ESTIMATE_PX - CARD_VERTICAL_MARGIN_PX
-          )
-        ),
-        ...(flip
-          ? { right: Math.max(8, active.containerWidth - active.x + CARD_OFFSET_PX) }
-          : { left: active.x + CARD_OFFSET_PX }),
-      }
-    : undefined;
+    const top = Math.min(
+      Math.max(CARD_VERTICAL_MARGIN_PX, active.y - CARD_VERTICAL_MARGIN_PX),
+      Math.max(
+        CARD_VERTICAL_MARGIN_PX,
+        active.containerHeight - CARD_HEIGHT_ESTIMATE_PX - CARD_VERTICAL_MARGIN_PX
+      )
+    );
+
+    cardStyle = { top, left: clampedViewportLeft - containerLeft };
+  }
 
   return (
     <>

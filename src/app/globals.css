@@ -1092,6 +1092,14 @@ body:has(.night-hero) > main#main-content {
   .night-hero-planet .pulse-canvas { transition: none; }
 }
 
+/* Always in the DOM (aria-live persistence — see the component), so it needs
+   its own rule rather than relying on being empty-and-therefore-harmless: a
+   zero-height wrapper only happens to have zero footprint because its one
+   possible child is position: absolute. Transparent to the pointer by
+   default so it never shadows the canvas beneath it when no card is
+   showing; .night-hero-card[data-sticky] re-establishes auto on itself. */
+.night-hero-card-region { pointer-events: none; }
+
 .night-hero-card {
   position: absolute;
   z-index: var(--z-overlay);
@@ -1206,7 +1214,12 @@ body:has(.night-hero) > main#main-content {
     padding: 88px 16px 40px;
   }
   .night-hero-planet {
-    width: min(78vw, 340px);
+    /* 340px read as a big, sudden drop right at 899px (a 340px globe next to
+       ~575px of dead space) vs. the 468px two-column globe just above the
+       breakpoint at 900px. 460px keeps the size roughly continuous across
+       the 900px seam while still shrinking well below it on real phones,
+       where 78vw takes over as the binding constraint. */
+    width: min(78vw, 460px);
     margin-left: auto;                                  /* flush right within the single column */
     right: calc(-1 * clamp(20px, 6vw, 48px));            /* then bleed further, same trick as desktop */
   }
