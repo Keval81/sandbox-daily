@@ -964,3 +964,7 @@
 @media (max-width: 480px) {
   .night-hero-globe { width: min(78vw, 340px); }
 }
+
+.sd-nav { transition: background-color 240ms ease; }
+.sd-nav--solid { background: var(--color-ink); }
+.sd-nav--overlay { background: transparent; }

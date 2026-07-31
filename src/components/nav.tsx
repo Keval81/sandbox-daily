@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { TypewriterText } from "./typewriter-text";
@@ -15,10 +15,27 @@ const navLinks = [
 
 export function Nav() {
   const pathname = usePathname();
+  const onHero = pathname === "/";
   const [open, setOpen] = useState(false);
+  const [heroScrolled, setHeroScrolled] = useState(false);
+
+  useEffect(() => {
+    if (!onHero) return;
+    const threshold = () => window.innerHeight * 0.7;
+    const update = () => setHeroScrolled(window.scrollY > threshold());
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, [onHero]);
+
+  const solid = !onHero || heroScrolled || open;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-30 bg-ink">
+    <nav
+      className={`fixed top-0 left-0 right-0 z-30 sd-nav ${
+        solid ? "sd-nav--solid" : "sd-nav--overlay"
+      }`}
+    >
       <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-4">
         <Link
           href="/"
@@ -26,11 +43,13 @@ export function Nav() {
           className="flex items-center"
           onClick={() => setOpen(false)}
         >
-          <TypewriterText
-            text="Sandbox Daily"
-            charMs={80}
-            className="font-display text-2xl md:text-3xl font-black uppercase tracking-tight text-cream leading-none"
-          />
+          {solid && (
+            <TypewriterText
+              text="Sandbox Daily"
+              charMs={80}
+              className="font-display text-2xl md:text-3xl font-black uppercase tracking-tight text-cream leading-none"
+            />
+          )}
         </Link>
 
         {/* Desktop nav */}
