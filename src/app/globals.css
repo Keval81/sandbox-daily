@@ -257,100 +257,6 @@
 }
 
 /* =========================================================
-   Homepage hero — paper bg + polaroid brain + scribble wordmark
-   ========================================================= */
-
-.sd-hero {
-  position: relative;
-  width: 100%;
-  height: 82vh;
-  min-height: 560px;
-  max-height: 880px;
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
-  isolation: isolate;
-  /* solid teal matches the video field so any letterbox / loop-seam reads clean (not black) */
-  background-color: #011f15;
-}
-
-.sd-hero-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  /* bias upward so the baked title (upper-left) is never cropped on wide screens */
-  object-position: center 28%;
-  background-color: #011f15;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.sd-hero-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    linear-gradient(to bottom, rgba(1, 31, 21, 0) 62%, rgba(1, 31, 21, 0.5) 100%),
-    radial-gradient(130% 90% at 72% 42%, rgba(1, 31, 21, 0) 58%, rgba(1, 31, 21, 0.22) 100%);
-}
-
-.sd-hero-bg::-webkit-media-controls,
-.sd-hero-bg::-webkit-media-controls-start-playback-button {
-  display: none !important;
-  -webkit-appearance: none;
-}
-
-.sd-hero-eyebrow {
-  position: relative;
-  z-index: 2;
-  font-family: var(--font-family-mono);
-  font-weight: 600;
-  font-size: clamp(11px, 1.1vw, 15px);
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  margin: 0;
-  padding: 0 0 30px 42px;
-  color: var(--color-cream);
-  opacity: 0.82;
-  text-shadow: 0 1px 10px rgba(1, 31, 21, 0.6);
-  animation: hero-eyebrow 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.6s both;
-}
-
-/* Tablet / small laptop */
-@media (max-width: 1024px) {
-  .sd-hero {
-    height: 70vh;
-    min-height: 460px;
-  }
-  .sd-hero-eyebrow { padding: 0 0 26px 28px; }
-}
-
-/* Mobile — show the WHOLE 16:9 frame (title + skyline), no crop.
-   Container is exactly 16:9 so object-fit:cover fills it with nothing cut. */
-@media (max-width: 640px) {
-  .sd-hero {
-    height: auto;
-    aspect-ratio: 16 / 9;
-    min-height: 0;
-    max-height: none;
-  }
-  .sd-hero-bg { object-position: center; }
-  .sd-hero-eyebrow { padding: 0 0 14px 16px; letter-spacing: 0.22em; }
-}
-
-/* Very short windows (e.g. resized desktop, landscape phones) */
-@media (max-height: 600px) {
-  .sd-hero {
-    height: 100vh;
-    min-height: 320px;
-    max-height: none;
-  }
-}
-
-/* =========================================================
    Planet Pulse — /pulse
    Sandbox Daily's dark room: the dark canvas survives the port (cream behind a
    planet reads as a diagram, not a view from orbit), every accent is rebound to
@@ -989,72 +895,14 @@
   .pulse-canvas, .pulse-chip, .pulse-btn, .pulse-ev { transition: none; }
 }
 
-/* ---- homepage teaser ---- */
-
-.pulse-teaser {
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: var(--space-8);
-  align-items: center;
-  max-width: var(--grid-max);
-  margin: 0 auto;
-  padding: var(--space-12) var(--space-6);
-  background: var(--color-ink);
-  color: var(--color-cream);
-  text-decoration: none;
-}
-.pulse-teaser-globe { position: relative; width: 200px; height: 200px; }
-/* Compact mode binds no pointer handlers at all, so `touch-action: none` buys
-   nothing here and costs everything: on a phone a thumb-drag starting inside
-   the 200px teaser globe would neither scroll the page nor rotate anything. */
-.pulse-teaser-globe .pulse-canvas { cursor: pointer; touch-action: auto; }
-.pulse-teaser-copy {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  min-width: 0;
-}
-.pulse-teaser-eyebrow {
-  font-family: var(--font-family-mono);
-  font-size: var(--text-meta);
-  letter-spacing: var(--tracking-mono-wide);
-  text-transform: uppercase;
-  color: var(--color-accent);
-}
-.pulse-teaser-stat {
-  margin: 0;
-  font-family: var(--font-family-body);
-  font-weight: 300;
-  font-size: var(--text-body);
-  line-height: 1.4;
-  color: var(--color-cream);
-}
-.pulse-teaser-stat .font-mono { font-variant-numeric: tabular-nums; }
-.pulse-teaser-cta { color: var(--color-accent); }
-
-@media (max-width: 640px) {
-  .pulse-teaser { grid-template-columns: 1fr; justify-items: center; text-align: center; }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee,
   .animate-ping,
   .animate-hero-title,
   .animate-hero-eyebrow,
-  .animate-brain-breathe,
-  .sd-hero-eyebrow {
+  .animate-brain-breathe {
     animation: none !important;
     opacity: 1 !important;
-  }
-
-  /* hide the looping hero video and show the still poster instead */
-  video {
-    display: none;
-  }
-  .sd-hero {
-    background-image: url("/images/london-hero-poster.webp");
-    background-size: cover;
-    background-position: center;
   }
 }
 

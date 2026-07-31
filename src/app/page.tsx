@@ -6,7 +6,6 @@ import { TrendingBar } from "@/components/trending-bar";
 import { ArticleGrid } from "@/components/article-grid";
 import { SubscribeStrip } from "@/components/subscribe-strip";
 import { getPulseSnapshot } from "@/lib/pulse/snapshot";
-import { PulseTeaser } from "@/components/pulse/pulse-teaser";
 import { NightHero } from "@/components/night-hero";
 
 const trendingTopics = [
@@ -34,7 +33,6 @@ export default async function Home() {
       <BreakingTicker headlines={breakingHeadlines} />
       <VerticalStrip />
       <TrendingBar topics={trendingTopics} />
-      <PulseTeaser snapshot={pulse} />
       <ArticleGrid articles={articles} typewriterTitles />
       <SubscribeStrip />
     </>
