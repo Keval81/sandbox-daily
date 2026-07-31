@@ -180,6 +180,47 @@ liveness travels with data; open-tab aging tick), the layer-proof contract,
 the night-to-daylight seam, nav-over-hero behaviour, footer index line,
 poster fallback, all engine safety work.
 
+## v3 — The Front Page (Reality Window on broadsheet anatomy; SanSan, 2026-07-31)
+
+Direction picked from three (Night Press / Reality Window / Full Riso):
+**Reality Window** — everything gets the print treatment EXCEPT the globe,
+which stays photoreal as "the one unstylised thing": framed as a tipped-in
+photographic plate. Homepage formatted as a broadsheet front page. Storyboard
+approved in the companion (`.superpowers/brainstorm/63457-*/content/`).
+
+**Anatomy (top to bottom, night stock above the fold):**
+1. **Folio row** (where a paper prints date + price): date · live clock
+   (client minute tick) · `LONDON N°C` via **open-meteo** (keyless; new
+   upstream — cached like pulse sources, HONESTLY OMITTED when unreachable,
+   never faked, never stale-served beyond its window) · the **layer filter
+   chips** (relocated from the left column).
+2. **Nameplate**: centred broadsheet masthead (same verbatim wordmark) +
+   edition stamp `№ <n> · PRINTED NIGHTLY · THE PLANET, FACT-CHECKED` —
+   edition number derived from the date (no fake serials; the pipeline does
+   run nightly, so the claim is true).
+3. **PRESS WIRE**: the breaking ticker, promoted — full-width orange strip
+   directly under the nameplate, mono, bigger. Removed from its old slot.
+4. **Front page body**: left — THE LEAD (top article) with its standfirst
+   set in two columns with a column rule, then two colour-keyed headlines;
+   right — the globe in a hairline **plate frame** captioned
+   `PLATE 1 — THE WORLD, LIVE & UNRETOUCHED`, live line beneath. ALL v2
+   interactivity preserved unchanged (hover/tap cards, severity meters,
+   drag, spin-pause, one shared clock, honesty modes).
+5. **Perforated fold-line** into the cream inside pages, kicker
+   `INSIDE THE EDITION ▾`; grid/carousels/subscribe unchanged.
+
+**Nav on `/`:** pre-scroll the nav hides entirely (links too — a broadsheet
+front page has no nav bar; the folio row owns the top edge). On scroll the
+existing solidify behaviour brings back wordmark + links. Other routes
+unchanged.
+
+**Print chrome (restraint per [[di-premium-restraint-motion]]):** hairline
+rules, the plate frame, perforation dashes, edition stamp. Event cards keep
+their clipping styling. No parallax, no new motion beyond what exists.
+
+**Unchanged:** all honesty rules (extended to weather), layer-proof
+contract, /pulse, footer index line, article pages, poster fallback.
+
 ## References studied
 
 - earth.nullschool.net — instrument restraint, hidden chrome.
