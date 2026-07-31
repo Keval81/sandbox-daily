@@ -7,6 +7,7 @@ import { ArticleGrid } from "@/components/article-grid";
 import { SubscribeStrip } from "@/components/subscribe-strip";
 import { getPulseSnapshot } from "@/lib/pulse/snapshot";
 import { PulseTeaser } from "@/components/pulse/pulse-teaser";
+import { NightHero } from "@/components/night-hero";
 
 const trendingTopics = [
   { label: "Fury vs Joshua", score: 94 },
@@ -28,23 +29,7 @@ export default async function Home() {
 
   return (
     <>
-      <section className="sd-hero">
-        <h1 className="sr-only">Sandbox Daily — News, Tech, Sport</h1>
-        <video
-          className="sd-hero-bg"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          poster="/images/london-hero-poster.webp"
-          disablePictureInPicture
-        >
-          <source src="/video/london-hero.mp4" type="video/mp4" />
-        </video>
-        <div className="sd-hero-scrim" />
-        <p className="sd-hero-eyebrow">News · Tech · Sport</p>
-      </section>
+      <NightHero snapshot={pulse} />
 
       <BreakingTicker headlines={breakingHeadlines} />
       <VerticalStrip />
