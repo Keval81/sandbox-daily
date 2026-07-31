@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { NightHeroGlobe } from "@/components/night-hero-globe";
-import { formatStamp } from "@/components/pulse/format";
+import { NightHeroStat } from "@/components/night-hero-stat";
 import { deriveHeroStatus, markersFromSnapshot } from "@/lib/pulse/hero";
 import type { PulseSnapshot } from "@/lib/pulse/types";
 
 export function NightHero({ snapshot }: { snapshot: PulseSnapshot }) {
-  // Seeded from generatedAt (freshnessOf's hydration-safe convention).
+  // Markers are derived once, server-side, from the snapshot's own timestamp
+  // (freshnessOf's hydration-safe convention) — dimming the globe on age is
+  // not required, only the printed claim (NightHeroStat, client) has to age
+  // honestly, so the marker colours don't need to keep ticking.
   const status = deriveHeroStatus(snapshot, Date.parse(snapshot.generatedAt));
   const markers = markersFromSnapshot(snapshot, status.mode === "snapshot");
 
@@ -19,31 +22,7 @@ export function NightHero({ snapshot }: { snapshot: PulseSnapshot }) {
 
       <NightHeroGlobe markers={markers} />
 
-      <p className="night-hero-stat">
-        {status.mode === "live" ? (
-          <>
-            <span className="night-hero-pip" data-live>● LIVE</span>{" "}
-            <span className="font-mono">{status.totalEvents} live events</span>
-            {status.indexChips.map((c) => (
-              <span key={c.layerId} className="font-mono night-hero-chip">
-                {" · "}{c.label} index <b style={{ color: c.color }}>{c.score}</b>
-              </span>
-            ))}
-            {status.aside && <span className="night-hero-aside"> {status.aside}</span>}
-          </>
-        ) : (
-          <>
-            <span className="night-hero-pip">◌ SNAPSHOT</span>{" "}
-            <span className="font-mono">last checked {formatStamp(status.generatedAt)}</span>
-          </>
-        )}
-      </p>
-
-      {status.whisper.length > 0 && (
-        <p className="night-hero-whisper font-mono">
-          {status.whisper.map((w) => `${w.label} ${w.count}`).join(" · ")}
-        </p>
-      )}
+      <NightHeroStat snapshot={snapshot} />
 
       <p className="night-hero-hint">
         DRAG TO TURN · <Link href="/pulse">TAP TO OPEN</Link> · ↓ TODAY&rsquo;S STORIES
