@@ -933,11 +933,14 @@ body:has(.night-hero) > main#main-content {
    Promoted from a below-hero strip to a full-width banner at the top of
    the homepage stack; same headline data and marquee mechanics (and the
    same reduced-motion guard above) as the base ticker used elsewhere
-   (e.g. /news), just a bigger, brighter shell. Unlayered so it beats the
-   Tailwind utilities (`bg-ink`/`text-meta`) the base variant still uses
-   on the same element structure — see the pt-16/night-hero precedent
-   further up this file for why author rules have to sit outside @layer
-   to win against the `utilities` layer.
+   (e.g. /news), just a bigger, brighter shell. The wire branch renders
+   its own elements with their own class lists (no `bg-ink`/`text-meta`
+   — those stay on the base-variant branch only), so there's no utility
+   to out-specificity here. Left outside @layer purely to match this
+   file's convention for hand-authored component selectors (.night-hero,
+   .pulse-*, .sd-h1, etc. are all unlayered too) — not, unlike the
+   pt-16/night-hero precedent further up this file, because anything
+   needs beating.
    ========================================================= */
 .breaking-ticker--wire {
   background-color: var(--color-orange);

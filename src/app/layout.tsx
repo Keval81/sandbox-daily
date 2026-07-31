@@ -20,7 +20,11 @@ const sourceSerif = Source_Serif_4({
 
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
-  weight: ["400", "500"],
+  // "700" added for the PRESS WIRE ticker (breaking-ticker.tsx): its
+  // font-weight:700 needs a true bold face, not browser-synthesized bold —
+  // the WCAG large-text contrast pass on cream-on-orange (3.011:1) depends
+  // on rendering as genuinely bold, not just fatter via faux-bold skew.
+  weight: ["400", "500", "700"],
   variable: "--font-mono",
   display: "swap",
 });
