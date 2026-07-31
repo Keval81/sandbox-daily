@@ -10,6 +10,12 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+/** Must match REVALIDATE_SECONDS in @/lib/pulse/freshness — Next statically
+ *  analyses this segment export, so it has to be a literal, not an import.
+ *  The global footer's pulse line renders on this static article page too,
+ *  so without this it would freeze at build time forever. */
+export const revalidate = 600;
+
 export async function generateStaticParams() {
   return getArticlesByVertical("features").map((a) => ({ slug: a.slug }));
 }
