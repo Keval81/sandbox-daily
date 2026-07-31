@@ -401,6 +401,11 @@
 .pulse-canvas.hot { cursor: pointer; }
 .pulse-canvas:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 
+/* Horizontal drag rotates; vertical stays with the page. A full-viewport hero
+   that eats vertical touch is a scroll dead zone (the teaser lesson). */
+.pulse-canvas--ambient { touch-action: pan-y; cursor: grab; }
+.pulse-canvas--ambient.grabbing { cursor: grabbing; }
+
 .pulse-pip {
   width: 7px; height: 7px; border-radius: 50%;
   background: var(--color-accent);

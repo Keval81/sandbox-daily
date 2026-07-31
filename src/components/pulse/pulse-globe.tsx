@@ -9,6 +9,8 @@ interface PulseGlobeProps {
   markers: Marker[];
   selectedId?: string | null;
   compact?: boolean;
+  /** Compact layout + drag-to-rotate, everything else off — the landing hero. */
+  ambient?: boolean;
   spin?: boolean;
   focusOn?: { lat: number; lon: number } | null;
   onPick?: (id: string | null) => void;
@@ -16,7 +18,7 @@ interface PulseGlobeProps {
 }
 
 export function PulseGlobe({
-  markers, selectedId = null, compact = false, spin = true,
+  markers, selectedId = null, compact = false, ambient = false, spin = true,
   focusOn = null, onPick, onHover,
 }: PulseGlobeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -43,7 +45,7 @@ export function PulseGlobe({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = new GlobeEngine(canvas, { compact });
+    const engine = new GlobeEngine(canvas, { compact: compact || ambient, dragOnly: ambient });
     engineRef.current = engine;
 
     const offPick = engine.on("pick", (id) => onPickRef.current?.(id));
@@ -60,7 +62,7 @@ export function PulseGlobe({
       engine.destroy();
       engineRef.current = null;
     };
-  }, [compact]);
+  }, [compact, ambient]);
 
   useEffect(() => { engineRef.current?.setMarkers(markers); }, [markers]);
   useEffect(() => { engineRef.current?.setSelected(selectedId); }, [selectedId]);
@@ -73,16 +75,17 @@ export function PulseGlobe({
   }, [focusOn]);
 
   return (
-    // Compact mode is decoration inside a link whose visible copy is already its
-    // accessible name; an aria-label here would prefix that name with invisible
-    // text (WCAG 2.5.3 Label in Name).
+    // Compact and ambient are both decoration next to copy that's already the
+    // accessible content (a link's visible text, or the hero copy beside the
+    // globe); an aria-label here would prefix that content with invisible text
+    // (WCAG 2.5.3 Label in Name).
     <canvas
       ref={canvasRef}
-      className="pulse-canvas"
-      tabIndex={compact ? -1 : 0}
-      aria-hidden={compact ? true : undefined}
+      className={ambient ? "pulse-canvas pulse-canvas--ambient" : "pulse-canvas"}
+      tabIndex={compact || ambient ? -1 : 0}
+      aria-hidden={compact || ambient ? true : undefined}
       aria-label={
-        compact
+        compact || ambient
           ? undefined
           : "Interactive globe of current natural hazards. Use arrow keys to rotate. Every event is also listed in the events panel."
       }

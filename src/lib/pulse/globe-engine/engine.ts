@@ -11,6 +11,8 @@ import {
 export interface GlobeEngineOptions {
   /** Compact mode: auto-spin, no picking, no hover, no keyboard rotation. */
   compact?: boolean;
+  /** Compact + drag-to-rotate (the landing hero): pick/hover/zoom/keys stay off. */
+  dragOnly?: boolean;
   textures?: typeof DEFAULT_TEXTURE_URLS;
 }
 
@@ -49,6 +51,7 @@ export class GlobeEngine {
   private readonly sphereCanvas: HTMLCanvasElement;
   private readonly sctx: CanvasRenderingContext2D;
   private readonly compact: boolean;
+  private readonly dragOnly: boolean;
   /** Not readonly: the OS setting can change mid-session, and the host tells us. */
   private reduceMotion: boolean;
   private readonly cleanups: (() => void)[] = [];
@@ -101,6 +104,7 @@ export class GlobeEngine {
     this.sphereCanvas = sphereCanvas;
     this.sctx = sctx;
     this.compact = options.compact ?? false;
+    this.dragOnly = options.dragOnly ?? false;
     // An initial value only. The preference can be turned off mid-session, and
     // a constructor read would leave the globe refusing to spin under a button
     // the host has already re-enabled and relabelled "Pause".
@@ -228,9 +232,9 @@ export class GlobeEngine {
   }
 
   private bindEvents(): void {
-    // Compact mode is a picture, not an instrument: no drag, no pick, no keys.
-    // The host component puts a link over it.
-    if (this.compact) return;
+    // Compact mode is a picture, not an instrument — unless the host asks for
+    // dragOnly (the landing hero): drag binds, pick/hover/zoom/keys stay off.
+    if (this.compact && !this.dragOnly) return;
 
     let moved = false;
     let lastX = 0;
@@ -263,6 +267,7 @@ export class GlobeEngine {
         this.applySpin(this.velX, this.velY);
         return;
       }
+      if (this.dragOnly) return;   // no hover emit, no hot cursor
       const local = this.toLocal(e.clientX, e.clientY);
       const hit = this.pickAt(local[0], local[1]);
       this.canvas.classList.toggle("hot", !!hit);
@@ -270,7 +275,7 @@ export class GlobeEngine {
     });
 
     this.listen("pointerup", (e) => {
-      if (this.dragging && !moved) {
+      if (!this.dragOnly && this.dragging && !moved) {
         const local = this.toLocal(e.clientX, e.clientY);
         this.emitPick(this.pickAt(local[0], local[1]));
       }
@@ -282,6 +287,9 @@ export class GlobeEngine {
       this.canvas.classList.remove("hot");
       this.emitHover(null, 0, 0);
     });
+
+    // Drag-only stops here: no wheel zoom, no pinch, no keyboard rotation.
+    if (this.dragOnly) return;
 
     this.listen("wheel", (e) => {
       e.preventDefault();
