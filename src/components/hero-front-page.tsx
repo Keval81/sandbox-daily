@@ -53,7 +53,6 @@ interface Anchor {
   /** Container-local snapshot, for positioning math relative to
    *  .night-hero-planet (the card's actual CSS containing block — bleed
    *  doesn't affect this, it's pure container geometry). */
-  containerWidth: number;
   containerHeight: number;
   /** Viewport-relative X of the pin at the moment this anchor was set — the
    *  edge-flip decision (Important 1) has to compare against the viewport,
@@ -138,13 +137,12 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
     // Read here, in the event handler — not in the render body, where
     // reading a ref's .current is disallowed (react-hooks/refs).
     const rect = globeRef.current?.getBoundingClientRect();
-    const containerWidth = rect?.width ?? 0;
     const containerHeight = rect?.height ?? 0;
     const viewportX = (rect?.left ?? 0) + x;
     setHover((prev) => {
       if (id === null) return prev === null ? prev : null;
       if (prev && prev.id === id && prev.x === x && prev.y === y) return prev;
-      return { id, x, y, containerWidth, containerHeight, viewportX };
+      return { id, x, y, containerHeight, viewportX };
     });
   }, []);
 
@@ -155,11 +153,10 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
         return;
       }
       const rect = globeRef.current?.getBoundingClientRect();
-      const containerWidth = rect?.width ?? 0;
       const containerHeight = rect?.height ?? 0;
       const pos = hover && hover.id === id ? { x: hover.x, y: hover.y } : lastPointerRef.current;
       const viewportX = (rect?.left ?? 0) + pos.x;
-      setSticky({ id, x: pos.x, y: pos.y, containerWidth, containerHeight, viewportX });
+      setSticky({ id, x: pos.x, y: pos.y, containerHeight, viewportX });
     },
     [hover]
   );
@@ -185,19 +182,25 @@ export function HeroFrontPage({ snapshot, articles }: { snapshot: PulseSnapshot;
   //
   // cardWidth is computed from the same formula as the CSS
   // (`width: min(78vw, 220px)`) rather than hardcoded, so the two can't drift
-  // apart. window is only touched once `active` is truthy, which requires a
-  // prior user interaction (post-mount) — never reached during SSR/first render.
+  // apart. document.documentElement.clientWidth (not window.innerWidth) so a
+  // classic scrollbar (~15px, non-macOS) is excluded from the viewport width
+  // used for the clamp — innerWidth includes the scrollbar's own real estate,
+  // which would let the clamp place a card 15px further right than the
+  // visible viewport actually allows, eating into the 8px margin. Only
+  // touched once `active` is truthy, which requires a prior user interaction
+  // (post-mount) — never reached during SSR/first render.
   let cardStyle: { top: number; left: number } | undefined;
   if (active) {
-    const cardWidth = Math.min(window.innerWidth * CARD_WIDTH_VW_FRACTION, CARD_MAX_WIDTH_PX);
+    const viewportWidth = document.documentElement.clientWidth;
+    const cardWidth = Math.min(viewportWidth * CARD_WIDTH_VW_FRACTION, CARD_MAX_WIDTH_PX);
     const rightTight =
-      active.viewportX + cardWidth + CARD_OFFSET_PX > window.innerWidth - VIEWPORT_EDGE_MARGIN_PX;
+      active.viewportX + cardWidth + CARD_OFFSET_PX > viewportWidth - VIEWPORT_EDGE_MARGIN_PX;
     const desiredViewportLeft = rightTight
       ? active.viewportX - cardWidth - CARD_OFFSET_PX
       : active.viewportX + CARD_OFFSET_PX;
     const clampedViewportLeft = Math.min(
       Math.max(desiredViewportLeft, VIEWPORT_EDGE_MARGIN_PX),
-      window.innerWidth - cardWidth - VIEWPORT_EDGE_MARGIN_PX
+      viewportWidth - cardWidth - VIEWPORT_EDGE_MARGIN_PX
     );
     // Convert back to container-local: the card's actual CSS containing
     // block is .night-hero-planet (position: absolute resolves against it),
