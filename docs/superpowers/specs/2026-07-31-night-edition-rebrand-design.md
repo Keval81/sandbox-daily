@@ -142,6 +142,42 @@ pass on the hero before its merge.
 - Sitewide reskin (article pages, section fronts, review UI).
 - Wordmark redesign — the masthead treatment uses the existing display face.
 
+## v2 — Front Page composition (SanSan's review verdict, 2026-07-31)
+
+SanSan reviewed the built v1 hero on device and redirected: the homepage
+globe must be genuinely interactive ("show where the current events are"),
+most hero text belongs on `/pulse`, and the page needs to be "a really nice
+designed homepage" for the rebrand. Composition **B — Front Page** chosen
+from three designed mockups (`.superpowers/brainstorm/63457-*/content/`).
+
+**Decisions overturned from v1:**
+- ~~Ambient + drag only~~ → the hero globe gains **hover/tap event cards**:
+  hovering a pin pops a floating card — category · place eyebrow, title with
+  magnitude, and a **severity meter** (5-segment bar + band word + value).
+  Severity words render only when `severityFrom === "magnitude"` (the
+  provenance rule); category-baseline severities show the bar unlabelled.
+  Touch: tap a pin shows the card, tap elsewhere dismisses; the card carries
+  an "open in pulse →" link. Keyboard path remains the headlines + nav links
+  (the accessible instrument is `/pulse`; the hero canvas stays decorative
+  to AT).
+- ~~Filters are /pulse-only~~ → **filter chips live on the homepage**:
+  one real chip per registered layer (toggling a layer's markers), plus
+  dashed "·soon" ghost chips for CONFLICT and UNREST so the layered future
+  is visible from day one. Chips derive from the registry — layer 2 arrives
+  as a data change, per the contract.
+- ~~Full-size masthead centred over globe~~ → **split composition**: left
+  column = masthead (reduced), strapline, the day's **top-3 headlines**
+  colour-keyed by section, filter chips beneath; right = the globe **larger,
+  bleeding off the right edge**. Live line (`● LIVE · N events`) bottom-right.
+- Whisper, aside, and index chips **leave the homepage** (the aside retires;
+  /pulse's HUD already carries index + categories). `deriveHeroStatus`
+  remains the single authority — the hero simply consumes less of it.
+
+**Unchanged from v1:** honesty rules (snapshot mode withholds everything;
+liveness travels with data; open-tab aging tick), the layer-proof contract,
+the night-to-daylight seam, nav-over-hero behaviour, footer index line,
+poster fallback, all engine safety work.
+
 ## References studied
 
 - earth.nullschool.net — instrument restraint, hidden chrome.
