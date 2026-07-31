@@ -1,4 +1,4 @@
-import type { WeatherReading } from "./weather";
+import { WEATHER_REVALIDATE_SECONDS, type WeatherReading } from "./weather";
 
 export interface FolioLine {
   dateLine: string; // "FRIDAY 31 JULY 2026"
@@ -58,9 +58,23 @@ const clockFor = (nowEpochMs: number): string =>
     timeZone: LONDON_TZ,
   }).format(new Date(nowEpochMs));
 
+/**
+ * A weather reading is only ever trusted inside its own revalidate window
+ * (Critical 1 fix). FolioRow re-derives this on a minute tick with a ticking
+ * `now`, but `weather` itself is a frozen prop seeded once at render — an
+ * open tab would otherwise keep showing an hours-old LONDON N°C beside a
+ * live clock forever, since nothing else ever re-fetches it client-side.
+ * Comparing against WEATHER_REVALIDATE_SECONDS (the same constant that gates
+ * the server-side cache in weather.ts) means a stale reading ages out of the
+ * folio line exactly when it ages out of the cache — one definition of
+ * "stale", not two that could drift apart.
+ */
+const isStaleWeather = (nowEpochMs: number, weather: WeatherReading): boolean =>
+  nowEpochMs - Date.parse(weather.fetchedAt) > WEATHER_REVALIDATE_SECONDS * 1000;
+
 export const deriveFolio = (nowEpochMs: number, weather: WeatherReading | null): FolioLine => ({
   dateLine: dateLineFor(nowEpochMs),
   clock: clockFor(nowEpochMs),
-  tempC: weather?.tempC ?? null,
+  tempC: weather && !isStaleWeather(nowEpochMs, weather) ? weather.tempC : null,
   edition: editionFor(nowEpochMs),
 });

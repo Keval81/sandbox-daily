@@ -1031,8 +1031,16 @@ body:has(.night-hero) > main#main-content {
   color: var(--color-cream);
   text-decoration: none;
 }
-.night-hero-lead-headline:hover,
-.night-hero-lead-headline:focus-visible { opacity: 0.85; }
+/* Hover/focus feedback lives on the anchor, not the h2 wrapper (M1 fix):
+   `.night-hero-lead-headline` is an h2 — it is never focusable, so
+   `:focus-visible` on it could never match, and keyboard users tabbing to
+   the lead link got no visible focus ring at all. `display: block` on the
+   anchor makes it fill the h2's own box, so `:hover` also lands exactly on
+   the click target instead of whatever stray box-model gap the h2 has
+   around it. */
+.night-hero-lead-headline a { display: block; }
+.night-hero-lead-headline a:hover,
+.night-hero-lead-headline a:focus-visible { opacity: 0.85; }
 
 .night-hero-standfirst {
   column-count: 2;
@@ -1337,9 +1345,11 @@ body:has(.night-hero) > main#main-content {
     margin: 0 auto;
   }
   .night-hero-planet {
-    /* 78vw is the binding constraint on real phones — the 56dvh desktop term
-       stops mattering once the viewport is this narrow. 420px keeps the cap
-       reasonable on a tall single-column tablet width just under 899px. */
+    /* 78vw is the binding constraint on real phones — the desktop-only
+       height-budget term (`calc(100dvh - 330px)` on `.night-hero-planet`
+       above) stops mattering once the viewport is this narrow. 420px keeps
+       the cap reasonable on a tall single-column tablet width just under
+       899px. */
     width: min(78vw, 420px);
   }
   .night-hero-live {
@@ -1419,9 +1429,11 @@ body:has(.night-hero) > main#main-content {
 .sd-nav { transition: background-color 240ms ease; }
 .sd-nav--solid { background: var(--color-ink); }
 /* background: transparent is the original nav-rides-over-the-hero rule.
-   pointer-events: none is a Task 4 fix: pre-scroll on `/`, nav.tsx unmounts
-   every interactive child (wordmark link, desktop links, hamburger — see
-   nav.tsx's own a11y note), but the fixed bar's own box still occupies the
+   pointer-events: none is a Task 4 fix: pre-scroll on `/`, nav.tsx takes
+   every interactive child out of the tab order (the wordmark link stays
+   mounted for layout but neutralized via tabIndex={-1} + aria-hidden;
+   desktop links and the hamburger unmount entirely — see nav.tsx's own a11y
+   note), but the fixed bar's own box still occupies the
    top ~64px and, being position: fixed with a positive z-index, still
    intercepted pointer events meant for the folio row underneath it (its
    chips are the front page's own top edge now — see .night-hero's comment).

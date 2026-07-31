@@ -86,6 +86,28 @@ test("tempC is null when weather is null (segment omitted, never fabricated)", (
   assert.equal(tempC, null);
 });
 
+test("tempC passes through a fresh reading (well inside the 30-minute revalidate window)", () => {
+  // fetchedAt is 5 minutes before JULY_EPOCH_MS — nowhere near stale.
+  const { tempC } = deriveFolio(JULY_EPOCH_MS, {
+    tempC: 19,
+    fetchedAt: "2026-07-31T13:17:00.000Z",
+  });
+  assert.equal(tempC, 19);
+});
+
+test("tempC is null for a 31-minute-old reading (past the 30-minute revalidate window — Critical 1)", () => {
+  // Regression test for the stale-weather bug: an open tab re-derives the
+  // folio on every minute tick with a ticking `now`, but `weather` itself is
+  // a frozen prop — without this check a 31-minute-old (or hours-old, under
+  // pipeline starvation) reading would keep rendering beside a live clock
+  // forever. fetchedAt is 31 minutes before JULY_EPOCH_MS.
+  const { tempC } = deriveFolio(JULY_EPOCH_MS, {
+    tempC: 19,
+    fetchedAt: "2026-07-31T12:51:00.000Z",
+  });
+  assert.equal(tempC, null);
+});
+
 test("dateLine follows London's calendar day, not UTC's, past London midnight (carried from Task 2 review)", () => {
   // 2026-07-30T23:30:00Z is already 2026-07-31 00:30 in Europe/London (BST,
   // UTC+1) — half an hour into the next London day while UTC's calendar

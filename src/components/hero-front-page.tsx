@@ -93,6 +93,7 @@ export function HeroFrontPage({
   articles,
   weather,
   seedEpochMs,
+  folioSeedEpochMs,
   nameplate,
   wireHeadlines,
 }: {
@@ -100,6 +101,12 @@ export function HeroFrontPage({
   articles: HeroArticle[];
   weather: WeatherReading | null;
   seedEpochMs: number;
+  /** Wall-clock seed for FolioRow only — deliberately NOT the same value as
+   *  `seedEpochMs` above. See the two-seeds-two-jobs note in night-hero.tsx
+   *  (Important 1 fix): this one is NightHero's `wallEpochMs`
+   *  (`Date.now()`), `seedEpochMs` is its `dataEpochMs`
+   *  (`Date.parse(snapshot.generatedAt)`). */
+  folioSeedEpochMs: number;
   nameplate: ReactNode;
   wireHeadlines: string[];
 }) {
@@ -124,15 +131,18 @@ export function HeroFrontPage({
     lastPointerRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }, []);
 
-  // Shared clock: the live line and the event cards must age together, or a
+  // Data clock: the live line and the event cards must age together, or a
   // tab left open could keep showing a "live" card over a hero whose stat
   // line has already flipped to Snapshot. Mirrors the retired hero stat
   // clock's seed/tick pattern (seeded from generatedAt so server and first
   // client render agree; deferred setTimeout before the wall clock takes over).
-  // Seeded from the prop, not a fresh Date.parse(snapshot.generatedAt) here —
-  // NightHero derives the same seedEpochMs for the folio row / nameplate
-  // edition, so every honest-clock consumer on the front page agrees on
-  // "now" at render time by construction, not by coincidence.
+  // Seeded from `seedEpochMs` — NightHero's `dataEpochMs`,
+  // `Date.parse(snapshot.generatedAt)` — deliberately, not the wall clock:
+  // this is the one clock on the front page that has to stay honestly tied
+  // to when the snapshot was actually generated, so it can keep saying
+  // SNAPSHOT truthfully under pipeline starvation. FolioRow below gets its
+  // own, separate wall-clock seed (`folioSeedEpochMs`) — see the
+  // two-seeds-two-jobs note in night-hero.tsx (Important 1 fix).
   const [now, setNow] = useState(() => seedEpochMs);
   useEffect(() => {
     // Deferred rather than synchronous: the first client render has to match
@@ -273,7 +283,7 @@ export function HeroFrontPage({
 
   return (
     <>
-      <FolioRow seedEpochMs={seedEpochMs} weather={weather}>
+      <FolioRow seedEpochMs={folioSeedEpochMs} weather={weather}>
         <div className="night-hero-chips" role="group" aria-label="Layers">
           {chips.map((chip) =>
             status.mode === "snapshot" || !chip.live ? (
