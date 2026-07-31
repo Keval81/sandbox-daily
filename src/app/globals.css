@@ -928,6 +928,26 @@ body:has(.night-hero) > main#main-content {
   }
 }
 
+/* =========================================================
+   PRESS WIRE — BreakingTicker's `wire` variant (front page only).
+   Promoted from a below-hero strip to a full-width banner at the top of
+   the homepage stack; same headline data and marquee mechanics (and the
+   same reduced-motion guard above) as the base ticker used elsewhere
+   (e.g. /news), just a bigger, brighter shell. Unlayered so it beats the
+   Tailwind utilities (`bg-ink`/`text-meta`) the base variant still uses
+   on the same element structure — see the pt-16/night-hero precedent
+   further up this file for why author rules have to sit outside @layer
+   to win against the `utilities` layer.
+   ========================================================= */
+.breaking-ticker--wire {
+  background-color: var(--color-orange);
+}
+
+.breaking-ticker--wire .breaking-ticker__type {
+  font-size: var(--text-body-lg);
+  font-weight: 700;
+}
+
 .night-hero {
   position: relative;
   min-height: 100dvh;               /* dvh, not vh — the iOS toolbar lesson */

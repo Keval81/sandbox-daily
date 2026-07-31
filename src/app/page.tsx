@@ -40,9 +40,12 @@ export default async function Home() {
 
   return (
     <>
+      {/* Top of the stack, above the hero — Task 4 slots this under the
+         nameplate when the full front-page stack is assembled. */}
+      <BreakingTicker headlines={breakingHeadlines} wire />
+
       <NightHero snapshot={pulse} articles={heroArticles} />
 
-      <BreakingTicker headlines={breakingHeadlines} />
       <VerticalStrip />
       <TrendingBar topics={trendingTopics} />
       <ArticleGrid articles={articles} typewriterTitles />
