@@ -944,6 +944,11 @@
 .night-hero-poster {
   position: absolute; inset: 0; width: 100%; height: 100%;
 }
+/* The engine adds `.ready` when textures load (`.failed` still shows
+   markers-over-starfield — honest). Either way the poster sits behind. */
+.night-hero-globe .pulse-canvas { opacity: 0; transition: opacity 400ms ease; }
+.night-hero-globe .pulse-canvas.ready,
+.night-hero-globe .pulse-canvas.failed { opacity: 1; }
 .night-hero-stat { font-size: 0.85rem; text-align: center; }
 .night-hero-pip { color: color-mix(in srgb, var(--color-cream) 55%, var(--color-ink)); }
 .night-hero-pip[data-live] { color: var(--color-accent); }
