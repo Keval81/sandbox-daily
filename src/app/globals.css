@@ -910,7 +910,7 @@ body:has(.night-hero) > main#main-content {
 @media (prefers-reduced-motion: reduce) {
   .pulse-pip, .pulse-gauge { animation: none; }
   .pulse-canvas, .pulse-chip, .pulse-btn, .pulse-ev { transition: none; }
-  /* .night-hero-globe .pulse-canvas's own 400ms opacity transition rule
+  /* .night-hero-planet .pulse-canvas's own 400ms opacity transition rule
      lives further down this file (with .night-hero) and ties this
      selector on specificity (0,2,0) — a repeat here would still LOSE
      because it comes earlier in source. The actual override sits right
@@ -931,25 +931,35 @@ body:has(.night-hero) > main#main-content {
 .night-hero {
   position: relative;
   min-height: 100dvh;               /* dvh, not vh — the iOS toolbar lesson */
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) min(52vw, 640px);
+  grid-template-areas:
+    "mast globe"
+    "rest globe";
   align-items: center;
-  justify-content: center;
-  gap: 12px;
+  column-gap: clamp(24px, 4vw, 64px);
+  row-gap: var(--space-8);
   background: var(--color-ink);
   color: var(--color-cream);
   overflow: hidden;
-  padding: 72px 16px 40px;          /* clears the fixed nav */
+  padding: 96px clamp(20px, 5vw, 56px) 40px;   /* clears the fixed nav */
 }
 .night-hero-grain {
   position: absolute; inset: 0; pointer-events: none; opacity: 0.06;
   background-image: radial-gradient(var(--color-cream) 0.5px, transparent 0.5px);
   background-size: 4px 4px;
 }
+
+.night-hero-mast {
+  grid-area: mast;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
 .night-hero-masthead {
   font-family: var(--font-family-display);
   font-weight: 900;
-  font-size: clamp(2.4rem, 7vw, 4.5rem);
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
   line-height: 1;
 }
 .night-hero-masthead em { font-style: italic; color: var(--color-orange); }
@@ -958,19 +968,99 @@ body:has(.night-hero) > main#main-content {
   font-size: 0.6rem; letter-spacing: 0.3em;
   color: color-mix(in srgb, var(--color-cream) 60%, transparent);
 }
-.night-hero-globe {
+
+.night-hero-rest {
+  grid-area: rest;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.night-hero-headlines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.night-hero-headline {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: var(--leading-headline);
+  color: var(--color-cream);
+  text-decoration: none;
+}
+.night-hero-headline:hover,
+.night-hero-headline:focus-visible { opacity: 0.8; }
+.night-hero-headline-bar {
+  flex: none;
+  width: 4px;
+  align-self: stretch;
+  border-radius: 2px;
+}
+
+.night-hero-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.night-hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: var(--border-hairline) solid color-mix(in srgb, var(--color-cream) 30%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-family-mono);
+  font-size: 10px;
+  letter-spacing: var(--tracking-mono-wide);
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-cream) 70%, transparent);
+  transition: border-color var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out);
+}
+.night-hero-chip[aria-pressed="true"] {
+  color: var(--color-cream);
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+.night-hero-chip[aria-pressed="false"] { opacity: 0.5; }
+.night-hero-chip[aria-disabled="true"] { cursor: default; }
+.night-hero-chip--ghost { border-style: dashed; opacity: 0.4; cursor: default; }
+.night-hero-chip-soon { opacity: 0.75; }
+
+.night-hero-planet {
+  grid-area: globe;
   position: relative;
-  width: min(64vw, 420px);
+  width: min(52vw, 640px);
   aspect-ratio: 1;
+  /* The bleed: a negative margin-right here is a no-op (margin-right only
+     affects what comes AFTER an item in flow, not the item's own box — there
+     is nothing after it in this grid area). `right` on a `position: relative`
+     box shifts the painted box itself without touching grid track sizing —
+     the globe's own reserved layout space is untouched, but it paints further
+     right than its track and gets clipped by .night-hero's overflow: hidden,
+     exactly like the mockup's `right: -30px` trick. */
+  right: calc(-1 * clamp(40px, 8vw, 120px));
 }
 .night-hero-poster {
   position: absolute; inset: 0; width: 100%; height: 100%;
 }
 /* The engine adds `.ready` when textures load (`.failed` still shows
-   markers-over-starfield — honest). Either way the poster sits behind. */
-.night-hero-globe .pulse-canvas { opacity: 0; transition: opacity 400ms ease; }
-.night-hero-globe .pulse-canvas.ready,
-.night-hero-globe .pulse-canvas.failed { opacity: 1; }
+   markers-over-starfield — honest). Either way the poster sits behind — which
+   requires the canvas to be a POSITIONED element, not the base .pulse-canvas
+   class's plain `position: static` (that class relies on a positioned
+   wrapper like .pulse-globe on /pulse; this component has no such wrapper).
+   Two static-vs-positioned siblings don't stack by DOM order: an
+   absolutely-positioned box always paints above a static one regardless of
+   markup order, so without this the poster silently sat on TOP of the
+   canvas and ate every pointer event meant for hover/pick/drag. */
+.night-hero-planet .pulse-canvas { position: absolute; inset: 0; opacity: 0; transition: opacity 400ms ease; }
+.night-hero-planet .pulse-canvas.ready,
+.night-hero-planet .pulse-canvas.failed { opacity: 1; }
 
 /* SOURCE ORDER IS LOAD-BEARING — do not move this block above the rule it
    overrides. This selector ties the 400ms rule above on specificity
@@ -980,28 +1070,116 @@ body:has(.night-hero) > main#main-content {
    inside the shared .pulse-canvas reduced-motion block near the top of this
    Planet Pulse section) silently loses to this rule. */
 @media (prefers-reduced-motion: reduce) {
-  .night-hero-globe .pulse-canvas { transition: none; }
+  .night-hero-planet .pulse-canvas { transition: none; }
 }
 
-.night-hero-stat { font-size: 0.85rem; text-align: center; }
+.night-hero-card {
+  position: absolute;
+  z-index: var(--z-overlay);
+  width: min(78vw, 220px);
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--color-ink) 92%, transparent);
+  border: var(--border-hairline) solid color-mix(in srgb, var(--color-cream) 25%, transparent);
+  border-left: 3px solid var(--color-orange);         /* overridden per-card via inline style */
+  border-radius: var(--radius-sharp);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.night-hero-card-close {
+  position: absolute;
+  top: 4px; right: 6px;
+  padding: 2px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--color-cream) 60%, transparent);
+  font-size: 12px;
+  line-height: 1;
+}
+.night-hero-card-close:hover { color: var(--color-cream); }
+.night-hero-card-eyebrow {
+  display: block;
+  font-family: var(--font-family-mono);
+  font-size: 9px;
+  letter-spacing: var(--tracking-mono-wide);
+  text-transform: uppercase;
+}
+.night-hero-card-title {
+  margin: 4px 20px 0 0;                                /* clears the close button */
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: var(--leading-headline);
+  color: var(--color-cream);
+}
+.night-hero-card-magnitude {
+  margin: 4px 0 0;
+  font-family: var(--font-family-mono);
+  font-size: 10px;
+  color: color-mix(in srgb, var(--color-cream) 70%, transparent);
+}
+.night-hero-card-meter {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: var(--space-2);
+}
+.night-hero-card-seg {
+  display: block;
+  width: 14px; height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--color-cream) 15%, transparent);
+}
+.night-hero-card-severity {
+  margin-left: 4px;
+  font-family: var(--font-family-mono);
+  font-size: 9px;
+  letter-spacing: var(--tracking-mono);
+  color: color-mix(in srgb, var(--color-cream) 70%, transparent);
+}
+.night-hero-card-link {
+  display: inline-block;
+  margin-top: var(--space-2);
+  font-family: var(--font-family-mono);
+  font-size: 9px;
+  letter-spacing: var(--tracking-mono-wide);
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.night-hero-live {
+  position: absolute;
+  bottom: clamp(20px, 4vh, 40px);
+  right: clamp(20px, 5vw, 56px);
+  text-align: right;
+}
+.night-hero-live-line { font-size: 0.8rem; }
+.night-hero-live-line .font-mono { font-variant-numeric: tabular-nums; }
 .night-hero-pip { color: color-mix(in srgb, var(--color-cream) 55%, var(--color-ink)); }
 .night-hero-pip[data-live] { color: var(--color-accent); }
-.night-hero-stat .font-mono { font-variant-numeric: tabular-nums; }
-.night-hero-aside { font-style: italic; opacity: 0.65; }
-.night-hero-whisper {
-  font-size: 0.6rem; letter-spacing: 0.15em;
-  color: color-mix(in srgb, var(--color-cream) 45%, var(--color-ink));
-}
-.night-hero-hint {
-  position: absolute; bottom: 12px; left: 0; right: 0;
-  text-align: center;
-  font-family: var(--font-family-mono);
-  font-size: 0.6rem; letter-spacing: 0.2em;
-  color: color-mix(in srgb, var(--color-cream) 50%, var(--color-ink));
-}
-.night-hero-hint a { color: inherit; text-decoration: underline; }
-@media (max-width: 480px) {
-  .night-hero-globe { width: min(78vw, 340px); }
+
+@media (max-width: 719px) {
+  .night-hero {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "mast"
+      "globe"
+      "live"
+      "rest";
+    row-gap: var(--space-6);
+    padding: 88px 16px 40px;
+  }
+  .night-hero-planet {
+    width: min(78vw, 340px);
+    margin-left: auto;                                  /* flush right within the single column */
+    right: calc(-1 * clamp(20px, 6vw, 48px));            /* then bleed further, same trick as desktop */
+  }
+  .night-hero-live {
+    position: static;
+    grid-area: live;
+    text-align: left;
+  }
 }
 
 .sd-nav { transition: background-color 240ms ease; }

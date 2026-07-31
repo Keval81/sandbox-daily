@@ -6,7 +6,7 @@ import { TrendingBar } from "@/components/trending-bar";
 import { ArticleGrid } from "@/components/article-grid";
 import { SubscribeStrip } from "@/components/subscribe-strip";
 import { getPulseSnapshot } from "@/lib/pulse/snapshot";
-import { NightHero } from "@/components/night-hero";
+import { NightHero, type HeroArticle } from "@/components/night-hero";
 
 /** Must match REVALIDATE_SECONDS in @/lib/pulse/freshness — Next statically
  *  analyses this segment export, so it has to be a literal, not an import. */
@@ -22,6 +22,14 @@ const trendingTopics = [
 
 export default async function Home() {
   const articles = getAllArticles().slice(0, 9);
+  // Same fields ArticleGrid's own cards build their hrefs from (article-card.tsx:
+  // `/${article.category}/${article.slug}`) — kept in sync by construction, not
+  // by convention, since both read off the same Article shape.
+  const heroArticles: HeroArticle[] = articles.slice(0, 3).map((a) => ({
+    href: `/${a.category}/${a.slug}`,
+    section: a.category,
+    title: a.title,
+  }));
   // Independent of each other, so fetched in parallel rather than one after
   // the other. getPulseSnapshot's own fetches are cached for 600s, shared
   // with /pulse — this is not a second upstream request.
@@ -32,7 +40,7 @@ export default async function Home() {
 
   return (
     <>
-      <NightHero snapshot={pulse} />
+      <NightHero snapshot={pulse} articles={heroArticles} />
 
       <BreakingTicker headlines={breakingHeadlines} />
       <VerticalStrip />
