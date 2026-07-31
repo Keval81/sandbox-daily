@@ -119,6 +119,54 @@ test("past the 30-minute window a successful refetch replaces the cached reading
   assert.equal(second?.tempC, 10);
 });
 
+test("two concurrent calls on a cold cache share one in-flight fetch — no thundering herd", async () => {
+  const { fetchImpl, calls } = stubFetch();
+  const reader = createWeatherReader(fetchImpl, () => 1_000_000);
+
+  const [a, b] = await Promise.all([reader(), reader()]);
+  assert.equal(calls(), 1, "two concurrent callers on a cold cache should share one fetch");
+  assert.deepEqual(a, b);
+  assert.equal(a?.tempC, 21);
+});
+
+test("two concurrent calls on a cold cache that fails both resolve null, and the slot clears for a later retry", async () => {
+  const { fetchImpl, setImpl, calls } = stubFetch();
+  setImpl(throwingFetch);
+  const reader = createWeatherReader(fetchImpl, () => 1_000_000);
+
+  const [a, b] = await Promise.all([reader(), reader()]);
+  assert.equal(calls(), 1, "one fetch attempt for two concurrent callers, even on failure");
+  assert.equal(a, null);
+  assert.equal(b, null);
+
+  // The in-flight slot must have cleared on settle, or this call would hang
+  // waiting on (or wrongly reuse) the already-failed promise.
+  setImpl((async () => jsonResponse({ current: { temperature_2m: 9.6 } })) as typeof fetch);
+  const retry = await reader();
+  assert.equal(calls(), 2, "a later call should attempt a fresh fetch, not reuse the failed in-flight slot");
+  assert.equal(retry?.tempC, 10);
+});
+
+test("rounds a mid-range negative temperature: Math.round(-2.5) is -2, not -3", async () => {
+  const fetchImpl = (async () => jsonResponse({ current: { temperature_2m: -2.5 } })) as typeof fetch;
+  const reader = createWeatherReader(fetchImpl, () => 1_000_000);
+  const reading = await reader();
+  // Pinned, not derived: Math.round rounds half-values toward +Infinity, so
+  // -2.5 -> -2 (not the -3 "round half away from zero" would give) — cold
+  // London mornings should not surprise anyone reading this later.
+  assert.equal(reading?.tempC, -2);
+});
+
+test("rounds a small negative temperature toward zero: Math.round(-0.4) is -0", async () => {
+  const fetchImpl = (async () => jsonResponse({ current: { temperature_2m: -0.4 } })) as typeof fetch;
+  const reader = createWeatherReader(fetchImpl, () => 1_000_000);
+  const reading = await reader();
+  // -0 is fine here: it prints as "0" via JSON/template-string serialization
+  // and -0 === 0 for every comparison the UI will ever do, so there is no
+  // "-0°C" footgun downstream.
+  assert.equal(reading?.tempC, -0);
+});
+
 test("getLondonWeather is exported with the production (real fetch, real clock) binding", async () => {
   const { getLondonWeather } = await import("./weather");
   assert.equal(typeof getLondonWeather, "function");

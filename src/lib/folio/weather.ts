@@ -36,11 +36,17 @@ export const createWeatherReader = (
   now: () => number = Date.now
 ): (() => Promise<WeatherReading | null>) => {
   let cached: { reading: WeatherReading; expiresAt: number } | null = null;
+  // Two concurrent callers hitting a cold/expired cache (e.g. the hero and
+  // the footer both requesting a snapshot in the same render pass) must not
+  // each fire their own request at open-meteo — that is a thundering herd
+  // against a keyless upstream. This holds the shared in-flight promise so a
+  // second caller awaits the first caller's request instead of starting its
+  // own; it is cleared as soon as that request settles (success or
+  // failure), so a later call — whether cache-hit or genuine retry — always
+  // sees fresh state.
+  let inFlight: Promise<WeatherReading | null> | null = null;
 
-  return async (): Promise<WeatherReading | null> => {
-    const nowMs = now();
-    if (cached && nowMs < cached.expiresAt) return cached.reading;
-
+  const fetchFresh = async (nowMs: number): Promise<WeatherReading | null> => {
     try {
       const res = await fetchImpl(LONDON_WEATHER_URL, {
         signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -63,6 +69,18 @@ export const createWeatherReader = (
       // null here, never a stale or fabricated reading.
       return null;
     }
+  };
+
+  return async (): Promise<WeatherReading | null> => {
+    const nowMs = now();
+    if (cached && nowMs < cached.expiresAt) return cached.reading;
+
+    if (!inFlight) {
+      inFlight = fetchFresh(nowMs).finally(() => {
+        inFlight = null;
+      });
+    }
+    return inFlight;
   };
 };
 
