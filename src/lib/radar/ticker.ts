@@ -1,13 +1,5 @@
 import { readEvents, type EventsFile } from "./events";
-import snapshot from "./events.snapshot.json";
-
-/** The bundled radar snapshot — the radar's own headlines, frozen at the last
- *  time `npm run radar:snapshot` copied the live feed in before a deploy. The
- *  live events.json only exists on the pipeline machine, so this is what
- *  production reads; it is still RADAR data, not article headlines.
- *  The double cast is confined here: JSON imports type `location` as plain
- *  `string`, not the `"global" | "london"` union. */
-const readBundledSnapshot = (): EventsFile => snapshot as unknown as EventsFile;
+import { readBundledSnapshot } from "./feed";
 
 /** Top-N radar headlines for the breaking ticker. `read` (the live machine-
  *  local feed) and `readSnapshot` (the bundled copy) are injectable for tests.

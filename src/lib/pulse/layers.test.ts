@@ -142,7 +142,6 @@ test("the layer carries its own category ordering, so no panel imports it", () =
   }
 });
 
-test("the registry exposes the hazards layer", () => {
-  assert.equal(PULSE_LAYERS.length, 1);
-  assert.equal(PULSE_LAYERS[0].id, "hazards");
+test("the registry exposes the hazards and news layers, hazards first", () => {
+  assert.deepEqual(PULSE_LAYERS.map((l) => l.id), ["hazards", "news"]);
 });

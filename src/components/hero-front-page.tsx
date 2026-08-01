@@ -96,14 +96,12 @@ export function HeroFrontPage({
   seedEpochMs,
   nameplate,
   wireHeadlines,
-  sectionIndex,
 }: {
   snapshot: PulseSnapshot;
   articles: HeroArticle[];
   seedEpochMs: number;
   nameplate: ReactNode;
   wireHeadlines: string[];
-  sectionIndex: { label: string; route: string; count: number }[];
 }) {
   const globeRef = useRef<HTMLDivElement>(null);
   // Fallback anchor for a touch tap that never fired a preceding hover — a
@@ -150,6 +148,23 @@ export function HeroFrontPage({
   }, []);
 
   const status = useMemo(() => deriveHeroStatus(snapshot, now), [snapshot, now]);
+  // What the plate is showing, counted: one row per category with events on
+  // the globe right now, in each layer's own declared order. Rendered as the
+  // box beneath the live line.
+  const plateSummary = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const e of snapshot.events) counts.set(`${e.layer}:${e.category}`, (counts.get(`${e.layer}:${e.category}`) ?? 0) + 1);
+    return snapshot.layers.flatMap((layer) =>
+      layer.categoryOrder
+        .map((key) => ({
+          key: `${layer.id}:${key}`,
+          label: layer.categories[key]?.label ?? key,
+          color: layer.categories[key]?.color ?? "#98989D",
+          count: counts.get(`${layer.id}:${key}`) ?? 0,
+        }))
+        .filter((row) => row.count > 0)
+    );
+  }, [snapshot]);
   const cards = useMemo(() => eventCardsById(snapshot, now), [snapshot, now]);
   const markers: Marker[] = useMemo(
     () => markersFromSnapshot(snapshot, status.mode === "snapshot"),
@@ -392,28 +407,20 @@ export function HeroFrontPage({
             )}
           </div>
 
-          {/* The broadsheet contents box — fills the plate column beneath the
-              live line (the old flex-end layout left this strip blank). Real
-              counts from the server; the PULSE row reuses the same snapshot
-              the globe is drawing. */}
-          <nav className="night-hero-index" aria-label="In this edition">
-            <span className="night-hero-index-caption font-mono">IN THIS EDITION</span>
-            {sectionIndex.map((row) => (
-              <Link key={row.route} href={row.route} className="night-hero-index-row">
+          {/* What the plate is showing, counted — one row per category with
+              events on the globe, colour-keyed to its markers. Same snapshot
+              the globe draws, so the two can never disagree. Each row opens
+              /pulse, where the full console lives. */}
+          <nav className="night-hero-index" aria-label="On the globe right now">
+            <span className="night-hero-index-caption font-mono">ON THE GLOBE RIGHT NOW</span>
+            {plateSummary.map((row) => (
+              <Link key={row.key} href="/pulse" className="night-hero-index-row">
+                <span className="night-hero-index-dot" style={{ background: row.color }} aria-hidden />
                 <span className="night-hero-index-label font-mono">{row.label}</span>
                 <span className="night-hero-index-dots" aria-hidden />
-                <span className="night-hero-index-count font-mono">
-                  {row.count} {row.count === 1 ? "story" : "stories"}
-                </span>
+                <span className="night-hero-index-count font-mono">{row.count}</span>
               </Link>
             ))}
-            <Link href="/pulse" className="night-hero-index-row">
-              <span className="night-hero-index-label font-mono">PULSE</span>
-              <span className="night-hero-index-dots" aria-hidden />
-              <span className="night-hero-index-count font-mono">
-                {snapshot.events.length} events
-              </span>
-            </Link>
           </nav>
         </div>
       </div>

@@ -1557,3 +1557,12 @@ body:has(.night-hero) > main#main-content {
 :root[data-theme="dark"] .plate-frame-caption {
   color: color-mix(in srgb, #EDE4CD 80%, transparent);
 }
+
+/* Marker swatch in the ON THE GLOBE summary rows — colour-keyed to the pins. */
+.night-hero-index-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  align-self: center;
+}

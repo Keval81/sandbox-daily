@@ -50,12 +50,12 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Pre-paint theme stamp: runs before first paint so a night-edition
-            reader never gets a flash of vellum. localStorage beats the OS
-            preference; ThemeToggle keeps both in sync from then on. */}
+        {/* Pre-paint theme stamp: runs before first paint so there is never a
+            flash of the wrong stock. The NIGHT edition is the house default
+            (SanSan's call); a stored toggle choice beats it. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem("sd-theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=t}catch(e){}`,
+            __html: `try{var t=localStorage.getItem("sd-theme");if(t!=="dark"&&t!=="light")t="dark";document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="dark"}`,
           }}
         />
       </head>
