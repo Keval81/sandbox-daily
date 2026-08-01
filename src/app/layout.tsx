@@ -44,7 +44,21 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${playfair.variable} ${sourceSerif.variable} ${ibmPlexMono.variable}`}
+      // data-theme is stamped by the inline script below BEFORE hydration, so
+      // the server HTML (no attribute) and the client's first paint disagree
+      // on purpose — suppress the attribute-mismatch warning for this element.
+      suppressHydrationWarning
     >
+      <head>
+        {/* Pre-paint theme stamp: runs before first paint so a night-edition
+            reader never gets a flash of vellum. localStorage beats the OS
+            preference; ThemeToggle keeps both in sync from then on. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("sd-theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=t}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="bg-cream text-ink antialiased">
           <a
             href="#main-content"

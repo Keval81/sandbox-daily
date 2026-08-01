@@ -38,7 +38,7 @@ export function VerticalStrip() {
   }));
 
   return (
-    <section className="grid grid-cols-1 md:grid-cols-4">
+    <section className="sd-chrome grid grid-cols-1 md:grid-cols-4">
       {strips.map((strip, i) => (
         <div
           key={strip.vertical.name}

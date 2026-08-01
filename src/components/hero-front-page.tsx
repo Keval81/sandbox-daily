@@ -96,12 +96,14 @@ export function HeroFrontPage({
   seedEpochMs,
   nameplate,
   wireHeadlines,
+  sectionIndex,
 }: {
   snapshot: PulseSnapshot;
   articles: HeroArticle[];
   seedEpochMs: number;
   nameplate: ReactNode;
   wireHeadlines: string[];
+  sectionIndex: { label: string; route: string; count: number }[];
 }) {
   const globeRef = useRef<HTMLDivElement>(null);
   // Fallback anchor for a touch tap that never fired a preceding hover — a
@@ -389,6 +391,30 @@ export function HeroFrontPage({
               </p>
             )}
           </div>
+
+          {/* The broadsheet contents box — fills the plate column beneath the
+              live line (the old flex-end layout left this strip blank). Real
+              counts from the server; the PULSE row reuses the same snapshot
+              the globe is drawing. */}
+          <nav className="night-hero-index" aria-label="In this edition">
+            <span className="night-hero-index-caption font-mono">IN THIS EDITION</span>
+            {sectionIndex.map((row) => (
+              <Link key={row.route} href={row.route} className="night-hero-index-row">
+                <span className="night-hero-index-label font-mono">{row.label}</span>
+                <span className="night-hero-index-dots" aria-hidden />
+                <span className="night-hero-index-count font-mono">
+                  {row.count} {row.count === 1 ? "story" : "stories"}
+                </span>
+              </Link>
+            ))}
+            <Link href="/pulse" className="night-hero-index-row">
+              <span className="night-hero-index-label font-mono">PULSE</span>
+              <span className="night-hero-index-dots" aria-hidden />
+              <span className="night-hero-index-count font-mono">
+                {snapshot.events.length} events
+              </span>
+            </Link>
+          </nav>
         </div>
       </div>
     </>

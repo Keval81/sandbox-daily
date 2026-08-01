@@ -5,6 +5,12 @@ import type { PulseSnapshot } from "@/lib/pulse/types";
 
 export type { HeroArticle };
 
+export interface SectionIndexRow {
+  label: string;
+  route: string;
+  count: number;
+}
+
 /**
  * Server shell for the front page (Day Edition): the section wrapper, the
  * paper grain overlay, the perforated fold at the trailing edge, and the one
@@ -39,11 +45,13 @@ export function NightHero({
   articles,
   weather,
   wireHeadlines,
+  sectionIndex,
 }: {
   snapshot: PulseSnapshot;
   articles: HeroArticle[];
   weather: WeatherReading | null;
   wireHeadlines: string[];
+  sectionIndex: SectionIndexRow[];
 }) {
   // react-hooks/purity flags Date.now() as an impure call "during render"
   // because its analysis has no notion of Server vs. Client Components — it
@@ -66,6 +74,7 @@ export function NightHero({
         seedEpochMs={dataEpochMs}
         nameplate={<Nameplate folioSeedEpochMs={wallEpochMs} weather={weather} />}
         wireHeadlines={wireHeadlines}
+        sectionIndex={sectionIndex}
       />
       {/* The broadsheet fold: a perforated seam, printed as part of the
          front page's own trailing edge — nested inside .night-hero so its

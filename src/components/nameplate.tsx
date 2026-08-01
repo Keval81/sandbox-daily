@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FolioRow } from "@/components/folio-row";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { verticals } from "@/lib/verticals";
 import type { WeatherReading } from "@/lib/folio/weather";
 import type { Vertical } from "@/lib/types";
@@ -59,6 +60,7 @@ export function Nameplate({
           <span className="masthead-rail-tick" style={{ background: "var(--color-accent)" }} aria-hidden />
           PULSE
         </Link>
+        <ThemeToggle />
       </nav>
     </header>
   );

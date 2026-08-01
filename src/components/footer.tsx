@@ -10,7 +10,7 @@ export async function Footer() {
   const status = deriveHeroStatus(snapshot, Date.parse(snapshot.generatedAt));
 
   return (
-    <footer className="bg-ink py-16">
+    <footer className="sd-chrome bg-ink py-16">
       <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-12 px-6 md:grid-cols-3">
         <div>
           <p className="font-display text-xl font-black uppercase tracking-tight text-cream">

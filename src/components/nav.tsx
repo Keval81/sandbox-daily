@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { TypewriterText } from "./typewriter-text";
+import { ThemeToggle } from "./theme-toggle";
 
 const navLinks = [
   { href: "/news", label: "NEWS", indicator: "border-orange" },
@@ -34,7 +35,7 @@ export function Nav() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-30 sd-nav ${
+      className={`fixed top-0 left-0 right-0 z-30 sd-nav sd-chrome ${
         solid ? "sd-nav--solid" : "sd-nav--overlay"
       }`}
     >
@@ -88,6 +89,9 @@ export function Nav() {
                 </Link>
               );
             })}
+            <span className="text-cream">
+              <ThemeToggle />
+            </span>
           </div>
         )}
 
@@ -131,6 +135,9 @@ export function Nav() {
               </Link>
             );
           })}
+          <div className="py-3 text-cream">
+            <ThemeToggle />
+          </div>
         </div>
       )}
     </nav>

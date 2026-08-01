@@ -1181,7 +1181,10 @@ body:has(.night-hero) > main#main-content {
   grid-area: plate;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  /* stretch, with the frame pinning itself to the end: the index box below
+     the plate then fills the column's full width — the old flex-end left a
+     blank strip under the globe. */
+  align-items: stretch;
   gap: var(--space-3);
   min-width: 0;
   /* The newspaper column rule between the lead column and the plate. */
@@ -1194,6 +1197,7 @@ body:has(.night-hero) > main#main-content {
 .plate-frame {
   position: relative;
   width: fit-content;
+  align-self: flex-end;
   border: var(--border-hairline) solid color-mix(in srgb, var(--color-ink) 45%, transparent);
   padding: var(--space-2);
   background: var(--color-ink);
@@ -1381,8 +1385,10 @@ body:has(.night-hero) > main#main-content {
     padding-left: 0;
   }
   .plate-frame {
+    align-self: center;
     margin: 0 auto;
   }
+  .night-hero-index { max-width: 420px; margin-left: auto; margin-right: auto; }
   .night-hero-planet {
     /* 78vw is the binding constraint on real phones; 420px keeps the cap
        reasonable on a tall single-column tablet width just under 899px. */
@@ -1427,3 +1433,127 @@ body:has(.night-hero) > main#main-content {
    events meant for the masthead underneath it. Safe to disable entirely in
    this state: there is nothing left inside `.sd-nav--overlay` to click. */
 .sd-nav--overlay { background: transparent; pointer-events: none; }
+
+/* =========================================================
+   Editions — light/dark theme system.
+   The whole palette lives in CSS custom properties (Tailwind v4 utilities
+   compile to var(--color-*) references), so the Night Edition is a token
+   flip, not a component rewrite. A pre-paint inline script in layout.tsx
+   stamps html[data-theme] from localStorage/prefers-color-scheme;
+   ThemeToggle flips it.
+
+   Two registers:
+   - PAGE surfaces invert: vellum paper -> night stock, ink type -> cream.
+   - CHROME stays printed ink in both editions — nav, footer, ticker,
+     trending bar, the section tiles, the globe plate/card, and /pulse's
+     dark room are pinned back to the print palette via `.sd-chrome` (or
+     their own selectors below), so the dark window on paper composition
+     survives the flip in both directions.
+   ========================================================= */
+:root { color-scheme: light; }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-cream: #191512;   /* page background — deep warm night stock */
+  --color-ink:   #EDE4CD;   /* type + rules print in cream */
+  --color-grey:  #A69C8D;   /* meta, readable on night stock */
+  --color-green: #5E9C79;   /* sport tags/hover borders — brand green is
+                               near-invisible on night stock */
+  --paper:       #14100C;   /* front-page stock, one step deeper again */
+}
+
+/* Chrome pinned to the print palette in BOTH editions. Local custom
+   properties override the theme for everything inside these subtrees —
+   the utilities and color-mix() rules resolve against these values. */
+.sd-chrome,
+.plate-frame,
+.night-hero-card,
+.pulse-stage {
+  --color-cream: #F5EED8;
+  --color-ink:   #111111;
+  --color-grey:  #6E655B;
+  --color-green: #1A3A2A;
+}
+
+/* =========================================================
+   Theme toggle — a print-register control (mono, hairline), lives in the
+   masthead rail on the front page and the fixed nav elsewhere.
+   ========================================================= */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: var(--border-hairline) solid color-mix(in srgb, currentColor 40%, transparent);
+  border-radius: 999px;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-family-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-mono-wide);
+  text-transform: uppercase;
+  color: inherit;
+  transition: color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+.theme-toggle:hover { color: var(--color-orange); }
+
+/* =========================================================
+   IN THIS EDITION — the front page's contents box (fills the plate
+   column beneath the live line; a broadsheet index with leader dots).
+   ========================================================= */
+.night-hero-index {
+  width: 100%;
+  margin-top: var(--space-4);
+  border: var(--border-hairline) solid color-mix(in srgb, var(--color-ink) 35%, transparent);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+.night-hero-index-caption {
+  display: block;
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border-hairline) solid color-mix(in srgb, var(--color-ink) 25%, transparent);
+  font-size: 9px;
+  letter-spacing: var(--tracking-mono-wide);
+  text-transform: uppercase;
+  color: var(--color-orange);
+}
+.night-hero-index-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 5px 0;
+  text-decoration: none;
+  color: var(--color-ink);
+}
+.night-hero-index-row:hover .night-hero-index-label { color: var(--color-orange); }
+.night-hero-index-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-mono-wide);
+  text-transform: uppercase;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.night-hero-index-dots {
+  flex: 1;
+  border-bottom: 1px dotted color-mix(in srgb, var(--color-ink) 40%, transparent);
+  transform: translateY(-3px);
+}
+.night-hero-index-count {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--color-ink) 70%, transparent);
+}
+
+/* Night Edition, plate decorations: the frame's interior is pinned to print
+   ink (the window must stay dark), but its BORDER and caption tab sit against
+   the night-stock page — the pinned ink-mix values are invisible there, so
+   these two repaint in cream. Literal values, deliberately: inside
+   .plate-frame the pinned --color-cream/--color-ink are the print palette,
+   so no var can express "the page's cream" from in here. */
+:root[data-theme="dark"] .plate-frame {
+  border-color: color-mix(in srgb, #EDE4CD 35%, transparent);
+}
+:root[data-theme="dark"] .plate-frame-caption {
+  color: color-mix(in srgb, #EDE4CD 80%, transparent);
+}

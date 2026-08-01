@@ -20,7 +20,7 @@ export function BreakingTicker({ headlines, front = false }: BreakingTickerProps
   const text = headlines.join(" · ");
 
   return (
-    <div className={`bg-ink overflow-hidden ${front ? "breaking-ticker--front py-3" : "py-3"}`}>
+    <div className={`sd-chrome bg-ink overflow-hidden ${front ? "breaking-ticker--front py-3" : "py-3"}`}>
       <div className="mx-auto max-w-[1440px] px-6 flex items-center gap-4">
         <LiveIndicator />
         <div className="overflow-hidden flex-1">

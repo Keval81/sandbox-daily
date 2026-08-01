@@ -11,7 +11,7 @@ interface TrendingBarProps {
 
 export function TrendingBar({ topics }: TrendingBarProps) {
   return (
-    <section className="bg-ink py-6 px-6">
+    <section className="sd-chrome bg-ink py-6 px-6">
       <div className="mx-auto max-w-[1440px] flex items-center gap-8 overflow-x-auto">
         <div className="flex items-center gap-3 shrink-0">
           <LiveIndicator />

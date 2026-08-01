@@ -1,5 +1,7 @@
-import { getAllArticles } from "@/lib/articles";
+import { getAllArticles, getArticlesByVertical } from "@/lib/articles";
 import { getTickerHeadlines } from "@/lib/radar/ticker";
+import { verticals } from "@/lib/verticals";
+import type { Vertical } from "@/lib/types";
 import { VerticalStrip } from "@/components/vertical-strip";
 import { TrendingBar } from "@/components/trending-bar";
 import { ArticleGrid } from "@/components/article-grid";
@@ -34,6 +36,13 @@ export default async function Home() {
     standfirst: i === 0 ? a.standfirst : undefined,
     thumb: a.heroImage,
   }));
+  // The broadsheet contents box (IN THIS EDITION, plate column): one row per
+  // section with its real published-story count.
+  const sectionIndex = (["news", "tech", "sport", "features"] as Vertical[]).map((v) => ({
+    label: verticals[v].label,
+    route: verticals[v].route,
+    count: getArticlesByVertical(v).length,
+  }));
   // Independent of each other, so fetched in parallel rather than one after
   // the other. getPulseSnapshot's own fetches are cached for 600s, shared
   // with /pulse — this is not a second upstream request. getLondonWeather is
@@ -53,6 +62,7 @@ export default async function Home() {
         articles={heroArticles}
         weather={weather}
         wireHeadlines={breakingHeadlines}
+        sectionIndex={sectionIndex}
       />
       {/* The perforated fold itself is inside NightHero now — nested in
          .night-hero so the ink background paints behind its dashes. */}
