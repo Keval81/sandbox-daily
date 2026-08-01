@@ -37,7 +37,18 @@ test("drops blank titles", async () => {
   assert.deepEqual(await getTickerHeadlines(3, read), ["Real", "Also real"]);
 });
 
-test("falls back to a neutral item when the feed is empty", async () => {
+test("falls back to the provided headlines when the feed is empty", async () => {
   const read = async () => feed([]);
-  assert.deepEqual(await getTickerHeadlines(3, read), ["SANDBOX DAILY — LIVE"]);
+  const fallback = () => ["Article one", "Article two"];
+  assert.deepEqual(await getTickerHeadlines(3, read, fallback), ["Article one", "Article two"]);
+});
+
+test("returns an empty list when both the feed and the fallback are empty", async () => {
+  const read = async () => feed([]);
+  assert.deepEqual(await getTickerHeadlines(3, read, () => []), []);
+});
+
+test("ignores the fallback when the feed has events", async () => {
+  const read = async () => feed(["Radar"]);
+  assert.deepEqual(await getTickerHeadlines(3, read, () => ["Article"]), ["Radar"]);
 });

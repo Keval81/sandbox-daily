@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { GHOST_CHIPS, chipsFromLayers, deriveHeroStatus, eventCardsById, markersFromSnapshot } from "./hero";
+import { deriveHeroStatus, eventCardsById, markersFromSnapshot } from "./hero";
 import { buildSnapshot } from "./snapshot";
 import type { LayerEvent, LayerSource, PulseLayerSummary, PulseSnapshot } from "./types";
 
@@ -247,17 +247,4 @@ test("eventCardsById: url passes through, null when absent", () => {
   const cards = eventCardsById(s, NOW);
   assert.equal(cards.get("withUrl")?.url, "https://example.com/a");
   assert.equal(cards.get("noUrl")?.url, null);
-});
-
-test("chipsFromLayers: one chip per snapshot layer, in order, with live flags", () => {
-  const deadUnrest = unrest({ live: false, sources: [{ id: "radar", label: "Radar", live: false }], index: null });
-  const s = snap([hazards(), deadUnrest], []);
-  assert.deepEqual(chipsFromLayers(s), [
-    { id: "hazards", label: "hazard", live: true },
-    { id: "unrest", label: "unrest", live: false },
-  ]);
-});
-
-test("GHOST_CHIPS: hardcoded ghost copy, not derived from layers", () => {
-  assert.deepEqual(GHOST_CHIPS, ["CONFLICT", "UNREST"]);
 });

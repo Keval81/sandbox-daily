@@ -408,8 +408,10 @@ export class GlobeEngine {
         this.velX *= 0.94;
         this.velY *= 0.94;
       } else if (this.spin) {
-        // spin about the planet's own axis (local Y), so it reads as Earth turning
-        this.orient = qnorm(qmul(this.orient, qaxis(0, 1, 0, -0.0018)));
+        // spin about the planet's own axis (local Y), so it reads as Earth turning.
+        // −0.0032/frame ≈ one revolution per ~33s at 60fps — the old −0.0018
+        // (~1 rev/min) read as a still image on the front page.
+        this.orient = qnorm(qmul(this.orient, qaxis(0, 1, 0, -0.0032)));
       }
     }
     this.frameNo++;

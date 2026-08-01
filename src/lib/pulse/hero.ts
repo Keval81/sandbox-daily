@@ -165,12 +165,3 @@ export const eventCardsById = (snapshot: PulseSnapshot, now: number): Map<string
   }));
 };
 
-export interface LayerChip { id: string; label: string; live: boolean }
-
-/** Hardcoded ghost copy for layers not yet registered — never derived from data.
- *  When a real layer with a matching label registers, delete it from this
- *  list, or the hero shows the chip and its ghost twin side by side. */
-export const GHOST_CHIPS = ["CONFLICT", "UNREST"] as const;
-
-export const chipsFromLayers = (snapshot: PulseSnapshot): LayerChip[] =>
-  snapshot.layers.map((l) => ({ id: l.id, label: l.label, live: l.live }));

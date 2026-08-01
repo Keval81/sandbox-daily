@@ -32,6 +32,11 @@
   --grid-max: 1440px;
   --reading-max: 75ch;
 
+  /* Day Edition front page: printed newsprint, one step warmer/deeper than
+     --color-cream so the fold line between the front page and the cream
+     sections below reads as a real page edge. */
+  --paper: #F1E7CE;
+
   /* Borders */
   --border-vertical: 4px;
   --border-hairline: 1px;
@@ -929,91 +934,145 @@ body:has(.night-hero) > main#main-content {
 }
 
 /* =========================================================
-   PRESS WIRE — BreakingTicker's `wire` variant (front page only).
-   Promoted from a below-hero strip to a full-width banner at the top of
-   the homepage stack; same headline data and marquee mechanics (and the
-   same reduced-motion guard above) as the base ticker used elsewhere
-   (e.g. /news), just a bigger, brighter shell. The wire branch renders
-   its own elements with their own class lists (no `bg-ink`/`text-meta`
-   — those stay on the base-variant branch only), so there's no utility
-   to out-specificity here. Left outside @layer purely to match this
-   file's convention for hand-authored component selectors (.night-hero,
-   .pulse-*, .sd-h1, etc. are all unlayered too) — not, unlike the
-   pt-16/night-hero precedent further up this file, because anything
-   needs beating.
+   Breaking ticker — front-page variant (Day Edition).
+   Same ink strip + Live dot as the base ticker used on /news, one type
+   size up (13px vs the 11px meta). The full-width orange PRESS WIRE
+   banner is retired. Unlayered to match this file's convention for
+   hand-authored component selectors.
    ========================================================= */
-.breaking-ticker--wire {
-  background-color: var(--color-orange);
+.breaking-ticker--front .breaking-ticker__type {
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.breaking-ticker--wire .breaking-ticker__type {
-  font-size: var(--text-body-lg);
-  font-weight: 700;
-}
-
-/* Task 4 restructure: the front page is now a vertical stack of full-width
-   bands (folio row → nameplate → PRESS WIRE → body grid), not the old
-   two-column "masthead beside a bleeding globe" grid — so .night-hero itself
-   moves from `display: grid` to a column flexbox and each band lays out its
-   own internal columns instead. No more 96px top padding to clear the fixed
-   nav: nav.tsx hides the whole bar pre-scroll on `/` (Task 2), so the folio
-   row is free to own the page's actual top edge. */
+/* =========================================================
+   Day Edition — the printed front page.
+   The homepage is a broadsheet printed on paper: masthead stack, folio
+   line, section rail, ink ticker, lead + thumbnail briefs, and the globe
+   as the single dark "Reality Window" plate cut into the page. The
+   .night-hero-* class names survive from Night Edition v3 (renaming them
+   would churn every file that composes the front page) — the register
+   they describe is now paper, not ink.
+   ========================================================= */
 .night-hero {
   position: relative;
   display: flex;
   flex-direction: column;
   min-height: 100dvh;               /* dvh, not vh — the iOS toolbar lesson */
-  background: var(--color-ink);
-  color: var(--color-cream);
+  background: var(--paper);
+  color: var(--color-ink);
   overflow: hidden;
-  /* Without this, .night-hero-card's z-index: var(--z-overlay) (40) competes
-     directly against the fixed nav's z-index: 30 at the SAME stacking level
-     (neither .night-hero nor its ancestors otherwise create a stacking
-     context), so the card could paint over the nav at short viewports.
-     isolation: isolate traps the card's z-index inside .night-hero's own
-     context; the hero as a whole then stacks by its own z-index (auto),
-     which loses to the nav's explicit positive z-index every time. */
+  /* Traps .night-hero-card's z-index: var(--z-overlay) (40) inside the
+     hero's own stacking context so it can never paint over the fixed nav
+     (z-index 30) at short viewports. */
   isolation: isolate;
 }
+/* Newsprint grain: ink flecks on paper (was cream-on-ink). */
 .night-hero-grain {
-  position: absolute; inset: 0; pointer-events: none; opacity: 0.06;
-  background-image: radial-gradient(var(--color-cream) 0.5px, transparent 0.5px);
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.05;
+  background-image: radial-gradient(var(--color-ink) 0.5px, transparent 0.5px);
   background-size: 4px 4px;
 }
 
-/* .night-hero-masthead is still live — Nameplate (nameplate.tsx) reuses it
-   verbatim for its own centred wordmark. .night-hero-mast (the old flex
-   wrapper) and .night-hero-strapline die here: HeroFrontPage no longer
-   renders its own masthead directly — NightHero (server) passes <Nameplate/>
-   down as the `nameplate` prop instead (Task 4 front-page-body restructure). */
-.night-hero-masthead {
+/* ---- Masthead stack: ears + nameplate, folio line, section rail ---- */
+.masthead {
+  position: relative;
+  padding: var(--space-4) clamp(20px, 5vw, 56px) 0;
+  text-align: center;
+}
+.masthead-plate {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) 0;
+}
+.masthead-ear {
+  position: absolute;
+  font-size: 9px;
+  letter-spacing: var(--tracking-mono-wide);
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--color-ink) 55%, transparent);
+}
+.masthead-ear--left { left: 0; text-align: left; }
+.masthead-ear--right { right: 0; text-align: right; }
+.masthead-title {
   font-family: var(--font-family-display);
   font-weight: 900;
-  font-size: clamp(2rem, 4.5vw, 3.2rem);
-  line-height: 1;
+  font-size: clamp(2.8rem, 7.5vw, 5.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  color: var(--color-ink);
 }
-.night-hero-masthead em { font-style: italic; color: var(--color-orange); }
+.masthead-title em { font-style: italic; color: var(--color-orange); }
 
-/* Front-page body: lead column (left) + plate column (right). Named grid
-   areas (not source order) drive the mobile reflow further down — the
-   storyboard wants the plate ABOVE the lead on a stacked phone layout even
-   though the lead stays first in the DOM/tab order. */
+/* Folio line — date · time · temp, printed directly under the nameplate
+   between hairlines (the "under the main header" ask). */
+.folio-row {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-2) 0;
+  border-top: var(--border-hairline) solid color-mix(in srgb, var(--color-ink) 30%, transparent);
+  color: color-mix(in srgb, var(--color-ink) 75%, transparent);
+}
+.folio-row-line {
+  font-size: 11px;
+  letter-spacing: var(--tracking-mono);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Section rail — the front page's own navigation, closed by the broadsheet
+   double rule. Real links; the fixed site nav takes over on scroll. */
+.masthead-rail {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: clamp(16px, 3.2vw, 44px);
+  row-gap: var(--space-2);
+  padding: 10px 0;
+  border-top: var(--border-hairline) solid color-mix(in srgb, var(--color-ink) 30%, transparent);
+  /* `double` needs >= 3px to render as two visible lines in every engine. */
+  border-bottom: 3px double color-mix(in srgb, var(--color-ink) 65%, transparent);
+}
+.masthead-rail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-mono-wide);
+  text-transform: uppercase;
+  color: var(--color-ink);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.masthead-rail-link:hover { color: var(--color-orange); }
+.masthead-rail-tick { width: 8px; height: 8px; flex: none; }
+
+/* ---- Front-page body: lead + briefs | column rule | plate window ---- */
 .night-hero-body {
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) min(36vw, 560px);
+  grid-template-columns: minmax(280px, 1fr) min(36vw, 540px);
   grid-template-areas: "lead plate";
-  align-items: center;
-  column-gap: clamp(24px, 4vw, 64px);
-  padding: var(--space-6) clamp(20px, 5vw, 56px);
+  align-items: start;
+  column-gap: clamp(24px, 3vw, 48px);
+  padding: var(--space-8) clamp(20px, 5vw, 56px) var(--space-8);
 }
 
 .night-hero-lead-col {
   grid-area: lead;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
   min-width: 0;
+}
+.night-hero-lead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 .night-hero-kicker {
   font-family: var(--font-family-mono);
@@ -1026,109 +1085,98 @@ body:has(.night-hero) > main#main-content {
   display: block;
   font-family: var(--font-family-display);
   font-weight: 900;
-  font-size: clamp(1.6rem, 2.9vw, 2.5rem);
-  line-height: var(--leading-headline);
-  color: var(--color-cream);
+  font-size: clamp(1.8rem, 3.2vw, 2.8rem);
+  line-height: 1.05;
+  color: var(--color-ink);
   text-decoration: none;
 }
 /* Hover/focus feedback lives on the anchor, not the h2 wrapper (M1 fix):
-   `.night-hero-lead-headline` is an h2 — it is never focusable, so
-   `:focus-visible` on it could never match, and keyboard users tabbing to
-   the lead link got no visible focus ring at all. `display: block` on the
-   anchor makes it fill the h2's own box, so `:hover` also lands exactly on
-   the click target instead of whatever stray box-model gap the h2 has
-   around it. */
+   the h2 is never focusable, so :focus-visible on it could never match.
+   display: block makes the anchor fill the h2's own box. */
 .night-hero-lead-headline a { display: block; }
 .night-hero-lead-headline a:hover,
-.night-hero-lead-headline a:focus-visible { opacity: 0.85; }
+.night-hero-lead-headline a:focus-visible { opacity: 0.8; }
 
 .night-hero-standfirst {
   column-count: 2;
   column-gap: var(--space-6);
-  column-rule: var(--border-hairline) solid color-mix(in srgb, var(--color-cream) 25%, transparent);
+  column-rule: var(--border-hairline) solid color-mix(in srgb, var(--color-ink) 25%, transparent);
   font-family: var(--font-family-body);
-  font-weight: 300;
-  font-size: 13px;
-  line-height: 1.5;
-  color: color-mix(in srgb, var(--color-cream) 85%, transparent);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--color-ink) 82%, transparent);
 }
 
-.night-hero-headlines {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-.night-hero-headline {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  font-family: var(--font-family-display);
-  font-weight: 700;
-  font-size: 1rem;
-  line-height: var(--leading-headline);
-  color: var(--color-cream);
+/* The lead illustration — a printed plate with a mono caption. */
+.night-hero-lead-figure {
+  display: block;
   text-decoration: none;
 }
-.night-hero-headline:hover,
-.night-hero-headline:focus-visible { opacity: 0.8; }
-.night-hero-headline-bar {
-  flex: none;
-  width: 4px;
-  align-self: stretch;
-  border-radius: 2px;
+.night-hero-lead-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Capped and centre-cropped (16:9 → wider) so the thumbnail briefs still
+     peek above the fold on a 900px-tall desktop — a broadsheet lead photo,
+     not a full-bleed poster. Phones keep the uncropped frame. */
+  max-height: clamp(260px, 38vh, 420px);
+  object-fit: cover;
+  border: var(--border-hairline) solid color-mix(in srgb, var(--color-ink) 35%, transparent);
 }
-
-/* Shared with .folio-row-chips (folio-row.tsx's own wrapper, further down
-   this file) — the chip buttons this class holds are nested one level
-   inside that wrapper (.folio-row-chips > .night-hero-chips), and both
-   needed the identical flex/wrap/gap layout, so the properties live here
-   once instead of twice. .folio-row-chips keeps its own rule for the one
-   property it alone needs (align-items, to centre the chip group against
-   the dateline text beside it). */
-.folio-row-chips,
-.night-hero-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.night-hero-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border: var(--border-hairline) solid color-mix(in srgb, var(--color-cream) 30%, transparent);
-  border-radius: 999px;
-  background: transparent;
-  cursor: pointer;
-  font-family: var(--font-family-mono);
-  font-size: 10px;
+@media (max-width: 899px) {
+  .night-hero-lead-figure img { max-height: none; }
+}
+.night-hero-figure-caption {
+  display: block;
+  margin-top: 5px;
+  font-size: 9px;
   letter-spacing: var(--tracking-mono-wide);
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-cream) 70%, transparent);
-  transition: border-color var(--dur-fast) var(--ease-out),
-              color var(--dur-fast) var(--ease-out),
-              background var(--dur-fast) var(--ease-out);
+  color: var(--color-grey);
 }
-.night-hero-chip[aria-pressed="true"] {
-  color: var(--color-cream);
-  border-color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
-}
-.night-hero-chip[aria-pressed="false"] { opacity: 0.5; }
-/* :not(--ghost), deliberately: a ghost chip is ALSO aria-disabled, and this
-   selector's specificity (class + attribute) would otherwise beat the plain
-   .night-hero-chip--ghost rule below regardless of source order, overwriting
-   its own (lighter, dashed) 0.4 opacity with this one. Real chips in
-   Snapshot mode need real disabled affordance beyond a cursor change — no
-   hover/press feedback, visibly dimmed, matching the honesty-in-UI stance
-   the rest of the hero already takes on Snapshot mode. */
-.night-hero-chip[aria-disabled="true"]:not(.night-hero-chip--ghost) {
-  cursor: default;
-  pointer-events: none;
-  opacity: 0.5;
-}
-.night-hero-chip--ghost { border-style: dashed; opacity: 0.4; cursor: default; pointer-events: none; }
-.night-hero-chip-soon { opacity: 0.75; }
 
+/* Thumbnail briefs — three across under the lead, separated by a rule. */
+.night-hero-briefs {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-4) 0 0;
+  border-top: var(--border-hairline) solid color-mix(in srgb, var(--color-ink) 30%, transparent);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.night-hero-brief {
+  display: block;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.night-hero-brief-thumb {
+  display: block;
+  margin-bottom: 7px;
+  border: var(--border-hairline) solid color-mix(in srgb, var(--color-ink) 30%, transparent);
+}
+.night-hero-brief-thumb img { display: block; width: 100%; height: auto; }
+.night-hero-brief-tag {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-mono-wide);
+  text-transform: uppercase;
+}
+.night-hero-brief-title {
+  display: block;
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 0.98rem;
+  line-height: 1.2;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.night-hero-brief:hover .night-hero-brief-title,
+.night-hero-brief:focus-visible .night-hero-brief-title { opacity: 0.7; }
+
+/* ---- Plate column: the Reality Window ---- */
 .night-hero-plate-col {
   grid-area: plate;
   display: flex;
@@ -1136,51 +1184,45 @@ body:has(.night-hero) > main#main-content {
   align-items: flex-end;
   gap: var(--space-3);
   min-width: 0;
+  /* The newspaper column rule between the lead column and the plate. */
+  border-left: var(--border-hairline) solid color-mix(in srgb, var(--color-ink) 25%, transparent);
+  padding-left: clamp(20px, 2.5vw, 40px);
 }
 
-/* Reality Window register (spec §v3): the globe is the one unstyled thing on
-   the front page — everything around it gets the print treatment. A
-   hairline frame + a caption tab reads as a tipped-in photographic plate.
-   The globe no longer bleeds past the viewport edge (the old v2
-   `right: -Npx` trick is gone): framed content has to actually stay inside
-   its frame. */
+/* The globe is the one dark thing on the page — a photographic plate tipped
+   into the paper. Hairline frame + caption tab; the interior stays ink. */
 .plate-frame {
   position: relative;
   width: fit-content;
-  border: var(--border-hairline) solid color-mix(in srgb, var(--color-cream) 30%, transparent);
+  border: var(--border-hairline) solid color-mix(in srgb, var(--color-ink) 45%, transparent);
   padding: var(--space-2);
+  background: var(--color-ink);
 }
 .plate-frame-caption {
   position: absolute;
   top: 0;
   left: var(--space-3);
   transform: translateY(-50%);
-  background: var(--color-ink);
+  background: var(--paper);
   padding: 2px var(--space-2);
   font-family: var(--font-family-mono);
   font-size: 9px;
   letter-spacing: var(--tracking-mono-wide);
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-cream) 70%, transparent);
+  color: color-mix(in srgb, var(--color-ink) 70%, transparent);
   white-space: nowrap;
 }
 
 .night-hero-planet {
   position: relative;
-  /* Bound on three axes at once, per the Task 4 height-budget rule: the
-     globe is the one element allowed to scale when a viewport is tight,
-     never the folio/nameplate/wire chrome above it. The vw/px terms cap the
-     common, width-bound case (mirrors the old bleed composition's own
-     scale). The third term is the height budget BY CONSTRUCTION, not a
-     rough vh guess: the fixed chrome above the globe (folio row + nameplate
-     + wire) runs ~231px, plus .night-hero-body's own padding, the plate
-     frame's border/padding, the caption tab, the gap to the live line below,
-     and the live line's own height — ~330px of non-globe vertical demand
-     total. 100dvh minus that is exactly the tallest the globe can be before
-     it — not the chrome — is what pushes the front page past the fold.
-     Verified rendered at a short 1366×700 desktop viewport (review
-     break-even ≈ 743px) with the live line still landing above the fold. */
-  width: min(36vw, 560px, calc(100dvh - 330px));
+  background: var(--color-ink);
+  /* Bound on three axes: the vw/px terms cap the common, width-bound case;
+     the dvh term keeps the plate from being what pushes the live line past
+     the fold on a short desktop viewport. Chrome above the globe (masthead
+     stack + ticker + body padding) now runs ~380px; the max() floor stops a
+     very short window collapsing the plate entirely — at that point the
+     page simply scrolls, which the front page is allowed to do. */
+  width: max(300px, min(36vw, 540px, calc(100dvh - 430px)));
   aspect-ratio: 1;
 }
 .night-hero-poster {
@@ -1202,22 +1244,21 @@ body:has(.night-hero) > main#main-content {
 /* SOURCE ORDER IS LOAD-BEARING — do not move this block above the rule it
    overrides. This selector ties the 400ms rule above on specificity
    (0,2,0 each); with no @layer involved (neither rule is layered), the tie
-   is broken by source order, and later wins. A reduced-motion override
-   with the same selector placed earlier in the file (as it originally was,
-   inside the shared .pulse-canvas reduced-motion block near the top of this
-   Planet Pulse section) silently loses to this rule. */
+   is broken by source order, and later wins. */
 @media (prefers-reduced-motion: reduce) {
   .night-hero-planet .pulse-canvas { transition: none; }
 }
 
 /* Always in the DOM (aria-live persistence — see the component), so it needs
-   its own rule rather than relying on being empty-and-therefore-harmless: a
-   zero-height wrapper only happens to have zero footprint because its one
-   possible child is position: absolute. Transparent to the pointer by
-   default so it never shadows the canvas beneath it when no card is
-   showing; .night-hero-card[data-sticky] re-establishes auto on itself. */
+   its own rule rather than relying on being empty-and-therefore-harmless.
+   Transparent to the pointer by default so it never shadows the canvas
+   beneath it when no card is showing; .night-hero-card[data-sticky]
+   re-establishes auto on itself. */
 .night-hero-card-region { pointer-events: none; }
 
+/* The hover/tap event card keeps its dark glass: it belongs to the window,
+   not the paper — and it can spill past the frame onto the page, where the
+   shadow carries it. */
 .night-hero-card {
   position: absolute;
   z-index: var(--z-overlay);
@@ -1304,34 +1345,30 @@ body:has(.night-hero) > main#main-content {
 }
 
 .night-hero-live {
-  /* No longer an overlay: the old composition bled the globe to the
-     viewport edge and floated the live line over its bottom-right corner.
-     Framed inside .plate-frame now, the live line is a normal block sitting
-     directly under the frame — spec §v3's "live line beneath", right-aligned
-     to match the frame above it. */
+  /* A normal block sitting directly under the frame, right-aligned to
+     match it. Printed in ink on the paper now. */
   text-align: right;
 }
-.night-hero-live-line { font-size: 0.8rem; }
+.night-hero-live-line { font-size: 0.8rem; color: var(--color-ink); }
 .night-hero-live-line .font-mono { font-variant-numeric: tabular-nums; }
-.night-hero-pip { color: color-mix(in srgb, var(--color-cream) 55%, var(--color-ink)); }
-.night-hero-pip[data-live] { color: var(--color-accent); }
+.night-hero-pip { color: color-mix(in srgb, var(--color-ink) 55%, transparent); }
+/* --color-accent is an AA pass on ink but a fail on paper; the live pip
+   prints in Deep Tissue Green out here instead. */
+.night-hero-pip[data-live] { color: var(--color-green); }
 
-/* minmax(280px,1fr) + column-gap + the plate track (min(36vw,560px)) exceeds
-   the content box below ~882px (same overflow point the old two-column
-   composition hit — see history) — the single-column breakpoint sits above
-   it rather than at it. Mobile has no viewport-fit requirement (Task 4's
-   height budget is a desktop-only, 1440×900/1280×800 constraint); the front
-   page is allowed to scroll on a phone, it just has to stack in the right
-   order without horizontal overflow. */
+/* minmax(280px,1fr) + column-gap + the plate track exceeds the content box
+   below ~882px — the single-column breakpoint sits above it rather than at
+   it. Mobile has no viewport-fit requirement; the front page is allowed to
+   scroll on a phone, it just has to stack in the right order without
+   horizontal overflow. */
 @media (max-width: 899px) {
+  .masthead-ear { display: none; }
   .night-hero-body {
     grid-template-columns: 1fr;
-    /* Visual reorder only (grid-area, not DOM order): the storyboard wants
-       the plate ABOVE the lead on a stacked mobile front page, but the lead
-       headline stays first in source/tab order — a keyboard or
-       screen-reader user meets the lead first, same as desktop, even though
-       sighted mobile users see the globe first. Same category of trade-off
-       nav.tsx already accepts for its pre-scroll link unmount. */
+    /* Visual reorder only (grid-area, not DOM order): the plate ABOVE the
+       lead on a stacked mobile front page, but the lead headline stays
+       first in source/tab order — a keyboard or screen-reader user meets
+       the lead first, same as desktop. */
     grid-template-areas:
       "plate"
       "lead";
@@ -1340,90 +1377,42 @@ body:has(.night-hero) > main#main-content {
   }
   .night-hero-plate-col {
     align-items: center;
+    border-left: 0;
+    padding-left: 0;
   }
   .plate-frame {
     margin: 0 auto;
   }
   .night-hero-planet {
-    /* 78vw is the binding constraint on real phones — the desktop-only
-       height-budget term (`calc(100dvh - 330px)` on `.night-hero-planet`
-       above) stops mattering once the viewport is this narrow. 420px keeps
-       the cap reasonable on a tall single-column tablet width just under
-       899px. */
+    /* 78vw is the binding constraint on real phones; 420px keeps the cap
+       reasonable on a tall single-column tablet width just under 899px. */
     width: min(78vw, 420px);
   }
   .night-hero-live {
     text-align: center;
   }
-  /* Two columns at ~167px each (the mobile lead-col's own width, split by
-     the column-gap) reads as cramped, not broadsheet — single column below
-     the same breakpoint everything else here reflows at. */
+  /* Two columns at ~167px each reads as cramped, not broadsheet. */
   .night-hero-standfirst {
     column-count: 1;
     column-rule: none;
   }
-}
-
-/* =========================================================
-   Night Edition v3 — Folio row + Nameplate (broadsheet front page)
-   Reality Window register: print chrome (hairline / double rules, mono
-   stamps) on night stock — the globe stays the one unstyled plate. Wired
-   into the front-page stack by Task 4 (HeroFrontPage renders FolioRow
-   itself; NightHero passes Nameplate down as a prop) — each still carries
-   its own ink background so it reads correctly nested inside .night-hero or
-   rendered standalone. */
-
-.folio-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  padding: var(--space-3) clamp(20px, 5vw, 56px);
-  background: var(--color-ink);
-  color: color-mix(in srgb, var(--color-cream) 75%, transparent);
-  border-bottom: var(--border-hairline) solid color-mix(in srgb, var(--color-cream) 25%, transparent);
-}
-.folio-row-line {
-  font-size: 11px;
-  letter-spacing: var(--tracking-mono);
-  text-transform: uppercase;
-  font-variant-numeric: tabular-nums;
-}
-.folio-row-chips { align-items: center; }
-
-.nameplate {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-6) clamp(20px, 5vw, 56px) var(--space-4);
-  background: var(--color-ink);
-  color: var(--color-cream);
-  text-align: center;
-  /* The print-masthead double rule. `double` needs >= 3px to render as two
-     visible lines in every engine (2px collapses to a single line in some),
-     so the border box is 3px even though the visual weight matches the
-     brief's "2px double" call-out. */
-  border-bottom: 3px double color-mix(in srgb, var(--color-cream) 50%, transparent);
-}
-.nameplate-stamp {
-  font-size: 10px;
-  letter-spacing: var(--tracking-mono-wide);
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-cream) 55%, transparent);
+  /* Briefs become a vertical list: thumbnail left, tag + title right. */
+  .night-hero-briefs { grid-template-columns: 1fr; }
+  .night-hero-brief {
+    display: grid;
+    grid-template-columns: 104px 1fr;
+    grid-template-rows: auto 1fr;
+    column-gap: var(--space-3);
+    align-items: start;
+  }
+  .night-hero-brief-thumb { grid-row: 1 / 3; margin-bottom: 0; }
 }
 
 /* The perforated fold: a torn-edge seam printed at the front page's own
-   trailing edge. Nested inside .night-hero (night-hero.tsx) so its ink
-   background paints behind the dashes — a sibling div sitting between
-   .night-hero and VerticalStrip instead sat on the document body's own
-   default background (--bg-page, cream), which made cream-tinted dashes on
-   a cream backdrop functionally invisible (caught in review; no rendered
-   screenshot had covered the seam itself). Cream reads clearly against the
-   .night-hero ink it now actually sits on top of. */
+   trailing edge — ink dashes on the paper it is part of, marking the page
+   break before the cream sections below. */
 .fold-perforation {
-  border-top: 2px dashed color-mix(in srgb, var(--color-cream) 45%, transparent);
+  border-top: 2px dashed color-mix(in srgb, var(--color-ink) 45%, transparent);
 }
 
 .sd-nav { transition: background-color 240ms ease; }
@@ -1433,12 +1422,8 @@ body:has(.night-hero) > main#main-content {
    every interactive child out of the tab order (the wordmark link stays
    mounted for layout but neutralized via tabIndex={-1} + aria-hidden;
    desktop links and the hamburger unmount entirely — see nav.tsx's own a11y
-   note), but the fixed bar's own box still occupies the
-   top ~64px and, being position: fixed with a positive z-index, still
-   intercepted pointer events meant for the folio row underneath it (its
-   chips are the front page's own top edge now — see .night-hero's comment).
-   Safe to disable entirely in this state: there is nothing left inside
-   `.sd-nav--overlay` to click. `.sd-nav--solid` (and the mobile menu, which
-   only opens once solid) are untouched, so this never affects a state
-   where the bar has real content. */
+   note), but the fixed bar's own box still occupies the top ~64px and,
+   being position: fixed with a positive z-index, still intercepted pointer
+   events meant for the masthead underneath it. Safe to disable entirely in
+   this state: there is nothing left inside `.sd-nav--overlay` to click. */
 .sd-nav--overlay { background: transparent; pointer-events: none; }

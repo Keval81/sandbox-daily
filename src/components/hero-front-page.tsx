@@ -3,19 +3,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { PulseGlobe } from "@/components/pulse/pulse-globe";
 import { formatStamp } from "@/components/pulse/format";
-import { FolioRow } from "@/components/folio-row";
 import { BreakingTicker } from "@/components/breaking-ticker";
 import {
   deriveHeroStatus,
   markersFromSnapshot,
   eventCardsById,
-  chipsFromLayers,
-  GHOST_CHIPS,
 } from "@/lib/pulse/hero";
+import { verticals } from "@/lib/verticals";
 import type { Marker, PulseSnapshot } from "@/lib/pulse/types";
-import type { WeatherReading } from "@/lib/folio/weather";
 import type { Vertical } from "@/lib/types";
 
 export interface HeroArticle {
@@ -27,25 +25,29 @@ export interface HeroArticle {
    *  article-standfirst.tsx / src/lib/articles.ts for how it's stored
    *  upstream; page.tsx is what decides only the lead carries one through. */
   standfirst?: string;
+  /** heroImage path — the lead renders it as the front-page illustration,
+   *  the briefs as thumbnails. Optional: an article without art still runs. */
+  thumb?: string;
 }
 
-const SECTION_COLOR: Record<Vertical, string> = {
+/** Section tags printed on paper — tech's brand cream is invisible here, so
+ *  it prints in ink (same call article-card.tsx makes for its tag map). */
+const TAG_COLOR: Record<Vertical, string> = {
   news: "var(--color-orange)",
-  tech: "var(--color-cream)",
-  sport: "var(--color-accent)",
+  tech: "var(--color-ink)",
+  sport: "var(--color-green)",
   features: "var(--color-orange)",
 };
 
 // The card's own footprint (globals.css: `.night-hero-card { width: min(78vw, 220px); }`,
 // offset 12px from the pin) plus a small viewport margin. The clamp below is
 // viewport-relative, not container-relative — a superset of what the
-// container alone would guarantee: the globe now stays fully inside
-// .plate-frame (Task 4 removed the old bleed-past-the-viewport composition),
-// but a card drawn beside a pin near the frame's edge can still extend past
-// the CONTAINER's own bounds into the lead column beside it. That's
-// harmless (nothing there clips it, it just visually overlaps), whereas
-// under-clamping against the real viewport edge would let a card run off
-// the actual screen — so the viewport, not the container, stays the
+// container alone would guarantee: the globe stays fully inside
+// .plate-frame, but a card drawn beside a pin near the frame's edge can
+// still extend past the CONTAINER's own bounds into the lead column beside
+// it. That's harmless (nothing there clips it, it just visually overlaps),
+// whereas under-clamping against the real viewport edge would let a card run
+// off the actual screen — so the viewport, not the container, stays the
 // correct thing to clamp against.
 const CARD_MAX_WIDTH_PX = 220;
 const CARD_WIDTH_VW_FRACTION = 0.78;
@@ -70,43 +72,34 @@ interface Anchor {
   /** Viewport-relative X of the pin at the moment this anchor was set — the
    *  edge-flip decision (Important 1) has to compare against the true
    *  viewport bounds, not just the container's, since the card drawn beside
-   *  the pin can be wider than the room left inside the container (it may
-   *  spill into the lead column beside it — harmless — but must never spill
-   *  off the actual screen edge). */
+   *  the pin can be wider than the room left inside the container. */
   viewportX: number;
 }
 
 /**
- * The front-page client root (Task 4 restructure). Owns every piece of front-
- * page state — clock, hover/sticky cards, chip toggles — in one place, per
- * the controller's "ONE client owner" decision. `nameplate` arrives as an
- * already-rendered ReactNode prop from NightHero (server) because Nameplate
- * itself IS a server component — a client component can't render a server
- * component inline, so this is the standard Next "pass server output as
- * children/props" pattern. BreakingTicker, by contrast, is a Client
- * Component ("use client" in breaking-ticker.tsx) — there's no boundary to
- * cross, so this file imports and renders it directly off the plain
- * `wireHeadlines` string array, the same way it renders everything else.
+ * The front-page client root. Owns the front-page state — clock and
+ * hover/sticky cards — in one place, per the controller's "ONE client owner"
+ * decision. `nameplate` arrives as an already-rendered ReactNode prop from
+ * NightHero (server) because Nameplate itself IS a server component — a
+ * client component can't render a server component inline, so this is the
+ * standard Next "pass server output as children/props" pattern.
+ * BreakingTicker, by contrast, is a Client Component ("use client" in
+ * breaking-ticker.tsx) — there's no boundary to cross, so this file imports
+ * and renders it directly off the plain `wireHeadlines` string array.
+ *
+ * Day Edition: the layer-filter chips are gone from the front page — the
+ * globe here is a window, not a console; /pulse keeps the full layer panel.
  */
 export function HeroFrontPage({
   snapshot,
   articles,
-  weather,
   seedEpochMs,
-  folioSeedEpochMs,
   nameplate,
   wireHeadlines,
 }: {
   snapshot: PulseSnapshot;
   articles: HeroArticle[];
-  weather: WeatherReading | null;
   seedEpochMs: number;
-  /** Wall-clock seed for FolioRow only — deliberately NOT the same value as
-   *  `seedEpochMs` above. See the two-seeds-two-jobs note in night-hero.tsx
-   *  (Important 1 fix): this one is NightHero's `wallEpochMs`
-   *  (`Date.now()`), `seedEpochMs` is its `dataEpochMs`
-   *  (`Date.parse(snapshot.generatedAt)`). */
-  folioSeedEpochMs: number;
   nameplate: ReactNode;
   wireHeadlines: string[];
 }) {
@@ -133,16 +126,14 @@ export function HeroFrontPage({
 
   // Data clock: the live line and the event cards must age together, or a
   // tab left open could keep showing a "live" card over a hero whose stat
-  // line has already flipped to Snapshot. Mirrors the retired hero stat
-  // clock's seed/tick pattern (seeded from generatedAt so server and first
-  // client render agree; deferred setTimeout before the wall clock takes over).
-  // Seeded from `seedEpochMs` — NightHero's `dataEpochMs`,
-  // `Date.parse(snapshot.generatedAt)` — deliberately, not the wall clock:
-  // this is the one clock on the front page that has to stay honestly tied
-  // to when the snapshot was actually generated, so it can keep saying
-  // SNAPSHOT truthfully under pipeline starvation. FolioRow below gets its
-  // own, separate wall-clock seed (`folioSeedEpochMs`) — see the
-  // two-seeds-two-jobs note in night-hero.tsx (Important 1 fix).
+  // line has already flipped to Snapshot. Seeded from `seedEpochMs` —
+  // NightHero's `dataEpochMs`, `Date.parse(snapshot.generatedAt)` —
+  // deliberately, not the wall clock: this is the one clock on the front
+  // page that has to stay honestly tied to when the snapshot was actually
+  // generated, so it can keep saying SNAPSHOT truthfully under pipeline
+  // starvation. The folio line's wall clock lives in FolioRow (inside the
+  // nameplate) with its own seed — see the two-seeds-two-jobs note in
+  // night-hero.tsx.
   const [now, setNow] = useState(() => seedEpochMs);
   useEffect(() => {
     // Deferred rather than synchronous: the first client render has to match
@@ -158,28 +149,10 @@ export function HeroFrontPage({
 
   const status = useMemo(() => deriveHeroStatus(snapshot, now), [snapshot, now]);
   const cards = useMemo(() => eventCardsById(snapshot, now), [snapshot, now]);
-  const chips = useMemo(() => chipsFromLayers(snapshot), [snapshot]);
-
-  const allMarkers = useMemo(
+  const markers: Marker[] = useMemo(
     () => markersFromSnapshot(snapshot, status.mode === "snapshot"),
     [snapshot, status.mode]
   );
-
-  // event.id -> layer, so a chip toggle can filter markers by layer without
-  // the globe engine (or Marker itself) ever learning what a "layer" is.
-  const layerOf = useMemo(
-    () => new Map(snapshot.events.map((e) => [e.id, e.layer])),
-    [snapshot.events]
-  );
-
-  const [hiddenLayers, setHiddenLayers] = useState<Set<string>>(() => new Set());
-  const markers: Marker[] = useMemo(() => {
-    // Chips go non-interactive in snapshot mode, so a layer hidden while live
-    // has no way back — showing every dimmed marker regardless of a prior
-    // toggle is the only honest reading once the chips can't be un-toggled.
-    if (status.mode === "snapshot" || hiddenLayers.size === 0) return allMarkers;
-    return allMarkers.filter((m) => !hiddenLayers.has(layerOf.get(m.id) ?? ""));
-  }, [allMarkers, hiddenLayers, layerOf, status.mode]);
 
   const [hover, setHover] = useState<Anchor | null>(null);
   const [sticky, setSticky] = useState<Anchor | null>(null);
@@ -217,24 +190,15 @@ export function HeroFrontPage({
     [hover]
   );
 
-  const toggleLayer = useCallback((id: string) => {
-    setHiddenLayers((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
   // A binary left/right flip can't satisfy both viewport edges once the card
   // is a large fraction of the viewport (at 390px the card is 56% of it) —
   // there's a band near the right edge where "flip left" itself overshoots
-  // the LEFT edge. Clamp instead: pick a starting side (mirrors the old flip
-  // logic — prefer beside the pin, to its right unless that would overflow),
-  // then clamp the result into [8, innerWidth - cardWidth - 8] so it can
-  // never leave the viewport on EITHER side. On a narrow phone this means the
-  // card parks at a stable x rather than tracking the pin exactly — correct,
-  // not a compromise: the alternative is a card partly off-screen.
+  // the LEFT edge. Clamp instead: pick a starting side (prefer beside the
+  // pin, to its right unless that would overflow), then clamp the result
+  // into [8, innerWidth - cardWidth - 8] so it can never leave the viewport
+  // on EITHER side. On a narrow phone this means the card parks at a stable
+  // x rather than tracking the pin exactly — correct, not a compromise: the
+  // alternative is a card partly off-screen.
   //
   // cardWidth is computed from the same formula as the CSS
   // (`width: min(78vw, 220px)`) rather than hardcoded, so the two can't drift
@@ -275,55 +239,19 @@ export function HeroFrontPage({
     cardStyle = { top, left: clampedViewportLeft - containerLeft };
   }
 
-  // Front-page body split: articles[0] is THE LEAD (headline + standfirst),
-  // the rest render as the existing colour-keyed headline list underneath it
-  // — same three-article shape page.tsx has always sent, just read
-  // positionally instead of as one flat list.
-  const [lead, ...restArticles] = articles;
+  // Front-page body split: articles[0] is THE LEAD (headline + standfirst +
+  // front-page illustration), the rest render as thumbnail briefs beneath it.
+  const [lead, ...briefs] = articles;
 
   return (
     <>
-      <FolioRow seedEpochMs={folioSeedEpochMs} weather={weather}>
-        <div className="night-hero-chips" role="group" aria-label="Layers">
-          {chips.map((chip) =>
-            status.mode === "snapshot" || !chip.live ? (
-              <span key={chip.id} className="night-hero-chip" aria-disabled="true">
-                {chip.label}
-              </span>
-            ) : (
-              <button
-                key={chip.id}
-                type="button"
-                className="night-hero-chip"
-                aria-pressed={!hiddenLayers.has(chip.id)}
-                onClick={() => {
-                  const hiding = !hiddenLayers.has(chip.id);
-                  toggleLayer(chip.id);
-                  if (hiding && active && layerOf.get(active.id) === chip.id) {
-                    setHover(null);
-                    setSticky(null);
-                  }
-                }}
-              >
-                {chip.label}
-              </button>
-            )
-          )}
-          {GHOST_CHIPS.map((label) => (
-            <span key={label} className="night-hero-chip night-hero-chip--ghost" aria-disabled="true">
-              {label} <span className="night-hero-chip-soon">·soon</span>
-            </span>
-          ))}
-        </div>
-      </FolioRow>
-
       {nameplate}
-      <BreakingTicker headlines={wireHeadlines} wire />
+      <BreakingTicker headlines={wireHeadlines} front />
 
       <div className="night-hero-body">
         <div className="night-hero-lead-col">
           {lead && (
-            <>
+            <article className="night-hero-lead">
               <p className="night-hero-kicker">THE LEAD</p>
               <h2 className="night-hero-lead-headline">
                 <Link href={lead.href}>{lead.title}</Link>
@@ -331,19 +259,47 @@ export function HeroFrontPage({
               {lead.standfirst && (
                 <div className="night-hero-standfirst">{lead.standfirst}</div>
               )}
-            </>
+              {lead.thumb && (
+                <Link href={lead.href} className="night-hero-lead-figure" tabIndex={-1} aria-hidden>
+                  <Image
+                    src={lead.thumb}
+                    alt=""
+                    width={1200}
+                    height={675}
+                    sizes="(max-width: 899px) 100vw, 42vw"
+                    unoptimized
+                  />
+                  <span className="night-hero-figure-caption font-mono">
+                    {verticals[lead.section].label} · FRONT-PAGE ILLUSTRATION
+                  </span>
+                </Link>
+              )}
+            </article>
           )}
 
-          <ul className="night-hero-headlines">
-            {restArticles.map((article) => (
+          <ul className="night-hero-briefs">
+            {briefs.map((article) => (
               <li key={article.href}>
-                <Link href={article.href} className="night-hero-headline">
+                <Link href={article.href} className="night-hero-brief">
+                  {article.thumb && (
+                    <span className="night-hero-brief-thumb">
+                      <Image
+                        src={article.thumb}
+                        alt=""
+                        width={480}
+                        height={270}
+                        sizes="(max-width: 899px) 90vw, 14vw"
+                        unoptimized
+                      />
+                    </span>
+                  )}
                   <span
-                    className="night-hero-headline-bar"
-                    style={{ background: SECTION_COLOR[article.section] }}
-                    aria-hidden
-                  />
-                  {article.title}
+                    className="night-hero-brief-tag font-mono"
+                    style={{ color: TAG_COLOR[article.section] }}
+                  >
+                    {verticals[article.section].label}
+                  </span>
+                  <span className="night-hero-brief-title">{article.title}</span>
                 </Link>
               </li>
             ))}

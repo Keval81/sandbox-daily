@@ -21,8 +21,10 @@ export function Nav() {
 
   useEffect(() => {
     if (!onHero) return;
-    const threshold = () => window.innerHeight * 0.7;
-    const update = () => setHeroScrolled(window.scrollY > threshold());
+    // Fixed 300px (was 70vh): the front page now opens with its own printed
+    // masthead + section rail, so the fixed bar only needs to take over once
+    // that rail has scrolled out of reach — roughly the masthead's height.
+    const update = () => setHeroScrolled(window.scrollY > 300);
     update();
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);

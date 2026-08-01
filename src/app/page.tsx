@@ -26,12 +26,13 @@ export default async function Home() {
   // `/${article.category}/${article.slug}`) — kept in sync by construction, not
   // by convention, since both read off the same Article shape. Only the lead
   // (index 0) carries its standfirst through — HeroFrontPage renders it as
-  // THE LEAD's two-column dek; the other two are the plain headline list.
-  const heroArticles: HeroArticle[] = articles.slice(0, 3).map((a, i) => ({
+  // THE LEAD's two-column dek; the other three are the thumbnail briefs.
+  const heroArticles: HeroArticle[] = articles.slice(0, 4).map((a, i) => ({
     href: `/${a.category}/${a.slug}`,
     section: a.category,
     title: a.title,
     standfirst: i === 0 ? a.standfirst : undefined,
+    thumb: a.heroImage,
   }));
   // Independent of each other, so fetched in parallel rather than one after
   // the other. getPulseSnapshot's own fetches are cached for 600s, shared

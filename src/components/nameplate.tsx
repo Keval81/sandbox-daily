@@ -1,25 +1,65 @@
+import Link from "next/link";
+import { FolioRow } from "@/components/folio-row";
+import { verticals } from "@/lib/verticals";
+import type { WeatherReading } from "@/lib/folio/weather";
+import type { Vertical } from "@/lib/types";
+
+const RAIL_ORDER: Vertical[] = ["news", "tech", "sport", "features"];
+
+/** Tick colours are literal print swatches on paper, so tech can't use its
+ *  cream `navIndicator` here — cream-on-paper is invisible. Ink stands in. */
+const RAIL_TICK: Record<Vertical, string> = {
+  news: "var(--color-orange)",
+  tech: "var(--color-ink)",
+  sport: "var(--color-green)",
+  features: "var(--color-orange)",
+};
+
 /**
- * Broadsheet nameplate: centred display wordmark + mono edition stamp +
- * double rule beneath (the print-masthead convention). Server component —
- * nothing here is time-dependent per render frame (edition is derived
- * upstream from the same clock the folio row ticks), so it never needs to
- * be a client component.
- *
- * The wordmark markup/classes (`night-hero-masthead`, italic orange `em`)
- * are copied verbatim from HeroFrontPage's current masthead
- * (hero-front-page.tsx) rather than duplicated with new class names — Task
- * 4 removes that masthead from the split hero once this nameplate is wired
- * in; until then both render the identical wordmark independently.
+ * The printed masthead, top of the front page (Day Edition): ears flanking
+ * the nameplate, then the folio line (client — it ticks), then the section
+ * rail, closed by the broadsheet double rule. Server component; FolioRow is
+ * the one client island inside it.
  */
-export function Nameplate({ edition }: { edition: number }) {
+export function Nameplate({
+  folioSeedEpochMs,
+  weather,
+}: {
+  folioSeedEpochMs: number;
+  weather: WeatherReading | null;
+}) {
   return (
-    <div className="nameplate">
-      <h1 className="night-hero-masthead">
-        Sandbox <em>Daily</em>
-      </h1>
-      <p className="nameplate-stamp font-mono">
-        № {edition} · PRINTED NIGHTLY · THE PLANET, FACT-CHECKED
-      </p>
-    </div>
+    <header className="masthead">
+      <div className="masthead-plate">
+        <p className="masthead-ear masthead-ear--left font-mono">
+          PRINTED
+          <br />
+          NIGHTLY
+        </p>
+        <h1 className="masthead-title">
+          Sandbox <em>Daily</em>
+        </h1>
+        <p className="masthead-ear masthead-ear--right font-mono">
+          THE PLANET,
+          <br />
+          FACT-CHECKED
+        </p>
+      </div>
+
+      <FolioRow seedEpochMs={folioSeedEpochMs} weather={weather} />
+
+      <nav className="masthead-rail" aria-label="Sections">
+        {RAIL_ORDER.map((v) => (
+          <Link key={v} href={verticals[v].route} className="masthead-rail-link font-mono">
+            <span className="masthead-rail-tick" style={{ background: RAIL_TICK[v] }} aria-hidden />
+            {verticals[v].label}
+          </Link>
+        ))}
+        <Link href="/pulse" className="masthead-rail-link font-mono">
+          <span className="masthead-rail-tick" style={{ background: "var(--color-accent)" }} aria-hidden />
+          PULSE
+        </Link>
+      </nav>
+    </header>
   );
 }
