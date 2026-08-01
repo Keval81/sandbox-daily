@@ -42,7 +42,7 @@ const throwingFetch = (async () => {
 const onlyFetch = (liveUrlPart: string, body: unknown): typeof fetch =>
   (async (input: RequestInfo | URL) => {
     if (!String(input).includes(liveUrlPart)) throw new Error("upstream unreachable");
-    return { ok: true, json: async () => body } as Response;
+    return { ok: true, json: async () => body, text: async () => "" } as Response;
   }) as typeof fetch;
 
 /** Every upstream answers except the one matching `deadUrlPart`, which throws. */
@@ -51,7 +51,11 @@ const allLiveExcept = (deadUrlPart: string, bodies: Record<string, unknown>): ty
     const url = String(input);
     if (url.includes(deadUrlPart)) throw new Error("upstream unreachable");
     const key = Object.keys(bodies).find((k) => url.includes(k));
-    return { ok: true, json: async () => (key ? bodies[key] : {}) } as Response;
+    return {
+      ok: true,
+      json: async () => (key ? bodies[key] : {}),
+      text: async () => (key ? String(bodies[key]) : ""),
+    } as Response;
   }) as typeof fetch;
 
 /** Drives the registered layer for real, exactly as getPulseSnapshot does. */
@@ -144,6 +148,7 @@ test("a total outage through the real layer is not live", async () => {
     { id: "eonet", label: "EONET", live: false },
     { id: "usgs", label: "USGS", live: false },
     { id: "gdacs", label: "GDACS", live: false },
+    { id: "firms", label: "FIRMS", live: false },
   ]);
 });
 
@@ -154,11 +159,11 @@ test("a total outage publishes no hazard index, fabricated Calm included", async
   assert.equal(snap.unplottable, 0);
 });
 
-test("a total outage reads Snapshot, not Live, and names all three dead feeds", async () => {
+test("a total outage reads Snapshot, not Live, and names all four dead feeds", async () => {
   const snap = await snapshotFrom(throwingFetch);
   assert.equal(everySourceDead(snap.layers), true);
   assert.deepEqual(freshnessOf(snap, AT_RENDER), { label: "Snapshot", live: false });
-  assert.deepEqual(deadSourceLabels(snap.layers), ["EONET", "USGS", "GDACS"]);
+  assert.deepEqual(deadSourceLabels(snap.layers), ["EONET", "USGS", "GDACS", "FIRMS"]);
 });
 
 const USGS_ONLY = {

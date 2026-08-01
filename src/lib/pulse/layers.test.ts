@@ -28,6 +28,17 @@ const gdacsStub = {
   ],
 };
 
+/** Three detections in one cell — enough for one FIRMS wildfire cluster.
+ *  Deliberately in the Australian outback: the eonet-traps fixture's own
+ *  wildfire sits at 38.1N 23.9E, and a stub cluster next to it would be
+ *  eaten by the near-EONET suppression this file also tests. */
+const firmsStub = [
+  "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,confidence,version,bright_t31,frp,daynight",
+  "-20.10,130.20,321.6,1.4,1.2,2026-08-01,0009,T,80,6.1NRT,298.4,25,D",
+  "-20.15,130.25,321.6,1.4,1.2,2026-08-01,0009,T,80,6.1NRT,298.4,25,D",
+  "-20.20,130.30,321.6,1.4,1.2,2026-08-01,0009,T,80,6.1NRT,298.4,25,D",
+].join("\n");
+
 const stubFetch = (byUrl: Record<string, unknown>, fail?: string): typeof fetch =>
   (async (input: RequestInfo | URL) => {
     const url = String(input);
@@ -36,6 +47,7 @@ const stubFetch = (byUrl: Record<string, unknown>, fail?: string): typeof fetch 
     return {
       ok: true,
       json: async () => (key ? byUrl[key] : {}),
+      text: async () => (key ? String(byUrl[key]) : ""),
     } as Response;
   }) as typeof fetch;
 
@@ -59,7 +71,7 @@ test("wildfire uses Cortex Orange, the site's brand token", () => {
   assert.equal(HAZARD_CATEGORIES.wildfire.color, "#E75D31");
 });
 
-test("fetches all three sources and merges them into one event list", async () => {
+test("fetches all four sources and merges them into one event list", async () => {
   const layer = createHazardsLayer(stubFetch({
     eonet: eonetTraps,
     usgs: { features: [{
@@ -68,24 +80,43 @@ test("fetches all three sources and merges them into one event list", async () =
       geometry: { coordinates: [10, 20, 5] },
     }] },
     gdacs: gdacsStub,
+    firms: firmsStub,
   }));
   const { events, unplottable, sources } = await layer.fetch();
   assert.ok(events.some((e) => e.source === "EONET"));
   assert.ok(events.some((e) => e.source === "USGS"));
   assert.ok(events.some((e) => e.source === "GDACS"));
+  assert.ok(events.some((e) => e.source === "FIRMS"));
   assert.equal(unplottable, 1); // the geometry-less EONET event
-  assert.deepEqual(sources.map((s) => s.live), [true, true, true]);
+  assert.deepEqual(sources.map((s) => s.live), [true, true, true, true]);
+});
+
+test("a FIRMS cluster within a degree of a named EONET fire is suppressed", async () => {
+  // eonet-traps carries a wildfire; park the FIRMS cluster on top of it.
+  const eonetFire = (await createHazardsLayer(stubFetch({ eonet: eonetTraps }))
+    .fetch()).events.find((e) => e.category === "wildfire" && e.source === "EONET");
+  assert.ok(eonetFire, "fixture must carry an EONET wildfire");
+  const onTop = [
+    "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,confidence,version,bright_t31,frp,daynight",
+    `${eonetFire.lat},${eonetFire.lon},321.6,1.4,1.2,2026-08-01,0009,T,80,6.1NRT,298.4,25,D`,
+    `${eonetFire.lat + 0.05},${eonetFire.lon},321.6,1.4,1.2,2026-08-01,0009,T,80,6.1NRT,298.4,25,D`,
+    `${eonetFire.lat},${eonetFire.lon + 0.05},321.6,1.4,1.2,2026-08-01,0009,T,80,6.1NRT,298.4,25,D`,
+  ].join("\n");
+  const layer = createHazardsLayer(stubFetch({ eonet: eonetTraps, firms: onTop }));
+  const { events } = await quiet(() => layer.fetch());
+  assert.equal(events.filter((e) => e.source === "FIRMS").length, 0);
 });
 
 test("one dead source degrades to partial data instead of throwing", async () => {
-  const layer = createHazardsLayer(stubFetch({ eonet: eonetTraps, gdacs: gdacsStub }, "usgs"));
+  const layer = createHazardsLayer(stubFetch({ eonet: eonetTraps, gdacs: gdacsStub, firms: firmsStub }, "usgs"));
   const { events, sources } = await quiet(() => layer.fetch());
   assert.ok(events.length > 0);
-  assert.equal(events.every((e) => e.source === "EONET" || e.source === "GDACS"), true);
+  assert.equal(events.every((e) => ["EONET", "GDACS", "FIRMS"].includes(e.source)), true);
   assert.deepEqual(sources, [
     { id: "eonet", label: "EONET", live: true },
     { id: "usgs", label: "USGS", live: false },
     { id: "gdacs", label: "GDACS", live: true },
+    { id: "firms", label: "FIRMS", live: true },
   ]);
 });
 
@@ -105,14 +136,14 @@ test("GDACS dead alone degrades to partial data, named in sources", async () => 
   assert.deepEqual(sources.filter((s) => !s.live).map((s) => s.label), ["GDACS"]);
 });
 
-test("all three sources dead yields an empty result, not a rejection", async () => {
+test("all four sources dead yields an empty result, not a rejection", async () => {
   const layer = createHazardsLayer(stubFetch({}, "http"));
   const { events, unplottable, sources } = await quiet(() => layer.fetch());
   assert.deepEqual(events, []);
   assert.equal(unplottable, 0);
   // The result the caller sees is indistinguishable from "a calm planet" —
   // only these records tell it apart, which is why they exist.
-  assert.deepEqual(sources.map((s) => s.live), [false, false, false]);
+  assert.deepEqual(sources.map((s) => s.live), [false, false, false, false]);
 });
 
 test("reports each feed's outcome so the HUD can name the one that died", async () => {

@@ -2,6 +2,7 @@ import type { CategoryMeta, LayerFetchResult, LayerSource, SourceStatus } from "
 import { normaliseEonet } from "../normalise-eonet";
 import { normaliseUsgs } from "../normalise-usgs";
 import { normaliseGdacs } from "../normalise-gdacs";
+import { normaliseFirms } from "../normalise-firms";
 import { mergeLayers } from "../merge";
 import { hazardIndex } from "../hazard-index";
 import { REVALIDATE_SECONDS } from "../freshness";
@@ -27,6 +28,12 @@ const USGS_URL =
  *  answers in ~1s and carries the active floods/cyclones/droughts. */
 const GDACS_URL =
   "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?fromDate=&toDate=&alertlevel=&eventlist=EQ;TC;FL;VO;DR;WF";
+// Keyless global MODIS active-fire CSV (~2MB / 25k rows per 24h). The answer
+// to "why no wildfires in Europe": EONET's fires are IRWIN (US-only) and
+// GDACS only alerts on majors — FIRMS sees what the satellites see,
+// everywhere. Clustered into fire complexes in normalise-firms.ts.
+const FIRMS_URL =
+  "https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv";
 
 // REVALIDATE_SECONDS — ten minutes: EONET updates on the order of hours, and a
 // news globe does not need per-second earthquake data. Upstream sees one request
@@ -82,7 +89,26 @@ const getJson = async (fetchImpl: typeof fetch, url: string): Promise<unknown> =
   }
 };
 
+const fetchTextOnce = async (fetchImpl: typeof fetch, url: string): Promise<string> => {
+  const res = await fetchImpl(url, {
+    next: { revalidate: REVALIDATE_SECONDS },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`${url} responded ${res.status}`);
+  return res.text();
+};
+
+/** Same one-retry contract as getJson, for the FIRMS CSV. */
+const getText = async (fetchImpl: typeof fetch, url: string): Promise<string> => {
+  try {
+    return await fetchTextOnce(fetchImpl, url);
+  } catch {
+    return fetchTextOnce(fetchImpl, url);
+  }
+};
+
 const EONET_SOURCE = { id: "eonet", label: "EONET" };
+const FIRMS_SOURCE = { id: "firms", label: "FIRMS" };
 const USGS_SOURCE = { id: "usgs", label: "USGS" };
 const GDACS_SOURCE = { id: "gdacs", label: "GDACS" };
 
@@ -112,16 +138,18 @@ export const createHazardsLayer = (fetchImpl: typeof fetch): LayerSource => ({
   async fetch(): Promise<LayerFetchResult> {
     // allSettled, not all: one dead source degrades to partial data, never a
     // blank page.
-    const [eonet, usgs, gdacs] = await Promise.allSettled([
+    const [eonet, usgs, gdacs, firms] = await Promise.allSettled([
       getJson(fetchImpl, EONET_URL),
       getJson(fetchImpl, USGS_URL),
       getJson(fetchImpl, GDACS_URL),
+      getText(fetchImpl, FIRMS_URL),
     ]);
 
     const sources = [
       statusOf(EONET_SOURCE, eonet),
       statusOf(USGS_SOURCE, usgs),
       statusOf(GDACS_SOURCE, gdacs),
+      statusOf(FIRMS_SOURCE, firms),
     ];
 
     const a = eonet.status === "fulfilled"
@@ -140,10 +168,23 @@ export const createHazardsLayer = (fetchImpl: typeof fetch): LayerSource => ({
     const c = gdacs.status === "fulfilled"
       ? normaliseGdacs(gdacs.value, WEIGHTS)
       : { events: [], unplottable: 0 };
+    const d = firms.status === "fulfilled"
+      ? normaliseFirms(firms.value)
+      : { events: [], unplottable: 0 };
+
+    // mergeLayers' 50km/2h window can't collapse a FIRMS cluster onto the
+    // EONET incident it belongs to (satellite pass time vs incident start
+    // time are hours apart), so US fires would pin twice. Suppress any
+    // cluster within a degree of a named EONET fire — the named incident is
+    // the better record; FIRMS keeps everywhere EONET is blind.
+    const eonetFires = a.events.filter((e) => e.category === "wildfire");
+    const firmsEvents = d.events.filter(
+      (f) => !eonetFires.some((e) => Math.abs(e.lat - f.lat) < 1 && Math.abs(e.lon - f.lon) < 1)
+    );
 
     return {
-      events: mergeLayers([a.events, b.events, c.events]),
-      unplottable: a.unplottable + b.unplottable + c.unplottable,
+      events: mergeLayers([a.events, b.events, c.events, firmsEvents]),
+      unplottable: a.unplottable + b.unplottable + c.unplottable + d.unplottable,
       sources,
     };
   },
