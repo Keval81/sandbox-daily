@@ -15,8 +15,13 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme | null>(null);
 
   useEffect(() => {
-    const current = document.documentElement.dataset.theme;
-    setTheme(current === "dark" ? "dark" : "light");
+    // Deferred, not synchronous — same pattern as the folio/data clocks: the
+    // first client render must match the server HTML (neutral label), and the
+    // real theme is read off the DOM a tick later.
+    const sync = () =>
+      setTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+    const id = setTimeout(sync, 0);
+    return () => clearTimeout(id);
   }, []);
 
   const flip = () => {
