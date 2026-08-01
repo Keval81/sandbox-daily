@@ -37,18 +37,28 @@ test("drops blank titles", async () => {
   assert.deepEqual(await getTickerHeadlines(3, read), ["Real", "Also real"]);
 });
 
-test("falls back to the provided headlines when the feed is empty", async () => {
+test("falls back to the bundled radar snapshot when the live feed is empty", async () => {
   const read = async () => feed([]);
-  const fallback = () => ["Article one", "Article two"];
-  assert.deepEqual(await getTickerHeadlines(3, read, fallback), ["Article one", "Article two"]);
+  const snapshot = () => feed(["Snapshot one", "Snapshot two"]);
+  assert.deepEqual(await getTickerHeadlines(3, read, snapshot), ["Snapshot one", "Snapshot two"]);
 });
 
-test("returns an empty list when both the feed and the fallback are empty", async () => {
-  const read = async () => feed([]);
-  assert.deepEqual(await getTickerHeadlines(3, read, () => []), []);
+test("prefers the live feed over the snapshot", async () => {
+  const read = async () => feed(["Live"]);
+  const snapshot = () => feed(["Snapshot"]);
+  assert.deepEqual(await getTickerHeadlines(3, read, snapshot), ["Live"]);
 });
 
-test("ignores the fallback when the feed has events", async () => {
-  const read = async () => feed(["Radar"]);
-  assert.deepEqual(await getTickerHeadlines(3, read, () => ["Article"]), ["Radar"]);
+test("returns an empty list when the live feed and the snapshot are both empty", async () => {
+  const read = async () => feed([]);
+  assert.deepEqual(await getTickerHeadlines(3, read, () => feed([])), []);
+});
+
+test("the default snapshot fallback carries real radar headlines", async () => {
+  // Guards the bundled snapshot itself: an empty or malformed
+  // events.snapshot.json would silently blank the production ticker.
+  const read = async () => feed([]);
+  const titles = await getTickerHeadlines(3, read);
+  assert.ok(titles.length > 0);
+  for (const t of titles) assert.equal(typeof t, "string");
 });

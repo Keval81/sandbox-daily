@@ -4,8 +4,8 @@ import {
   type Mat3, type Quat, type Vec3,
 } from "./math";
 import {
-  loadEarthTextures, DEFAULT_TEXTURE_URLS, TEX_W, TEX_H, CLOUD_W, CLOUD_H,
-  type EarthTextures,
+  loadEarthTextures, TEX_W, TEX_H, CLOUD_W, CLOUD_H,
+  type EarthTextures, type TextureUrls,
 } from "./textures";
 
 export interface GlobeEngineOptions {
@@ -19,7 +19,7 @@ export interface GlobeEngineOptions {
    * pinch and keyboard stay off.
    */
   interaction?: "full" | "none" | "ambient";
-  textures?: typeof DEFAULT_TEXTURE_URLS;
+  textures?: TextureUrls;
 }
 
 export type GlobeEvent = "pick" | "hover";
@@ -119,11 +119,23 @@ export class GlobeEngine {
     this.resize();
     this.bindEvents();
 
-    void loadEarthTextures(options.textures)
+    this.startTextureLoad(options.textures, 1);
+
+    this.raf = requestAnimationFrame(this.tick);
+  }
+
+  /** One retry after a short delay, because the failure mode is almost always
+   *  a transient fetch drop on a cold connection — and a permanently textureless
+   *  globe over the static poster reads as "the globe is broken/not spinning"
+   *  (the poster is a finished-looking render, so the degraded state hides in
+   *  plain sight). The final failure still lands honestly in `.failed`. */
+  private startTextureLoad(urls: TextureUrls | undefined, retriesLeft: number): void {
+    void loadEarthTextures(urls)
       .then((t) => {
         if (this.destroyed) return;
         this.textures = t;
         this.sphereDirty = true;
+        this.canvas.classList.remove("failed");
         this.canvas.classList.add("ready");
       })
       // Without this the rejection is silent and the globe just draws stars,
@@ -137,9 +149,12 @@ export class GlobeEngine {
         // drawn into a permanently invisible canvas. Markers over starfield is
         // an honest picture; nothing at all is not.
         this.canvas.classList.add("failed");
+        if (retriesLeft > 0) {
+          setTimeout(() => {
+            if (!this.destroyed) this.startTextureLoad(urls, retriesLeft - 1);
+          }, 4000);
+        }
       });
-
-    this.raf = requestAnimationFrame(this.tick);
   }
 
   /** Container-relative, NOT window-relative — this is what lets the teaser be

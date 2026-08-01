@@ -8,11 +8,27 @@ export const TEX_H = 1024;
 export const CLOUD_W = 1024;
 export const CLOUD_H = 512;
 
-export const DEFAULT_TEXTURE_URLS = {
+export interface TextureUrls {
+  day: string;
+  topo: string;
+  clouds: string;   // PNG, not JPEG: density lives in the alpha channel
+}
+
+/** A function, not an exported const object — deliberately. Turbopack's
+ *  production minifier compiled the previous
+ *  `export const DEFAULT_TEXTURE_URLS = { day: "/pulse/day.jpg", ... }` into
+ *  a literal `{}` in the client chunk (all three string properties dropped;
+ *  every URL became `undefined`, the engine 404'd on `/undefined`, and the
+ *  planet silently fell back to the static poster — "the globe isn't
+ *  spinning, only the pins are"). Dev builds were unaffected, so it only
+ *  showed in production. Building the object at call time inside a function
+ *  body is opaque to that optimisation. Verified fixed by grepping the built
+ *  chunk for "/pulse/day.jpg" — keep that check if this ever changes shape. */
+export const defaultTextureUrls = (): TextureUrls => ({
   day: "/pulse/day.jpg",
   topo: "/pulse/topo.png",
-  clouds: "/pulse/clouds.png",   // PNG, not JPEG: density lives in the alpha channel
-};
+  clouds: "/pulse/clouds.png",
+});
 
 const loadImage = (src: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
@@ -39,7 +55,7 @@ const grab = (
  * surface reads as terrain rather than a flat plain. ~2M pixels — expensive
  * enough that the result is cached for the process, not per engine instance.
  */
-const build = async (urls: typeof DEFAULT_TEXTURE_URLS): Promise<EarthTextures> => {
+const build = async (urls: TextureUrls): Promise<EarthTextures> => {
   const [dayImg, topoImg, cloudImg] = await Promise.all([
     loadImage(urls.day), loadImage(urls.topo), loadImage(urls.clouds),
   ]);
@@ -82,7 +98,7 @@ const build = async (urls: typeof DEFAULT_TEXTURE_URLS): Promise<EarthTextures> 
 let cached: Promise<EarthTextures> | null = null;
 
 export const loadEarthTextures = (
-  urls: typeof DEFAULT_TEXTURE_URLS = DEFAULT_TEXTURE_URLS
+  urls: TextureUrls = defaultTextureUrls()
 ): Promise<EarthTextures> => {
   // Memoise the success, never the failure: a cached rejection would mean one
   // bad asset path leaves the planet missing for the lifetime of the page,

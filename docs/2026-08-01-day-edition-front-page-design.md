@@ -21,10 +21,13 @@ of the page moves off night ink onto paper.
    PULSE, real links, colour ticks) → 3px double rule. Nameplate (server)
    owns the whole stack and renders FolioRow (client) inside it.
 3. **Ticker** reverts to the ink strip + Live dot, one size up from the
-   original (13px vs 11px meta; the 19px orange wire dies). Headlines: radar
-   events when the local feed exists, else the latest published article
-   titles — the radar file is machine-local, so production always fell back
-   to the static "SANDBOX DAILY — LIVE" string. Empty list renders nothing.
+   original (13px vs 11px meta; the 19px orange wire dies). Headlines come
+   from the RADAR only (SanSan's call — not article titles): the live
+   machine-local feed when present, else a bundled snapshot
+   (`src/lib/radar/events.snapshot.json`, refreshed via
+   `npm run radar:snapshot` before a deploy) — the radar file is
+   machine-local, so production used to fall back to the static
+   "SANDBOX DAILY — LIVE" string. Empty list renders nothing.
 4. **Front-page body:** lead column (kicker, headline, 2-col standfirst,
    bordered lead illustration + mono caption, then three thumbnail briefs in
    a row) | hairline column rule | plate window + live line. Four stories on
