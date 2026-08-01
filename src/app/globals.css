@@ -826,6 +826,14 @@ body:has(.night-hero) > main#main-content {
   letter-spacing: var(--tracking-display);
   color: var(--pulse-fg);
 }
+.pulse-detail-where {
+  margin: 4px 0 0;
+  font-family: var(--font-family-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pulse-meta);
+}
 .pulse-mini-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1565,4 +1573,16 @@ body:has(.night-hero) > main#main-content {
   height: 8px;
   border-radius: 50%;
   align-self: center;
+}
+
+/* Where on Earth a selected pin is — hero card and /pulse detail panel.
+   Sits directly under each title; see the note in detail-panel.tsx for why
+   coordinates alone were not an answer. */
+.night-hero-card-where {
+  margin-top: 3px;
+  font-family: var(--font-family-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-cream) 62%, transparent);
 }

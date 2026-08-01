@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { normaliseFirms, FIRMS_MIN_CONFIDENCE, FIRMS_MIN_POINTS } from "./normalise-firms";
+import { regionOf } from "./region";
 
 const HEADER =
   "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,confidence,version,bright_t31,frp,daynight";
@@ -52,7 +53,7 @@ test("a cell needs a minimum of detections — lone pixels are noise, not fires"
   assert.equal(normaliseFirms(csv(...rows)).events.length, 0);
 });
 
-test("caps the cluster list to the strongest fires", () => {
+test("caps the cluster list", () => {
   const rows: string[] = [];
   for (let i = 0; i < 130; i++) {
     // 130 distinct cells, 3 points each, ascending FRP.
@@ -60,8 +61,40 @@ test("caps the cluster list to the strongest fires", () => {
   }
   const { events } = normaliseFirms(csv(...rows), 100);
   assert.equal(events.length, 100);
-  // The weakest clusters are the ones dropped.
   assert.ok(events.every((e) => (e.magnitude ?? "").length > 0));
+});
+
+test("a continent's fire season cannot crowd every other region off the globe", () => {
+  const rows: string[] = [];
+  // 60 huge African savanna clusters (1000 MW each), one per 1-degree cell ...
+  for (let i = 0; i < 30; i++) {
+    for (const lat of [-5, -6]) {
+      for (let j = 0; j < 3; j++) rows.push(row(lat + 0.1 * j, 10 + i, 80, 1000));
+    }
+  }
+  // ... against 5 small European ones (20 MW each). Under a pure
+  // sort-by-power cap, Europe is invisible; the whole point of the regional
+  // allocation is that it is not.
+  for (let i = 0; i < 5; i++) {
+    for (let j = 0; j < 3; j++) rows.push(row(38 + 0.1 * j, 20 + i, 80, 20));
+  }
+  const { events } = normaliseFirms(csv(...rows), 20);
+  const regions = events.map((e) => regionOf(e.lat, e.lon).id);
+  assert.ok(regions.includes("s-europe"), "Europe must survive the cap");
+  assert.ok(regions.some((r) => r.endsWith("-africa")), "Africa must still be represented");
+});
+
+test("within a region the strongest fires are the ones kept", () => {
+  const rows: string[] = [];
+  // Ten Southern-Europe cells (one per degree of longitude), FRP ascending.
+  for (let i = 0; i < 10; i++) {
+    for (let j = 0; j < 3; j++) rows.push(row(38 + 0.1 * j, 15 + i, 80, (i + 1) * 10));
+  }
+  const { events } = normaliseFirms(csv(...rows), 3);
+  assert.equal(events.length, 3);
+  // Strongest three = the three easternmost cells in this fixture.
+  const lons = events.map((e) => Math.floor(e.lon)).sort((a, b) => a - b);
+  assert.deepEqual(lons, [22, 23, 24]);
 });
 
 test("malformed rows are counted unplottable, not fatal", () => {

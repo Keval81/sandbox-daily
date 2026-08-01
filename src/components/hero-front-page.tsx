@@ -365,6 +365,7 @@ export function HeroFrontPage({
                       {activeCard.eyebrow}
                     </span>
                     <p className="night-hero-card-title">{activeCard.title}</p>
+                    <p className="night-hero-card-where">{activeCard.where}</p>
                     {activeCard.magnitude && (
                       <p className="night-hero-card-magnitude">{activeCard.magnitude}</p>
                     )}

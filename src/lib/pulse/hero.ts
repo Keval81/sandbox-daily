@@ -1,4 +1,5 @@
 import { freshnessOf } from "./freshness";
+import { describeLocation } from "./region";
 import type { Marker, PulseSnapshot } from "./types";
 
 export interface IndexChip { layerId: string; label: string; score: number; band: string; color: string }
@@ -122,6 +123,12 @@ export interface EventCard {
   segments: number;         // 0..5 — Math.round(severity * 5), clamped
   color: string;            // category colour from the OWNING layer
   url: string | null;
+  /** Where on Earth this pin is, in words — "near Athens · Southern Europe",
+   *  or the region alone over open water. Derived from the coordinates, never
+   *  from the title: a FIRMS cluster is called "Active fire front" and a quake
+   *  names a sea, so without this a reader has only a spinning globe to work
+   *  out what they clicked. */
+  where: string;
 }
 
 const severityWordFor = (severity: number): string => {
@@ -160,6 +167,7 @@ export const eventCardsById = (snapshot: PulseSnapshot, now: number): Map<string
       segments: clampSegments(Math.round(e.severity * 5)),
       color: meta?.color ?? FALLBACK_COLOR,
       url: e.url ?? null,
+      where: describeLocation(e.lat, e.lon),
     };
     return [e.id, card];
   }));

@@ -1,6 +1,7 @@
 "use client";
 
 import type { CategoryMeta, LayerEvent } from "@/lib/pulse/types";
+import { describeLocation } from "@/lib/pulse/region";
 import { severityLabel, timeAgo } from "./format";
 
 /** Focus target when a selection arrives from the console — see PulseClient. */
@@ -44,6 +45,12 @@ export function DetailPanel({ event, meta, now, onClose }: DetailPanelProps) {
       <h2 id={DETAIL_TITLE_ID} tabIndex={-1} className="pulse-detail-title">
         {event.title}
       </h2>
+
+      {/* Where on Earth, in words. Several sources title an event without ever
+          naming a place ("Active fire front"), so the coordinates in the foot
+          were the only answer — and a reader should not have to parse
+          decimal degrees to know which continent they clicked. */}
+      <p className="pulse-detail-where">{describeLocation(event.lat, event.lon)}</p>
 
       <dl className="pulse-mini-grid">
         <div className="pulse-mini">

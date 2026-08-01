@@ -152,6 +152,19 @@ const DEMONYMS: Row[] = [
   ["Moroccan", 31.79, -7.09, "Morocco"], ["Algerian", 28.03, 1.66, "Algeria"],
 ];
 
+/** Every place this gazetteer knows, flattened — the reverse direction
+ *  (coords -> nearest named place) reads this in src/lib/pulse/region.ts.
+ *  Deduped by name: several rows are aliases of the same canonical place
+ *  ("Kiev"/"Kyiv"), and a nearest-place search must not weigh one twice. */
+export const GAZETTEER_PLACES: GeoHit[] = (() => {
+  const byName = new Map<string, GeoHit>();
+  for (const [name, lat, lon, canonical] of [...CITIES_AND_REGIONS, ...COUNTRIES]) {
+    const place = canonical ?? name;
+    if (!byName.has(place)) byName.set(place, { place, lat, lon });
+  }
+  return [...byName.values()];
+})();
+
 interface Compiled {
   re: RegExp;
   hit: GeoHit;

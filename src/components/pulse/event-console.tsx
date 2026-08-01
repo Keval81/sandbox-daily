@@ -1,6 +1,7 @@
 "use client";
 
 import type { CategoryMeta, LayerEvent } from "@/lib/pulse/types";
+import { regionOf } from "@/lib/pulse/region";
 import { timeAgo } from "./format";
 
 export type SortMode = "recent" | "severity";
@@ -63,7 +64,7 @@ export function EventConsole({
                   <span className="pulse-ev-dot" style={{ background: meta?.color }} />
                   <span className="pulse-ev-title">{e.title}</span>
                   <span className="pulse-ev-meta">
-                    {meta?.label} · {timeAgo(e.date, now)}
+                    {meta?.label} · {regionOf(e.lat, e.lon).label} · {timeAgo(e.date, now)}
                   </span>
                 </button>
               </li>
