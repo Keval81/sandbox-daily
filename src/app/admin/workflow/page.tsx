@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { WorkflowDashboard } from "./WorkflowDashboard";
+import { operatorSurfaceEnabled } from "@/lib/admin/surface";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export const metadata = {
 };
 
 export default async function WorkflowPage() {
-  if (process.env.NODE_ENV === "production") {
+  if (!operatorSurfaceEnabled()) {
     notFound();
   }
 

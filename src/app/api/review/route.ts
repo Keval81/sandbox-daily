@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
+import { operatorSurfaceEnabled } from "@/lib/admin/surface";
 
 const VALID_VERTICALS = ["news", "sport", "tech", "features"] as const;
 type Vertical = (typeof VALID_VERTICALS)[number];
@@ -32,7 +33,7 @@ const DISCARD_ROOT = path.join(process.cwd(), ".review-discarded");
  * local dev where physical access gates the action.
  */
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV === "production") {
+  if (!operatorSurfaceEnabled()) {
     return NextResponse.json(
       { ok: false, error: "Not available in production" },
       { status: 403 }

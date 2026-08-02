@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { retryPersistedReviewRequest } from "@/lib/revision/jobs";
 import { VERTICALS } from "@/lib/revision/types";
 import type { ReviewRequest } from "@/lib/revision/types";
+import { operatorSurfaceEnabled } from "@/lib/admin/surface";
 
 interface RetryBody {
   vertical?: unknown;
@@ -9,7 +10,7 @@ interface RetryBody {
 }
 
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV === "production") {
+  if (!operatorSurfaceEnabled()) {
     return NextResponse.json(
       { ok: false, error: "Not available in production" },
       { status: 403 }

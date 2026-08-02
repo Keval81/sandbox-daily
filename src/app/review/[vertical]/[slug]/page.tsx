@@ -8,6 +8,7 @@ import type { Vertical } from "@/lib/types";
 import { getPersistedRevisionState } from "@/lib/revision/persisted-state";
 import { PersistedRevisionNotice } from "./PersistedRevisionNotice";
 import { ReviewActions } from "./ReviewActions";
+import { operatorSurfaceEnabled } from "@/lib/admin/surface";
 
 interface Props {
   params: Promise<{ vertical: string; slug: string }>;
@@ -25,13 +26,19 @@ export default async function ReviewArticlePage({ params }: Props) {
   const { vertical, slug } = await params;
   if (!isVertical(vertical)) notFound();
 
+  // Operator-only, like the queue it is reached from: an article awaiting
+  // approval is not published work.
+  if (!operatorSurfaceEnabled()) notFound();
+
   const article = getAnyArticleBySlug(vertical, slug);
   if (!article) notFound();
 
   const renderedHtml = await renderMarkdown(article.content);
   const htmlContent = injectInlineImages(renderedHtml, article.inlineImages);
   const config = verticals[article.category];
-  const isDev = process.env.NODE_ENV !== "production";
+  // The approve/revise controls: always on here now, since the page itself
+  // only renders on the operator server.
+  const isDev = true;
   const persistedRevisionState = await getPersistedRevisionState({
     status: article.status,
     vertical: article.category,

@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { retryPersistedReviewRequest } from "@/lib/revision/jobs";
 import type { WorkflowVertical } from "@/lib/workflow/types";
+import { operatorSurfaceEnabled } from "@/lib/admin/surface";
 
 function assertLocalOnly(): void {
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("Workflow actions are not available in production.");
+  if (!operatorSurfaceEnabled()) {
+    throw new Error("Workflow actions run only on the operator server (SANDBOX_ADMIN=1).");
   }
 }
 

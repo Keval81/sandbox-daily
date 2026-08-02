@@ -11,11 +11,12 @@ import {
 } from "@/lib/revision/jobs";
 import { REVIEW_REQUESTS_ROOT } from "@/lib/revision/paths";
 import type { ReviewRequest } from "@/lib/revision/types";
+import { operatorSurfaceEnabled } from "@/lib/admin/surface";
 
 const CONTENT_ROOT = path.join(process.cwd(), "src/content");
 
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV === "production") {
+  if (!operatorSurfaceEnabled()) {
     return NextResponse.json(
       { ok: false, error: "Not available in production" },
       { status: 403 }

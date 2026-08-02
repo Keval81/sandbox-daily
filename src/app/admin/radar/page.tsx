@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { RadarList } from "./RadarList";
+import { operatorSurfaceEnabled } from "@/lib/admin/surface";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export const metadata = {
 };
 
 export default async function RadarPage() {
-  if (process.env.NODE_ENV === "production") {
+  if (!operatorSurfaceEnabled()) {
     notFound();
   }
   const { readEvents } = await import("@/lib/radar/events");

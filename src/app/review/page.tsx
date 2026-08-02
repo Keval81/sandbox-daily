@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import Image from "next/image";
 import { getPendingArticles } from "@/lib/articles";
 import { verticals } from "@/lib/verticals";
+import { operatorSurfaceEnabled } from "@/lib/admin/surface";
 
 export const metadata = {
   title: "Review — Sandbox Daily",
@@ -13,6 +15,11 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default function ReviewIndexPage() {
+  // This page had NO production guard: the deployed site served the review
+  // queue to anyone who typed the URL, which is a leak of unpublished drafts
+  // the moment one is pending. It belongs to the operator server only.
+  if (!operatorSurfaceEnabled()) notFound();
+
   const pending = getPendingArticles();
 
   return (

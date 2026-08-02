@@ -1,9 +1,10 @@
 // src/app/api/review/revision/status/route.ts
 import { NextResponse } from "next/server";
 import { readJob } from "@/lib/revision/jobs";
+import { operatorSurfaceEnabled } from "@/lib/admin/surface";
 
 export async function GET(request: Request) {
-  if (process.env.NODE_ENV === "production") {
+  if (!operatorSurfaceEnabled()) {
     return NextResponse.json(
       { ok: false, error: "Not available in production" },
       { status: 403 }
