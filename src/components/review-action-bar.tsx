@@ -37,9 +37,19 @@ export function ReviewActionBar({ vertical, slug, title }: Props) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ vertical, slug, action }),
         });
-        const body = (await res.json()) as { ok?: boolean; error?: string };
+        const body = (await res.json()) as {
+          ok?: boolean;
+          error?: string;
+          published?: { ok: boolean; commit?: string; alreadyPublished?: boolean; error?: string };
+        };
         if (!res.ok || !body.ok) {
           setError(body.error ?? `${action} failed (HTTP ${res.status})`);
+          return;
+        }
+        if (action === "approve" && body.published && !body.published.ok) {
+          setError(
+            `Approved, but NOT live: ${body.published.error ?? "publish failed"}. Run \`git push\` in the repo to finish.`
+          );
           return;
         }
         setDone(action === "approve" ? "approved" : "rejected");
@@ -56,7 +66,7 @@ export function ReviewActionBar({ vertical, slug, title }: Props) {
       <div className="sticky bottom-0 z-50 bg-ink text-cream py-6 px-6 border-t-4 border-orange">
         <div className="mx-auto max-w-[1200px] flex items-center justify-between">
           <p className="font-mono text-meta uppercase tracking-mono-wide">
-            ✓ {done === "approved" ? "Approved — now live" : "Rejected and moved to discard folder"}
+            ✓ {done === "approved" ? "Approved and pushed — live in ~3 min" : "Rejected and moved to discard folder"}
           </p>
           <p className="font-mono text-meta-sm uppercase tracking-mono-wide opacity-70">
             Returning to queue…

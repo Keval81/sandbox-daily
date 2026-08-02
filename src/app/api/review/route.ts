@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
 import { operatorSurfaceEnabled } from "@/lib/admin/surface";
+import { publishArticle } from "@/lib/review/publish";
 
 const VALID_VERTICALS = ["news", "sport", "tech", "features"] as const;
 type Vertical = (typeof VALID_VERTICALS)[number];
@@ -79,8 +80,25 @@ export async function POST(request: Request) {
   }
 
   if (action === "approve") {
-    await approveArticle(articlePath, body.fields);
-    return NextResponse.json({ ok: true, action: "approved" });
+    const title = await approveArticle(articlePath, body.fields);
+
+    // Approval IS publication. Flipping frontmatter only changed this machine;
+    // the live site builds from git, so a story stayed invisible to readers
+    // until someone remembered to commit — while the UI said "now live".
+    const published = await publishArticle(
+      vertical,
+      path.basename(articlePath),
+      slug,
+      title ?? slug
+    );
+
+    return NextResponse.json({
+      ok: true,
+      action: "approved",
+      // Reported separately: the approval succeeded even when the push did not,
+      // and the operator needs to know which of those happened.
+      published,
+    });
   }
 
   await rejectArticle(articlePath, slug);
@@ -110,10 +128,12 @@ async function findArticleFile(
   return null;
 }
 
+/** Returns the final title, so the publish commit can carry the headline the
+ *  operator actually approved rather than the writer's original. */
 async function approveArticle(
   articlePath: string,
   fields?: { title?: string; standfirst?: string; social_post?: string }
-): Promise<void> {
+): Promise<string | undefined> {
   const raw = await fs.readFile(articlePath, "utf-8");
   const parsed = matter(raw);
   if (fields?.title && fields.title.trim()) parsed.data.title = fields.title.trim();
@@ -123,6 +143,7 @@ async function approveArticle(
   parsed.data.approved_at = new Date().toISOString();
   const next = matter.stringify(parsed.content, parsed.data);
   await fs.writeFile(articlePath, next, "utf-8");
+  return typeof parsed.data.title === "string" ? parsed.data.title : undefined;
 }
 
 async function rejectArticle(
