@@ -195,7 +195,7 @@ export function WorkflowDashboard({ data }: WorkflowDashboardProps) {
           : `No ${filter} stories match this view.`;
 
   return (
-    <main className="mx-auto max-w-[1600px] px-6 py-6">
+    <main className="mx-auto max-w-[1600px] px-3 py-4 sm:px-6 sm:py-6">
       <section className="overflow-hidden rounded-[24px] border border-slate-800 bg-slate-950 shadow-2xl shadow-black/30">
         <div className="grid grid-cols-1 border-b border-slate-800 md:grid-cols-[1.1fr_repeat(4,1fr)]">
           <div className="bg-slate-900 p-6">
@@ -234,8 +234,12 @@ export function WorkflowDashboard({ data }: WorkflowDashboardProps) {
           </div>
         )}
 
-        <div className="grid gap-5 p-5 xl:grid-cols-[1fr_360px]">
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/80">
+        {/* min-w-0 on every child below: a grid item defaults to min-width:auto, so
+           the 1180px pipeline board stretched this track past the viewport and the
+           section's overflow-hidden clipped the overflow away instead of letting
+           the inner overflow-x-auto scroll it. */}
+        <div className="grid gap-5 p-3 sm:p-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <section className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/80">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-5 py-4">
               <h2 className="text-base font-bold text-slate-100">
                 Live Pipeline Map
@@ -279,7 +283,7 @@ export function WorkflowDashboard({ data }: WorkflowDashboardProps) {
               </div>
             </div>
 
-            <div className="overflow-x-auto p-5">
+            <div className="overflow-x-auto overscroll-x-contain p-3 sm:p-5">
               <div className="min-w-[1180px] space-y-2">
                 <div className="grid grid-cols-[112px_repeat(7,minmax(130px,1fr))] gap-2">
                   <div className="flex items-end rounded-2xl border border-slate-800 bg-slate-950/60 p-3 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-500">
@@ -380,7 +384,7 @@ export function WorkflowDashboard({ data }: WorkflowDashboardProps) {
           </section>
 
           {activeStories.length === 0 && (
-            <section className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5 text-emerald-100 xl:col-span-2">
+            <section className="min-w-0 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5 text-emerald-100 xl:col-span-2">
               <p className="font-mono text-[10px] uppercase tracking-[0.16em]">
                 Pipeline Clear
               </p>
@@ -395,7 +399,7 @@ export function WorkflowDashboard({ data }: WorkflowDashboardProps) {
             </section>
           )}
 
-          <aside className="rounded-2xl border border-slate-800 bg-slate-900/80">
+          <aside className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/80">
             <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
               <h2 className="text-base font-bold text-slate-100">
                 {selectedStory ? "Selected Story" : "Exceptions Feed"}
@@ -488,7 +492,7 @@ export function WorkflowDashboard({ data }: WorkflowDashboardProps) {
             </div>
           </aside>
 
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/80 xl:col-span-2">
+          <section className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/80 xl:col-span-2">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-5 py-4">
               <h2 className="text-base font-bold text-slate-100">
                 {filter === "archived" ? "Archived Stories" : "Story Drill-Down"}

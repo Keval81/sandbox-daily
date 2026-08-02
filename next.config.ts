@@ -1,6 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The operator surfaces (/admin/radar, /admin/workflow, /review) run on this
+  // machine and are reached from SanSan's phone over Tailscale. Next 16 blocks
+  // dev resources requested from any origin other than localhost, so served
+  // through the tailnet hostname the client bundle never finished booting: the
+  // pages RENDERED but nothing hydrated, and every button — including Promote —
+  // was inert. The symptom is silent; the tell is the nav's theme toggle stuck
+  // on its pre-mount "◐ EDITION" label.
+  //
+  // Dev-only setting: production builds ignore it entirely, and it grants
+  // nothing beyond letting this one tailnet host load dev assets.
+  allowedDevOrigins: ["sandboxs-mac-mini.tailcb630f.ts.net"],
   // Pin Turbopack's workspace root to this project. Without this, a stray
   // package-lock.json in the user's home directory makes Turbopack infer
   // ~/ as the workspace and write build artifacts there — breaking dev

@@ -32,10 +32,10 @@ export function RadarList({ events }: { events: RadarEvent[] }) {
   return (
     <ul className="space-y-3">
       {events.map((e) => (
-        <li key={e.id} className="border rounded-lg p-4 flex justify-between gap-4">
+        <li key={e.id} className="border rounded-lg p-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs uppercase px-2 py-0.5 rounded bg-neutral-100">{e.location}</span>
+              <span className="text-xs uppercase px-2 py-0.5 rounded bg-neutral-100 text-neutral-900">{e.location}</span>
               <span className="text-xs text-neutral-500">vol {e.volume} · score {e.score}</span>
             </div>
             <p className="font-medium mt-1">{e.title}</p>
@@ -48,7 +48,7 @@ export function RadarList({ events }: { events: RadarEvent[] }) {
           <button
             disabled={promoted.has(e.id) || busy === e.id}
             onClick={() => promote(e.id)}
-            className="self-start px-3 py-1.5 rounded bg-black text-white text-sm disabled:opacity-40"
+            className="w-full min-h-11 shrink-0 rounded bg-black px-4 text-sm font-medium text-white disabled:opacity-40 sm:w-auto sm:self-start"
           >
             {promoted.has(e.id) ? "Promoted" : busy === e.id ? "…" : "Promote"}
           </button>
