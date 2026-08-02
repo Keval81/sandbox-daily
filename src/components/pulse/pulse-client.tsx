@@ -10,6 +10,8 @@ import { formatStamp } from "./format";
 import { deadSourceLabels, freshnessOf, REVALIDATE_SECONDS } from "@/lib/pulse/freshness";
 import { categoryKey, eventKey } from "@/lib/pulse/category-key";
 import { useReducedMotion } from "./use-reduced-motion";
+import { ShareButton } from "@/components/signals/share-button";
+import { buildShareUrl } from "@/lib/signals/share";
 import type { CategoryMeta, LayerEvent, Marker, PulseSnapshot } from "@/lib/pulse/types";
 
 /** 6-digit hex, deliberately: the engine appends an alpha pair to marker colours. */
@@ -145,6 +147,24 @@ export function PulseClient({ snapshot }: PulseClientProps) {
   // The gauge's sub-stat is read off the layer that published the gauge — counts
   // are keyed by layer, so a bare "wildfire" would tally nothing.
   const wildfires = indexLayer ? counts[categoryKey(indexLayer.id, "wildfire")] ?? 0 : 0;
+
+  // Deep link from a shared URL, and the origin the share button needs.
+  //
+  // Read from window.location rather than useSearchParams: the hook opts the
+  // route out of static rendering, and /pulse is prerendered with
+  // revalidate = 600. Same read-after-mount discipline as the clocks.
+  const [origin, setOrigin] = useState("");
+  useEffect(() => {
+    setOrigin(window.location.origin);
+    const id = new URLSearchParams(window.location.search).get("event");
+    // An id the feeds have since dropped selects nothing: a stale share link
+    // should open the globe, not an error.
+    if (id && snapshot.events.some((e) => e.id === id)) setSelectedId(id);
+  }, [snapshot.events]);
+
+  const shareUrl = origin
+    ? buildShareUrl(origin, "/pulse", selectedId ? { event: selectedId } : {})
+    : "";
 
   const handlePick = useCallback((id: string | null) => {
     focusDetailRef.current = false;
@@ -349,6 +369,18 @@ export function PulseClient({ snapshot }: PulseClientProps) {
         >
           {consoleOpen ? "Close" : "Events"} <span className="font-mono">{visible.length}</span>
         </button>
+        {shareUrl && (
+          <ShareButton
+            className="pulse-share"
+            url={shareUrl}
+            title={selected ? `${selected.title} — Planet Pulse` : "Planet Pulse — Sandbox Daily"}
+            text={
+              selected
+                ? undefined
+                : "A live globe of what is burning, shaking and flooding right now."
+            }
+          />
+        )}
       </div>
 
       <EventConsole

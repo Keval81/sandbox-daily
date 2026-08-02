@@ -1652,3 +1652,12 @@ body:has(.night-hero) > main#main-content {
   .sd-like, .sd-share { transition: none; }
   .sd-like:active, .sd-share:active { transform: none; }
 }
+
+/* The Pulse share sits in the HUD's control row, which is pinned to the print
+   palette by .pulse-stage — inherit that rather than the page edition, or the
+   button turns cream-on-cream in the Night Edition. */
+.pulse-share {
+  background: color-mix(in srgb, var(--color-ink) 82%, transparent);
+  color: var(--color-cream);
+}
+.pulse-share:hover { background: var(--color-ink); }
