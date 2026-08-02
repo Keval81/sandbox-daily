@@ -11,6 +11,7 @@ import {
 } from "./types";
 import { parseQualityScore, parseRelevanceScore } from "./quality-score";
 import { stripLeadingH1 } from "./strip-leading-h1";
+import { byRecency } from "@/lib/articles/order";
 
 const contentDir = path.join(process.cwd(), "src/content");
 
@@ -84,7 +85,7 @@ function readVerticalDir(vertical: Vertical): Article[] {
 export function getArticlesByVertical(vertical: Vertical): Article[] {
   return readVerticalDir(vertical)
     .filter((a) => a.status === "published")
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .sort(byRecency);
 }
 
 /**
@@ -96,7 +97,7 @@ export function getPendingArticles(): Article[] {
   return verticals
     .flatMap((v) => readVerticalDir(v))
     .filter((a) => a.status === "pending" || a.status === "revision-requested")
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .sort(byRecency);
 }
 
 /**
@@ -122,7 +123,7 @@ export function getAllArticles(): Article[] {
   const verticals: Vertical[] = ["news", "sport", "tech", "features"];
   return verticals
     .flatMap((v) => getArticlesByVertical(v))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .sort(byRecency);
 }
 
 export async function renderMarkdown(content: string): Promise<string> {
