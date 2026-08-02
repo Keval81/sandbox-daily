@@ -63,7 +63,7 @@ quality_score:
       Lays out both camps' logic but leans hard into mockery of the rebels
       ('tantrum,' 'theatre'), heavy editorial tilt.
   scored_at: '2026-08-02T21:07:41.586Z'
-approved_at: '2026-08-02T21:11:29.139Z'
+approved_at: '2026-08-02T21:11:29.515Z'
 ---
 
 # You Can't Un-Elect a Man With a Grudge and a Stamp
