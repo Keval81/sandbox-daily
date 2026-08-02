@@ -25,7 +25,12 @@ export function ArticleSignals({ slug, title, vertical, placement }: Props) {
   // HTML — the pattern folio-row.tsx and pulse-client.tsx already use, and the
   // one whose absence cost the whole SSR tree earlier today.
   useEffect(() => {
-    setUrl(buildShareUrl(window.location.origin, `/${vertical}/${slug}`));
+    // Deferred, not synchronous — the house pattern (folio-row, theme-toggle,
+    // pulse-client) and what react-hooks/set-state-in-effect asks for.
+    const timer = setTimeout(
+      () => setUrl(buildShareUrl(window.location.origin, `/${vertical}/${slug}`)),
+      0
+    );
 
     let cancelled = false;
     fetch(`/api/signals?slugs=${encodeURIComponent(slug)}`)
@@ -49,6 +54,7 @@ export function ArticleSignals({ slug, title, vertical, placement }: Props) {
 
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [slug, vertical, placement]);
 

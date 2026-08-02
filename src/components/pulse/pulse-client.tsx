@@ -155,11 +155,18 @@ export function PulseClient({ snapshot }: PulseClientProps) {
   // revalidate = 600. Same read-after-mount discipline as the clocks.
   const [origin, setOrigin] = useState("");
   useEffect(() => {
-    setOrigin(window.location.origin);
-    const id = new URLSearchParams(window.location.search).get("event");
-    // An id the feeds have since dropped selects nothing: a stale share link
-    // should open the globe, not an error.
-    if (id && snapshot.events.some((e) => e.id === id)) setSelectedId(id);
+    // Deferred, not synchronous — the same pattern as the clocks above and the
+    // theme toggle: the first client render must match the server HTML, and
+    // react-hooks/set-state-in-effect flags the synchronous form.
+    const read = () => {
+      setOrigin(window.location.origin);
+      const id = new URLSearchParams(window.location.search).get("event");
+      // An id the feeds have since dropped selects nothing: a stale share link
+      // should open the globe, not an error.
+      if (id && snapshot.events.some((e) => e.id === id)) setSelectedId(id);
+    };
+    const timer = setTimeout(read, 0);
+    return () => clearTimeout(timer);
   }, [snapshot.events]);
 
   const shareUrl = origin
