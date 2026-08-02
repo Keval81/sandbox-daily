@@ -1,8 +1,8 @@
 import { getAllArticles } from "@/lib/articles";
+import { selectHomepage } from "@/lib/homepage/select";
 import { getTickerHeadlines } from "@/lib/radar/ticker";
 import { VerticalStrip } from "@/components/vertical-strip";
 import { TrendingBar } from "@/components/trending-bar";
-import { ArticleGrid } from "@/components/article-grid";
 import { SubscribeStrip } from "@/components/subscribe-strip";
 import { getPulseSnapshot } from "@/lib/pulse/snapshot";
 import { getLondonWeather } from "@/lib/folio/weather";
@@ -22,13 +22,15 @@ const trendingTopics = [
 ];
 
 export default async function Home() {
-  const articles = getAllArticles().slice(0, 9);
-  // Same fields ArticleGrid's own cards build their hrefs from (article-card.tsx:
+  // One pass decides the whole page. Nothing below may reach for an article on
+  // its own — that independence is what printed the lead story four times.
+  const { hero, sections } = selectHomepage(getAllArticles());
+  // Same fields the section cards build their hrefs from (article-card.tsx:
   // `/${article.category}/${article.slug}`) — kept in sync by construction, not
   // by convention, since both read off the same Article shape. Only the lead
   // (index 0) carries its standfirst through — HeroFrontPage renders it as
   // THE LEAD's two-column dek; the other three are the thumbnail briefs.
-  const heroArticles: HeroArticle[] = articles.slice(0, 4).map((a, i) => ({
+  const heroArticles: HeroArticle[] = hero.map((a, i) => ({
     href: `/${a.category}/${a.slug}`,
     section: a.category,
     title: a.title,
@@ -59,14 +61,13 @@ export default async function Home() {
       {/* The perforated fold itself is inside NightHero now — nested in
          .night-hero so the ink background paints behind its dashes. */}
 
-      <VerticalStrip />
+      {/* The section rows ARE the rest of the front page now. The INSIDE THE
+         EDITION grid used to sit here showing the newest nine overall, which
+         re-printed the hero's four and the tiles' top stories; below the fold
+         should be previous stories by section, so the grid moved out (it still
+         serves /news, /tech, /sport and /features). */}
+      <VerticalStrip sections={sections} />
       <TrendingBar topics={trendingTopics} />
-      <ArticleGrid
-        articles={articles}
-        title="INSIDE THE EDITION ▾"
-        titleColor="text-orange"
-        typewriterTitles
-      />
       <SubscribeStrip />
     </>
   );

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { verticals } from "@/lib/verticals";
-import { getArticlesByVertical } from "@/lib/articles";
-import { type Vertical } from "@/lib/types";
+import { type Article, type Vertical } from "@/lib/types";
 import { SectionCarousel } from "@/components/section-carousel";
 
 const TILE_DEFINITIONS: ReadonlyArray<{
@@ -28,13 +27,22 @@ const TILE_DEFINITIONS: ReadonlyArray<{
   },
 ];
 
-const ARTICLES_PER_TILE = 3;
-
-export function VerticalStrip() {
+/**
+ * Presentational by design. This component used to call getArticlesByVertical
+ * itself, which is exactly how the front page ended up printing the lead story
+ * in the hero, in the grid AND in its section tile — three surfaces reaching
+ * for the newest article, none aware of the others. The homepage now runs one
+ * selection pass (@/lib/homepage/select) and hands each tile what it may show.
+ */
+export function VerticalStrip({
+  sections,
+}: {
+  sections: Record<Vertical, Article[]>;
+}) {
   const strips = TILE_DEFINITIONS.map((def) => ({
     vertical: verticals[def.vertical],
     tagline: def.tagline,
-    articles: getArticlesByVertical(def.vertical).slice(0, ARTICLES_PER_TILE),
+    articles: sections[def.vertical],
   }));
 
   return (
