@@ -520,12 +520,17 @@ const call = async (path: string, init: RequestInit): Promise<Response | null> =
   }
 };
 
-/** Insert-or-ignore: the table's primary key is what makes a second tap a
- *  no-op, so a duplicate is success, not an error to report. */
+/** Plain insert, and a duplicate is success.
+ *
+ *  NOT `Prefer: resolution=ignore-duplicates` — measured against this project
+ *  2026-08-02, that resolution makes PostgREST run an upsert, which RLS rejects
+ *  (42501) because the tables grant INSERT only and deliberately have no UPDATE
+ *  policy. Letting the primary key raise 23505 keeps the grant minimal: the
+ *  second tap is refused by the database, exactly as intended. */
 const insert = async (table: string, body: Record<string, string>): Promise<void> => {
   await call(table, {
     method: "POST",
-    headers: headers({ Prefer: "resolution=ignore-duplicates,return=minimal" }),
+    headers: headers({ Prefer: "return=minimal" }),
     body: JSON.stringify(body),
   });
 };
