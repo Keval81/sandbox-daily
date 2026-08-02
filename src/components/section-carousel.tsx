@@ -12,6 +12,7 @@ import {
   useCarousel,
 } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
+import { LikeButton } from "@/components/signals/like-button";
 import { type Article, type Vertical } from "@/lib/types";
 
 interface SectionCarouselProps {
@@ -99,6 +100,9 @@ export function SectionCarousel({
       <CarouselContent className="-ml-2">
         {articles.map((article) => (
           <CarouselItem key={article.slug} className="pl-2">
+            {/* Thumb as a sibling of the Link — a button inside an anchor is
+               invalid markup and loses the tap on touch. */}
+            <div className="relative">
             <Link
               href={`${routePrefix}/${article.slug}`}
               className="block group/slide"
@@ -125,6 +129,11 @@ export function SectionCarousel({
                 </div>
               </div>
             </Link>
+              <LikeButton
+                slug={article.slug}
+                className="absolute right-2 top-2 z-10 shadow-sm"
+              />
+            </div>
           </CarouselItem>
         ))}
       </CarouselContent>

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { type Article } from "@/lib/types";
 import { verticals } from "@/lib/verticals";
 import { TypewriterText } from "./typewriter-text";
+import { LikeButton } from "./signals/like-button";
 
 interface ArticleCardProps {
   article: Article;
@@ -33,6 +34,11 @@ export function ArticleCard({ article, showVerticalTag = true, dark = false, typ
   const isSpotlight = !!article.subjectName;
 
   return (
+    // The like thumb is a SIBLING of the card's Link, not a child: a <button>
+    // inside an <a> is invalid markup, and on touch the anchor swallows the tap
+    // before the button ever sees it. This wrapper is what gives the thumb
+    // something to position against.
+    <div className="relative">
     <Link
       href={href}
       className={`group block rounded-sharp border-l-4 border-l-transparent ${borderColorMap[article.category]} transition-all duration-200 cursor-pointer overflow-hidden`}
@@ -77,5 +83,10 @@ export function ArticleCard({ article, showVerticalTag = true, dark = false, typ
         </p>
       </article>
     </Link>
+      <LikeButton
+        slug={article.slug}
+        className="absolute right-3 top-3 z-10 shadow-sm"
+      />
+    </div>
   );
 }
