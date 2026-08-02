@@ -68,7 +68,7 @@ hero_image_concept: >-
   cables, stacked papers and a drooping desk lamp crowd the desk; blinds and a
   router blink behind.
 status: published
-approved_at: '2026-08-02T20:42:48.585Z'
+approved_at: '2026-08-02T20:42:55.069Z'
 ---
 
 # Google Made the World's Reference Ruler Bend, Then Pretended It Was Fixed
