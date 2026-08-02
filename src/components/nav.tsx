@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isFrontPage, normalisePathname } from "@/lib/nav/route";
 import { TypewriterText } from "./typewriter-text";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -15,8 +16,12 @@ const navLinks = [
 ];
 
 export function Nav() {
-  const pathname = usePathname();
-  const onHero = pathname === "/";
+  // Normalised, not raw: on Vercel the server renders `/` as `/index`, and a
+  // raw comparison here made the server ship the solid bar while the browser
+  // rendered the overlay — a hydration mismatch that cost the whole SSR tree,
+  // and with it the pre-paint theme stamp (see @/lib/nav/route).
+  const pathname = normalisePathname(usePathname());
+  const onHero = isFrontPage(pathname);
   const [open, setOpen] = useState(false);
   const [heroScrolled, setHeroScrolled] = useState(false);
 

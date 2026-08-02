@@ -130,7 +130,16 @@ export class GlobeEngine {
    *  (the poster is a finished-looking render, so the degraded state hides in
    *  plain sight). The final failure still lands honestly in `.failed`. */
   private startTextureLoad(urls: TextureUrls | undefined, retriesLeft: number): void {
-    void loadEarthTextures(urls)
+    void loadEarthTextures(urls, (cloudData) => {
+      // Second arrival, after the planet is already on screen: swap the
+      // transparent stand-in for the real sheet and force one re-raster.
+      // Guarded on `this.textures` because a cloud sheet that wins the race
+      // against the planet has nothing to attach itself to yet — `build`
+      // reads the same cache, so that copy gets the clouds anyway.
+      if (this.destroyed || !this.textures) return;
+      this.textures = { ...this.textures, cloudData };
+      this.sphereDirty = true;
+    })
       .then((t) => {
         if (this.destroyed) return;
         this.textures = t;

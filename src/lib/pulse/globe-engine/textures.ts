@@ -1,6 +1,9 @@
 export interface EarthTextures {
   earthData: Uint8ClampedArray;   // 2048×1024 RGBA, hillshade baked in
-  cloudData: Uint8ClampedArray;   // 1024×512 RGBA, density in the alpha channel
+  /** 1024×512 RGBA, density in the alpha channel. Starts as a transparent
+   *  stand-in and is replaced when the cloud sheet lands — see
+   *  `loadEarthTextures`. */
+  cloudData: Uint8ClampedArray;
 }
 
 export const TEX_W = 2048;
@@ -50,21 +53,47 @@ const grab = (
   return x.getImageData(0, 0, w, h).data;
 };
 
+/** A cloudless sheet: alpha 0 everywhere, so renderSphere's `ca > 0.02` test
+ *  skips the cloud blend entirely. Lets the planet render before the cloud
+ *  PNG has arrived without a null check in the per-pixel hot loop. */
+const emptyClouds = (): Uint8ClampedArray =>
+  new Uint8ClampedArray(CLOUD_W * CLOUD_H * 4);
+
+let cloudCache: Uint8ClampedArray | null = null;
+let cloudPending: Promise<Uint8ClampedArray> | null = null;
+
+/** The cloud sheet, fetched once per process and off the planet's critical
+ *  path. Failure is never cached: a transient drop would otherwise leave the
+ *  globe permanently clear. */
+const loadClouds = (url: string): Promise<Uint8ClampedArray> => {
+  if (cloudCache) return Promise.resolve(cloudCache);
+  cloudPending ??= loadImage(url)
+    .then((img) => {
+      cloudCache = grab(img, CLOUD_W, CLOUD_H);
+      return cloudCache;
+    })
+    .catch((err: unknown) => {
+      cloudPending = null;
+      throw err;
+    });
+  return cloudPending;
+};
+
 /**
  * Bake hillshade relief from the topography into the day colour, so the
  * surface reads as terrain rather than a flat plain. ~2M pixels — expensive
  * enough that the result is cached for the process, not per engine instance.
  */
 const build = async (urls: TextureUrls): Promise<EarthTextures> => {
-  const [dayImg, topoImg, cloudImg] = await Promise.all([
-    loadImage(urls.day), loadImage(urls.topo), loadImage(urls.clouds),
+  const [dayImg, topoImg] = await Promise.all([
+    loadImage(urls.day), loadImage(urls.topo),
   ]);
 
   const day = grab(dayImg, TEX_W, TEX_H);
   const HW = TEX_W >> 1;
   const HH = TEX_H >> 1;
   const topo = grab(topoImg, HW, HH);
-  const cloudData = grab(cloudImg, CLOUD_W, CLOUD_H);
+  const cloudData = cloudCache ?? emptyClouds();
 
   const earthData = new Uint8ClampedArray(day.length);
   const hAt = (hx: number, hy: number) => topo[((hy * HW) + hx) << 2];
@@ -98,7 +127,9 @@ const build = async (urls: TextureUrls): Promise<EarthTextures> => {
 let cached: Promise<EarthTextures> | null = null;
 
 export const loadEarthTextures = (
-  urls: TextureUrls = defaultTextureUrls()
+  urls: TextureUrls = defaultTextureUrls(),
+  /** Called when the cloud sheet lands — after the returned promise, normally. */
+  onClouds?: (cloudData: Uint8ClampedArray) => void
 ): Promise<EarthTextures> => {
   // Memoise the success, never the failure: a cached rejection would mean one
   // bad asset path leaves the planet missing for the lifetime of the page,
@@ -107,5 +138,21 @@ export const loadEarthTextures = (
     cached = null;
     throw err;
   });
+
+  // Clouds are cosmetic, so they load alongside the planet rather than gating
+  // it. The canvas is invisible (opacity 0) until the engine marks it ready,
+  // and the engine can only do that once this promise resolves — holding that
+  // behind another 470KB cost ~2s of blank globe on a 4 Mbps connection, on
+  // top of the ~8s the planet's own bytes already took (measured 2026-08-02).
+  if (onClouds) {
+    void loadClouds(urls.clouds)
+      .then(onClouds)
+      .catch((err: unknown) => {
+        // Honest degradation, logged not hidden: a clear globe is a correct
+        // globe, but a silently missing weather layer is a lie by omission.
+        console.error("[GlobeEngine] cloud sheet failed to load", err);
+      });
+  }
+
   return cached;
 };

@@ -7,6 +7,7 @@ import { SubscribeStrip } from "@/components/subscribe-strip";
 import { getPulseSnapshot } from "@/lib/pulse/snapshot";
 import { getLondonWeather } from "@/lib/folio/weather";
 import { NightHero, type HeroArticle } from "@/components/night-hero";
+import { GlobeTexturePreload } from "@/components/pulse/globe-texture-preload";
 
 /** Must match REVALIDATE_SECONDS in @/lib/pulse/freshness — Next statically
  *  analyses this segment export, so it has to be a literal, not an import. */
@@ -48,6 +49,7 @@ export default async function Home() {
 
   return (
     <>
+      <GlobeTexturePreload />
       <NightHero
         snapshot={pulse}
         articles={heroArticles}

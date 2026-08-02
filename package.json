@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:lib": "node --import tsx --test \"src/lib/**/*.test.ts\"",
-    "radar:snapshot": "cp \"${SSNN_OUTPUTS_ROOT:-$HOME/Desktop/ssnn-outputs}/event-radar/events.json\" src/lib/radar/events.snapshot.json"
+    "radar:snapshot": "node scripts/radar-snapshot.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
