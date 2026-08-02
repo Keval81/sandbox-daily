@@ -13,6 +13,38 @@ interface Props {
 type State = "idle" | "copied" | "failed";
 
 /**
+ * Async Clipboard first, `execCommand` second.
+ *
+ * The legacy path is not belt-and-braces: `navigator.clipboard` is undefined
+ * outside a secure context, and the dev server viewed from a phone over
+ * http://192.168.x.x is exactly that — the case where someone is most likely to
+ * be testing share on a real handset.
+ */
+const copyToClipboard = async (text: string): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // fall through
+  }
+  try {
+    const field = document.createElement("textarea");
+    field.value = text;
+    field.setAttribute("readonly", "");
+    // Off-screen rather than hidden: display:none cannot hold a selection, and
+    // a visible jump would scroll the page under the reader.
+    field.style.cssText = "position:fixed;top:-1000px;opacity:0";
+    document.body.appendChild(field);
+    field.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(field);
+    return ok;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * The native sheet where it exists, the clipboard everywhere else. No
  * per-network buttons and no share SDKs: those are third-party script tags on a
  * page whose whole pitch is that it carries none.
@@ -36,12 +68,7 @@ export function ShareButton({ url, title, text, className = "" }: Props) {
         // is kinder than reporting a failure the reader caused on purpose.
       }
     }
-    try {
-      await navigator.clipboard.writeText(url);
-      setState("copied");
-    } catch {
-      setState("failed");
-    }
+    setState((await copyToClipboard(url)) ? "copied" : "failed");
   };
 
   return (

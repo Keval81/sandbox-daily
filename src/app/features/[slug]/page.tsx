@@ -4,6 +4,7 @@ import { verticals } from "@/lib/verticals";
 import { ArticleCard } from "@/components/article-card";
 import { ArticleHeroImage } from "@/components/article-hero-image";
 import { ArticleStandfirst } from "@/components/article-standfirst";
+import { ArticleSignals } from "@/components/signals/article-signals";
 import { ARTICLE_PROSE_CLASS, injectInlineImages } from "@/lib/article-html";
 
 interface Props {
@@ -58,6 +59,7 @@ export default async function FeaturesArticlePage({ params }: Props) {
             })}{" "}
             · {article.readTime} min read · {article.wordCount} words
           </p>
+          <ArticleSignals slug={article.slug} title={article.title} vertical="features" placement="top" />
         </div>
       </section>
 
@@ -75,6 +77,7 @@ export default async function FeaturesArticlePage({ params }: Props) {
             className={ARTICLE_PROSE_CLASS}
             dangerouslySetInnerHTML={{ __html: htmlContent }}
           />
+          <ArticleSignals slug={article.slug} title={article.title} vertical="features" placement="bottom" />
           <aside className="hidden lg:block">
             <div className="sticky top-24">
               <div className="mb-8">
