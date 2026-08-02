@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getTickerHeadlines } from "./ticker";
+import { getTickerHeadlines, reachesTicker } from "./ticker";
 import type { EventsFile } from "./events";
 
-function feed(titles: string[]): EventsFile {
+function feed(titles: string[], over: Record<number, Record<string, unknown>> = {}): EventsFile {
   return {
     generated_at: "2026-06-06T14:00:00Z",
     events: titles.map((title, i) => ({
@@ -18,6 +18,8 @@ function feed(titles: string[]): EventsFile {
       surfaced_at: "2026-06-06T14:00:00Z",
       latest_seen: "2026-06-06T14:00:00Z",
       promoted: false,
+      vertical: "news" as const,
+      ...(over[i] ?? {}),
     })),
   };
 }
@@ -61,4 +63,25 @@ test("the default snapshot fallback carries real radar headlines", async () => {
   const titles = await getTickerHeadlines(3, read);
   assert.ok(titles.length > 0);
   for (const t of titles) assert.equal(typeof t, "string");
+});
+
+test("a sport story reaches the wire when enough outlets corroborate it", () => {
+  // SanSan's rule: a sport story on the news wire is fine IF it is genuinely
+  // massive. Corroboration is the measure — several reputable outlets running
+  // it — not the raw score, which sport now scores higher on simply because the
+  // soft-section penalty no longer applies inside its own radar.
+  assert.equal(reachesTicker({ vertical: "sport", volume: 6, authoritative: true }), true);
+});
+
+test("a routine sport story stays off the wire", () => {
+  assert.equal(reachesTicker({ vertical: "sport", volume: 1, authoritative: false }), false);
+  assert.equal(reachesTicker({ vertical: "tech", volume: 2, authoritative: true }), false);
+});
+
+test("news needs no corroboration bar — the wire is its home", () => {
+  assert.equal(reachesTicker({ vertical: "news", volume: 1, authoritative: false }), true);
+});
+
+test("an event from an older snapshot with no vertical is treated as news", () => {
+  assert.equal(reachesTicker({ volume: 1, authoritative: false }), true);
 });

@@ -6,6 +6,10 @@ export interface RadarEvent {
   title: string;
   summary: string;
   location: "global" | "london";
+  /** Which radar surfaced it. Optional: snapshots written before the tech and
+   *  sport radars existed have no vertical, and those are all news. */
+  vertical?: "news" | "tech" | "sport";
+  authoritative?: boolean;
   tone: number;
   volume: number;
   score: number;

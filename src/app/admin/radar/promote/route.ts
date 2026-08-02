@@ -19,6 +19,10 @@ export async function POST(req: Request): Promise<Response> {
     summary: event.summary,
     sources: event.sources,
     location: event.location,
+    // The radar SanSan promoted from decides the section. Without this the
+    // editor's classifier picks, and a story promoted from Sport can publish
+    // as News — which makes the three radars decorative.
+    vertical: event.vertical ?? "news",
     promoted_at: new Date().toISOString(),
   };
   const dest = join(RESEARCH_LEADS_DIR, `${event.id}.json`);
