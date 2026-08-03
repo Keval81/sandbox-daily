@@ -32,6 +32,7 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive, headli
   const [error, setError] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
   const [editHeadline, setEditHeadline] = useState(headline ?? "");
   const [editStandfirst, setEditStandfirst] = useState(standfirst ?? "");
   const [editSocial, setEditSocial] = useState(socialPost ?? "");
@@ -41,27 +42,41 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive, headli
   // parent render and stomp on an in-progress drag selection.
   const onEditComment = useCallback((id: string) => setHighlightedId(id), []);
 
+  // Approve stages, commits and pushes — seconds of work, from a phone. Without
+  // an in-flight guard the button just looks dead and gets tapped again; one
+  // article once went out as seven commits, and seven production builds.
   const callApi = async (action: "approve" | "reject") => {
-    const res = await fetch("/api/review", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        vertical,
-        slug,
-        action,
-        fields:
-          action === "approve"
-            ? { title: editHeadline, standfirst: editStandfirst, social_post: editSocial }
-            : undefined,
-      }),
-    });
-    if (!res.ok) {
-      const j = await res.json();
-      setError(j.error ?? `Failed: ${action}`);
-      return;
+    if (busy) return;
+    setBusy(action);
+    setError(null);
+    try {
+      const res = await fetch("/api/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vertical,
+          slug,
+          action,
+          fields:
+            action === "approve"
+              ? { title: editHeadline, standfirst: editStandfirst, social_post: editSocial }
+              : undefined,
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json();
+        setError(j.error ?? `Failed: ${action}`);
+        setBusy(null);
+        return;
+      }
+      // Deliberately stays busy through the navigation — re-enabling the button
+      // while the page is still on screen is the same trap again.
+      router.push("/review");
+      router.refresh();
+    } catch (err) {
+      setError((err as Error).message);
+      setBusy(null);
     }
-    router.push("/review");
-    router.refresh();
   };
 
   const submitRevision = async () => {
@@ -217,24 +232,27 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive, headli
         <div className="flex gap-3 pt-8 border-t-2 border-ink mt-12">
           <button
             type="button"
-            className="flex-1 bg-ink text-cream py-3 font-mono uppercase tracking-mono-wide"
+            disabled={busy !== null}
+            className="flex-1 bg-ink text-cream py-3 font-mono uppercase tracking-mono-wide disabled:opacity-50"
             onClick={() => callApi("approve")}
           >
-            Approve
+            {busy === "approve" ? "Publishing…" : "Approve"}
           </button>
           <button
             type="button"
-            className="flex-1 border-2 border-ink py-3 font-mono uppercase tracking-mono-wide hover:bg-ink hover:text-cream"
+            disabled={busy !== null}
+            className="flex-1 border-2 border-ink py-3 font-mono uppercase tracking-mono-wide hover:bg-ink hover:text-cream disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-ink"
             onClick={() => setMode("annotating")}
           >
             Request revision
           </button>
           <button
             type="button"
-            className="flex-1 border-2 border-ink py-3 font-mono uppercase tracking-mono-wide hover:bg-ink hover:text-cream"
+            disabled={busy !== null}
+            className="flex-1 border-2 border-ink py-3 font-mono uppercase tracking-mono-wide hover:bg-ink hover:text-cream disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-ink"
             onClick={() => callApi("reject")}
           >
-            Reject
+            {busy === "reject" ? "Discarding…" : "Reject"}
           </button>
         </div>
       )}
