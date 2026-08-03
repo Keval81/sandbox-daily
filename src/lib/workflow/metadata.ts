@@ -27,14 +27,27 @@ export function titleFromSlug(slug: string): string {
     .join(" ");
 }
 
+/**
+ * Research docs carry their headline as the first `# ` heading, not as
+ * frontmatter — the writer only stamps `title` once it has written the piece.
+ * Without this, every doc on the board was labelled from its filename, which
+ * turns "BBC Future research" into "Bbc Future Research".
+ */
+function headingTitle(content: string): string | null {
+  const match = content.match(/^#[ \t]+(.+)$/m);
+  return match ? match[1].trim() : null;
+}
+
 export function parseWorkflowMarkdown(raw: string): WorkflowMarkdownMetadata {
-  const { data } = matter(raw);
+  const { data, content } = matter(raw);
   const rawDate = data.date;
 
   return {
-    title: stringOrNull(data.title),
+    title: stringOrNull(data.title) ?? headingTitle(content),
     slug: stringOrNull(data.slug),
-    category: stringOrNull(data.category),
+    // `vertical` is what a promoted radar lead stamps; `category` is what the
+    // editor stamps later. Same idea, two stages of the pipeline.
+    category: stringOrNull(data.category) ?? stringOrNull(data.vertical),
     status: stringOrNull(data.status),
     featureType: stringOrNull(data.feature_type),
     subjectName: stringOrNull(data.subject_name),

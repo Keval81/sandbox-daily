@@ -387,3 +387,211 @@ test("scanWorkflowDashboard places pending feature articles in the feature lane"
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+async function buildSpikeFixture(): Promise<{ dir: string; outputsRoot: string; siteRoot: string }> {
+  const dir = await mkdtemp(join(tmpdir(), "workflow-spike-"));
+  const outputsRoot = join(dir, "ssnn-outputs");
+  const siteRoot = join(dir, "site");
+  await mkdir(join(outputsRoot, "research-docs"), { recursive: true });
+  await mkdir(join(outputsRoot, "research-docs-features"), { recursive: true });
+  await mkdir(join(outputsRoot, "articles"), { recursive: true });
+  await mkdir(join(outputsRoot, "review-jobs"), { recursive: true });
+  await mkdir(join(siteRoot, "src/content/sport"), { recursive: true });
+  return { dir, outputsRoot, siteRoot };
+}
+
+async function writeArticlesState(
+  outputsRoot: string,
+  processed: Record<string, unknown>
+): Promise<void> {
+  await writeFile(
+    join(outputsRoot, "articles", "articles-state.json"),
+    JSON.stringify({ processed }, null, 2),
+    "utf-8"
+  );
+}
+
+test("a doc the editorial gate spiked is reported as a spike, not as a research story", async () => {
+  const { dir, outputsRoot, siteRoot } = await buildSpikeFixture();
+  try {
+    await writeMarkdown(
+      join(outputsRoot, "research-docs", "2026-08-03-semenyo.md"),
+      "title: Semenyo hails Maresca\ncategory: sport\n"
+    );
+    await writeArticlesState(outputsRoot, {
+      "2026-08-03-semenyo.md": {
+        processed_at: "2026-08-03T10:12:46.421Z",
+        editorial_decision: "skip",
+        skip_reason: "Classic football filler.",
+      },
+    });
+
+    const data = await scanWorkflowDashboard({ outputsRoot, siteRoot });
+
+    assert.equal(data.spikes.length, 1);
+    assert.equal(data.spikes[0]?.title, "Semenyo hails Maresca");
+    assert.equal(data.spikes[0]?.vertical, "sport");
+    assert.equal(data.spikes[0]?.reason, "Classic football filler.");
+    assert.equal(
+      data.stories.filter((story) => story.stage === "research").length,
+      0,
+      "a spiked doc must not also occupy the research column"
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a spiked doc is not counted in the research stage summary", async () => {
+  const { dir, outputsRoot, siteRoot } = await buildSpikeFixture();
+  try {
+    await writeMarkdown(
+      join(outputsRoot, "research-docs", "2026-08-03-semenyo.md"),
+      "title: Semenyo hails Maresca\ncategory: sport\n"
+    );
+    await writeArticlesState(outputsRoot, {
+      "2026-08-03-semenyo.md": {
+        processed_at: "2026-08-03T10:12:46.421Z",
+        editorial_decision: "skip",
+        skip_reason: "Classic football filler.",
+      },
+    });
+
+    const data = await scanWorkflowDashboard({ outputsRoot, siteRoot });
+
+    const research = data.stages.find((stage) => stage.stage === "research");
+    assert.equal(research?.count, 0);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a doc still awaiting the writer stays in research", async () => {
+  const { dir, outputsRoot, siteRoot } = await buildSpikeFixture();
+  try {
+    await writeMarkdown(
+      join(outputsRoot, "research-docs", "2026-08-03-waiting.md"),
+      "title: Still waiting\ncategory: news\n"
+    );
+    await writeArticlesState(outputsRoot, {});
+
+    const data = await scanWorkflowDashboard({ outputsRoot, siteRoot });
+
+    assert.equal(data.spikes.length, 0);
+    assert.equal(
+      data.stories.filter((story) => story.stage === "research").length,
+      1
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a doc written after being spiked no longer appears as a spike", async () => {
+  const { dir, outputsRoot, siteRoot } = await buildSpikeFixture();
+  try {
+    await writeMarkdown(
+      join(outputsRoot, "research-docs", "2026-08-03-semenyo.md"),
+      "title: Semenyo hails Maresca\ncategory: sport\n"
+    );
+    // What recordWrite leaves behind once "Write anyway" succeeds.
+    await writeArticlesState(outputsRoot, {
+      "2026-08-03-semenyo.md": {
+        article: "2026-08-03-semenyo.md",
+        processed_at: "2026-08-03T11:00:00.000Z",
+        editorial_decision: "write",
+        format: "short-form",
+      },
+    });
+
+    const data = await scanWorkflowDashboard({ outputsRoot, siteRoot });
+
+    assert.equal(data.spikes.length, 0);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a spike older than the active research window drops off the tray", async () => {
+  const { dir, outputsRoot, siteRoot } = await buildSpikeFixture();
+  try {
+    const stale = join(outputsRoot, "research-docs", "2026-04-17-old.md");
+    await writeMarkdown(stale, "title: Ancient history\ncategory: news\n");
+    const longAgo = new Date("2026-04-17T08:41:38.130Z");
+    await utimes(stale, longAgo, longAgo);
+    await writeArticlesState(outputsRoot, {
+      "2026-04-17-old.md": {
+        processed_at: "2026-04-17T08:41:38.130Z",
+        editorial_decision: "skip",
+        skip_reason: "Eight years old.",
+      },
+    });
+
+    const data = await scanWorkflowDashboard({
+      outputsRoot,
+      siteRoot,
+      now: new Date("2026-08-03T12:00:00.000Z"),
+    });
+
+    assert.equal(data.spikes.length, 0);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a spike with an override already running says so", async () => {
+  const { dir, outputsRoot, siteRoot } = await buildSpikeFixture();
+  try {
+    await writeMarkdown(
+      join(outputsRoot, "research-docs", "2026-08-03-semenyo.md"),
+      "title: Semenyo hails Maresca\ncategory: sport\n"
+    );
+    await writeArticlesState(outputsRoot, {
+      "2026-08-03-semenyo.md": {
+        processed_at: "2026-08-03T10:12:46.421Z",
+        editorial_decision: "skip",
+        skip_reason: "Classic football filler.",
+      },
+    });
+    await mkdir(join(outputsRoot, "force-write-jobs"), { recursive: true });
+    await writeFile(
+      join(outputsRoot, "force-write-jobs", "2026-08-03-semenyo.json"),
+      JSON.stringify({
+        filename: "2026-08-03-semenyo.md",
+        status: "running",
+        startedAt: "2026-08-03T12:00:00.000Z",
+        logPath: "/tmp/force-write.log",
+      }),
+      "utf-8"
+    );
+
+    const data = await scanWorkflowDashboard({ outputsRoot, siteRoot });
+
+    assert.equal(data.spikes[0]?.forceWrite?.status, "running");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a spike with no override attempt carries no job", async () => {
+  const { dir, outputsRoot, siteRoot } = await buildSpikeFixture();
+  try {
+    await writeMarkdown(
+      join(outputsRoot, "research-docs", "2026-08-03-semenyo.md"),
+      "title: Semenyo hails Maresca\ncategory: sport\n"
+    );
+    await writeArticlesState(outputsRoot, {
+      "2026-08-03-semenyo.md": {
+        processed_at: "2026-08-03T10:12:46.421Z",
+        editorial_decision: "skip",
+        skip_reason: "Classic football filler.",
+      },
+    });
+
+    const data = await scanWorkflowDashboard({ outputsRoot, siteRoot });
+
+    assert.equal(data.spikes[0]?.forceWrite, undefined);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

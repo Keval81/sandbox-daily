@@ -13,6 +13,7 @@ import {
   moveWorkflowStoryToSocialReady,
   retryWorkflowRevision,
 } from "./actions";
+import { SpikedTray } from "./SpikedTray";
 import type {
   WorkflowAction,
   WorkflowDashboardData,
@@ -233,6 +234,8 @@ export function WorkflowDashboard({ data }: WorkflowDashboardProps) {
             ))}
           </div>
         )}
+
+        <SpikedTray spikes={data.spikes} />
 
         {/* min-w-0 on every child below: a grid item defaults to min-width:auto, so
            the 1180px pipeline board stretched this track past the viewport and the

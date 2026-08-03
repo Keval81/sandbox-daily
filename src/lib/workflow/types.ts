@@ -1,3 +1,5 @@
+import type { ForceWriteJob } from "./force-write";
+
 export const WORKFLOW_TYPES = ["normal", "feature", "spotlight"] as const;
 export type WorkflowStoryType = (typeof WORKFLOW_TYPES)[number];
 
@@ -73,6 +75,27 @@ export interface WorkflowArchivedStory {
   archivedAt: string | null;
 }
 
+/**
+ * A research doc the writer's editorial gate declined to write.
+ *
+ * Not a pipeline stage: a spiked story is terminal unless the operator
+ * overrules it, which is why these live in their own tray rather than in a
+ * column on the board.
+ */
+export interface WorkflowSpike {
+  id: string;
+  slug: string;
+  title: string;
+  vertical: WorkflowVertical;
+  sourcePath: string;
+  /** The gate's own words, as recorded in articles-state.json. */
+  reason: string;
+  skippedAt: string;
+  ageLabel: string;
+  /** Present once the operator has overruled the gate for this doc. */
+  forceWrite?: ForceWriteJob;
+}
+
 export interface WorkflowStageSummary {
   stage: WorkflowStage;
   count: number;
@@ -104,6 +127,7 @@ export interface WorkflowDashboardData {
   summary: WorkflowSummary;
   stages: WorkflowStageSummary[];
   stories: WorkflowStory[];
+  spikes: WorkflowSpike[];
   archived: WorkflowArchivedStory[];
   exceptions: WorkflowException[];
   warnings: string[];

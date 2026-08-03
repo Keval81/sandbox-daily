@@ -12,7 +12,12 @@ import {
   inferStoryType,
   normalizeVertical,
 } from "./stage-inference";
-import { readReviewJobs } from "./state-readers";
+import {
+  readEditorialSkips,
+  readReviewJobs,
+  type EditorialSkip,
+} from "./state-readers";
+import { readForceWriteJobs } from "./force-write";
 import type { JobRecord } from "@/lib/revision/types";
 import {
   WORKFLOW_STAGES,
@@ -24,6 +29,7 @@ import {
   type WorkflowStage,
   type WorkflowStageSummary,
   type WorkflowStory,
+  type WorkflowSpike,
 } from "./types";
 
 const ACTIVE_RESEARCH_WINDOW_DAYS = 7;
@@ -328,6 +334,27 @@ function buildExceptions(stories: WorkflowStory[]): WorkflowException[] {
     }));
 }
 
+function toSpike(
+  candidate: CandidateStory,
+  sourcePath: string,
+  skip: EditorialSkip,
+  now: Date
+): WorkflowSpike {
+  // The gate's timestamp beats the file's mtime: it says when the decision was
+  // made, not when the doc last happened to be touched.
+  const skippedAt = skip.skippedAt || candidate.updatedAt || "";
+  return {
+    id: `spike:${candidate.slug}`,
+    slug: candidate.slug,
+    title: candidate.title,
+    vertical: candidate.vertical,
+    sourcePath,
+    reason: skip.reason,
+    skippedAt,
+    ageLabel: ageLabel(skippedAt || null, now),
+  };
+}
+
 function isActionableWorkflowStory(story: WorkflowStory): boolean {
   return (
     story.stage !== "published" &&
@@ -379,31 +406,44 @@ export async function scanWorkflowDashboard(
   );
   const reviewJobs = await readReviewJobs(paths.reviewJobsRoot);
   warnings.push(...reviewJobs.warnings);
+  const editorialSkips = await readEditorialSkips(paths.articlesRoot);
+  warnings.push(...editorialSkips.warnings);
+  const forceWrites = await readForceWriteJobs(
+    path.join(paths.outputsRoot, "force-write-jobs")
+  );
+  warnings.push(...forceWrites.warnings);
   const archived = await Promise.all(archiveFiles.map(readArchivedStory));
 
   const candidates: CandidateStory[] = [];
-  for (const file of researchFiles) {
-    const candidate = await readCandidateFromMarkdown(file, "research", "research");
-    if (
-      isWithinActiveResearchWindow(candidate, now) &&
-      !completedResearchFilenames.has(path.basename(file))
-    ) {
+  const spikes: WorkflowSpike[] = [];
+
+  // A spiked doc leaves the research column entirely. It is not waiting for the
+  // writer — the writer has already refused it — and counting it in both places
+  // would report the same story twice.
+  const collectResearch = async (
+    files: string[],
+    sourceKind: "research" | "feature-research"
+  ): Promise<void> => {
+    for (const file of files) {
+      const candidate = await readCandidateFromMarkdown(file, "research", sourceKind);
+      const filename = path.basename(file);
+      if (!isWithinActiveResearchWindow(candidate, now)) continue;
+      if (completedResearchFilenames.has(filename)) continue;
+
+      const skip = editorialSkips.skips.get(filename);
+      if (skip) {
+        spikes.push({
+          ...toSpike(candidate, file, skip, now),
+          forceWrite: forceWrites.jobs.get(filename),
+        });
+        continue;
+      }
       candidates.push(candidate);
     }
-  }
-  for (const file of featureResearchFiles) {
-    const candidate = await readCandidateFromMarkdown(
-      file,
-      "research",
-      "feature-research"
-    );
-    if (
-      isWithinActiveResearchWindow(candidate, now) &&
-      !completedResearchFilenames.has(path.basename(file))
-    ) {
-      candidates.push(candidate);
-    }
-  }
+  };
+
+  await collectResearch(researchFiles, "research");
+  await collectResearch(featureResearchFiles, "feature-research");
   for (const file of readyImageFiles) {
     const candidate = await readCandidateFromMarkdown(
       file,
@@ -468,6 +508,7 @@ export async function scanWorkflowDashboard(
     },
     stages: summarizeStages(stories),
     stories,
+    spikes: spikes.sort((a, b) => b.skippedAt.localeCompare(a.skippedAt)),
     archived,
     exceptions,
     warnings,

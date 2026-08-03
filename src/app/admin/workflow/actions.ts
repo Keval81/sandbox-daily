@@ -52,6 +52,43 @@ export async function retryWorkflowRevision(
   revalidatePath("/admin/workflow");
 }
 
+/**
+ * Overrules the writer's editorial gate for one spiked research doc.
+ *
+ * Detached on purpose: the run behind this takes minutes (writer, editor,
+ * image), far longer than a form post should hold open. Progress is reported
+ * through the job record force-write.sh writes, which the board reads back.
+ */
+export async function forceWriteSpikedStory(formData: FormData): Promise<void> {
+  assertLocalOnly();
+  const filename = formData.get("filename");
+  if (typeof filename !== "string" || filename.length === 0) {
+    throw new Error("Missing research doc filename.");
+  }
+
+  const { buildForceWriteCommand, resolveResearchDoc } = await import(
+    "@/lib/workflow/force-write"
+  );
+  const { WORKFLOW_PATHS } = await import("@/lib/workflow/paths");
+
+  // Throws on anything that isn't a bare markdown filename — the value reaches
+  // a shell command.
+  const resolved = await resolveResearchDoc(WORKFLOW_PATHS.outputsRoot, filename);
+  if (!resolved) {
+    throw new Error(`No such research doc: ${filename}`);
+  }
+
+  const { spawn } = await import("node:child_process");
+  const { command, args, cwd } = buildForceWriteCommand(
+    WORKFLOW_PATHS.outputsRoot,
+    filename
+  );
+  const child = spawn(command, args, { cwd, detached: true, stdio: "ignore" });
+  child.unref();
+
+  revalidatePath("/admin/workflow");
+}
+
 export async function archiveWorkflowStory(formData: FormData): Promise<void> {
   assertLocalOnly();
   const filePath = formData.get("filePath");

@@ -78,3 +78,66 @@ export async function readReviewJobs(
 
   return { jobs, warnings };
 }
+
+export interface EditorialSkip {
+  /** Why the writer's editorial gate declined to write this doc. */
+  reason: string;
+  skippedAt: string;
+}
+
+export interface EditorialSkipsReadResult {
+  skips: Map<string, EditorialSkip>;
+  warnings: string[];
+}
+
+const STATED_REASON_FALLBACK = "Scored below the editorial threshold.";
+
+/**
+ * The research docs the writer-agent's editorial gate declined to write.
+ *
+ * `articles-state.json` records three outcomes per doc, and only one of them is
+ * a settled editorial decision:
+ *
+ *   write — has an `article`; the completed-research path already handles it
+ *   skip  — the gate said no; nothing surfaced this until the spiked tray
+ *   error — a transient failure that the next pipeline run retries
+ *
+ * Reading an error as a rejection would tell the operator a story was spiked
+ * when the pipeline is in fact about to try it again.
+ */
+export async function readEditorialSkips(
+  articlesRoot: string
+): Promise<EditorialSkipsReadResult> {
+  const statePath = path.join(articlesRoot, "articles-state.json");
+  const { data, warning } = await readJsonFile<unknown>(statePath);
+  if (warning) return { skips: new Map(), warnings: [warning] };
+
+  const skips = new Map<string, EditorialSkip>();
+  if (!data || typeof data !== "object") return { skips, warnings: [] };
+
+  const processed = (data as { processed?: unknown }).processed;
+  if (!processed || typeof processed !== "object") return { skips, warnings: [] };
+
+  for (const [filename, entry] of Object.entries(
+    processed as Record<string, unknown>
+  )) {
+    if (!entry || typeof entry !== "object") continue;
+    const record = entry as {
+      editorial_decision?: unknown;
+      skip_reason?: unknown;
+      processed_at?: unknown;
+    };
+    if (record.editorial_decision !== "skip") continue;
+
+    skips.set(filename, {
+      reason:
+        typeof record.skip_reason === "string" && record.skip_reason.trim()
+          ? record.skip_reason.trim()
+          : STATED_REASON_FALLBACK,
+      skippedAt:
+        typeof record.processed_at === "string" ? record.processed_at : "",
+    });
+  }
+
+  return { skips, warnings: [] };
+}
