@@ -3,6 +3,7 @@ import { Playfair_Display, Source_Serif_4, IBM_Plex_Mono } from "next/font/googl
 import "./globals.css";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
+import { siteUrl } from "@/lib/article-metadata";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -30,6 +31,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: "Sandbox Daily — News · Tech · Sport",
   description:
     "The intelligence of a broadsheet, the urgency of a live broadcast, the data depth of a financial terminal.",

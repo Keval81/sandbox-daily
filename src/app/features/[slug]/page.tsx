@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getArticleBySlug, getArticlesByVertical, renderMarkdown } from "@/lib/articles";
+import { buildArticleJsonLd, buildArticleMetadata, serializeJsonLd } from "@/lib/article-metadata";
 import { verticals } from "@/lib/verticals";
 import { ArticleCard } from "@/components/article-card";
 import { ArticleHeroImage } from "@/components/article-hero-image";
@@ -21,6 +23,13 @@ export async function generateStaticParams() {
   return getArticlesByVertical("features").map((a) => ({ slug: a.slug }));
 }
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const article = getArticleBySlug("features", slug);
+  if (!article) return {};
+  return buildArticleMetadata(article);
+}
+
 export default async function FeaturesArticlePage({ params }: Props) {
   const { slug } = await params;
   const article = getArticleBySlug("features", slug);
@@ -35,6 +44,10 @@ export default async function FeaturesArticlePage({ params }: Props) {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildArticleJsonLd(article)) }}
+      />
       <section className={`${config.bg} ${config.text} py-20 px-6`}>
         <div className="mx-auto max-w-[1440px]">
           <span className="font-mono text-meta-sm uppercase tracking-mono-wide opacity-70">
