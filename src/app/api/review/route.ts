@@ -4,7 +4,7 @@ import path from "node:path";
 import matter from "gray-matter";
 import { operatorSurfaceEnabled } from "@/lib/admin/surface";
 import { publishArticle } from "@/lib/review/publish";
-import { approveArticle, withApprovalLock } from "@/lib/review/approve";
+import { approveArticle, withApprovalLock, normaliseApprovalFields } from "@/lib/review/approve";
 
 const VALID_VERTICALS = ["news", "sport", "tech", "features"] as const;
 type Vertical = (typeof VALID_VERTICALS)[number];
@@ -16,7 +16,12 @@ interface ReviewRequest {
   vertical: Vertical;
   slug: string;
   action: Action;
-  fields?: { title?: string; standfirst?: string; social_post?: string };
+  fields?: {
+    title?: string;
+    standfirst?: string;
+    social_post?: string;
+    homepage_lead?: boolean;
+  };
 }
 
 const CONTENT_ROOT = path.join(process.cwd(), "src/content");
@@ -84,7 +89,7 @@ export async function POST(request: Request) {
     // Locked per article: publishing takes seconds, and a second tap that lands
     // mid-push would otherwise read the pre-approval file and commit again.
     const published = await withApprovalLock(`${vertical}/${slug}`, async () => {
-      const { title } = await approveArticle(articlePath, body.fields);
+      const { title } = await approveArticle(articlePath, normaliseApprovalFields(body.fields));
 
       // Approval IS publication. Flipping frontmatter only changed this machine;
       // the live site builds from git, so a story stayed invisible to readers

@@ -4,6 +4,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ReviewRequest } from "@/lib/revision/types";
+import { canPromoteToLead } from "@/lib/homepage/lead";
 import { useAnnotations } from "./use-annotations";
 import { AnnotatableArticle } from "./AnnotatableArticle";
 import { RevisionPanel } from "./RevisionPanel";
@@ -20,9 +21,10 @@ interface Props {
   headline?: string;
   standfirst?: string;
   socialPost?: string;
+  homepageLead?: boolean;
 }
 
-export function ReviewActions({ vertical, slug, articleHtml, interactive, headline, standfirst, socialPost }: Props) {
+export function ReviewActions({ vertical, slug, articleHtml, interactive, headline, standfirst, socialPost, homepageLead }: Props) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("default");
   const [overallNotes, setOverallNotes] = useState("");
@@ -36,6 +38,7 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive, headli
   const [editHeadline, setEditHeadline] = useState(headline ?? "");
   const [editStandfirst, setEditStandfirst] = useState(standfirst ?? "");
   const [editSocial, setEditSocial] = useState(socialPost ?? "");
+  const [editLead, setEditLead] = useState(homepageLead ?? false);
   const annotations = useAnnotations();
 
   // Stable so AnnotatableArticle's applyHighlights effect doesn't re-run on every
@@ -59,7 +62,14 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive, headli
           action,
           fields:
             action === "approve"
-              ? { title: editHeadline, standfirst: editStandfirst, social_post: editSocial }
+              ? {
+                  title: editHeadline,
+                  standfirst: editStandfirst,
+                  social_post: editSocial,
+                  // Only sent where it means something. On news and features
+                  // there is no checkbox, so there is nothing to say.
+                  ...(canPromoteToLead(vertical) ? { homepage_lead: editLead } : {}),
+                }
               : undefined,
         }),
       });
@@ -225,6 +235,25 @@ export function ReviewActions({ vertical, slug, articleHtml, interactive, headli
               Posting: post natively with the image, then drop the article link in your first reply (a link in the post suppresses reach).
             </p>
           </div>
+          {canPromoteToLead(vertical) && (
+            <label className="flex items-start gap-3 border-2 border-ink bg-cream px-3 py-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={editLead}
+                onChange={(e) => setEditLead(e.target.checked)}
+                className="mt-1 h-5 w-5 accent-orange"
+              />
+              <span>
+                <span className="block font-mono text-meta-sm uppercase tracking-mono-wide">
+                  Lead the front page
+                </span>
+                <span className="block font-mono text-meta-sm text-grey mt-1">
+                  Sport and tech sit in the briefs by default. Ticked, this story
+                  may take the lead — until something newer is published.
+                </span>
+              </span>
+            </label>
+          )}
         </div>
       )}
 
