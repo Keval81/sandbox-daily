@@ -3,7 +3,12 @@ import assert from "node:assert/strict";
 import { selectHomepage, HERO_COUNT } from "./select";
 import type { Article, Vertical } from "@/lib/types";
 
-const article = (slug: string, category: Vertical, date: string): Article =>
+const article = (
+  slug: string,
+  category: Vertical,
+  date: string,
+  extra: Partial<Article> = {}
+): Article =>
   ({
     slug,
     category,
@@ -14,6 +19,7 @@ const article = (slug: string, category: Vertical, date: string): Article =>
     content: "",
     status: "published",
     readTime: 4,
+    ...extra,
   }) as unknown as Article;
 
 /** Newest first — the order getAllArticles() hands over. */
@@ -78,5 +84,48 @@ test("every vertical is present as a key even when it has nothing left", () => {
   const onlyNews = [article("n1", "news", "2026-08-02")];
   const { sections } = selectHomepage(onlyNews, 6);
   assert.deepEqual(Object.keys(sections).sort(), ["features", "news", "sport", "tech"]);
+  assert.deepEqual(sections.news, []);
+});
+
+/** Newest in the store is a sport story — the case Phase B made common. */
+const sportOnTop = (extra: Partial<Article> = {}): Article[] => [
+  article("s0", "sport", "2026-08-03", extra),
+  ...stock(),
+];
+
+test("a sport story does not lead just by being newest", () => {
+  const { hero } = selectHomepage(sportOnTop(), 3);
+  assert.equal(hero[0].slug, "n1");
+});
+
+test("the sport story it skipped still appears, exactly once, below the lead", () => {
+  const { hero, sections } = selectHomepage(sportOnTop(), 3);
+  const printed = [...hero, ...Object.values(sections).flat()].map((a) => a.slug);
+  assert.deepEqual(printed.filter((s) => s === "s0"), ["s0"]);
+  assert.ok(hero.slice(1).some((a) => a.slug === "s0"), "expected s0 in the briefs");
+});
+
+test("a flagged sport story leads when nothing eligible is newer", () => {
+  const { hero } = selectHomepage(sportOnTop({ homepageLead: true }), 3);
+  assert.equal(hero[0].slug, "s0");
+});
+
+test("a flagged story yields to a newer news story", () => {
+  // Flagged, but oldest in the list — the flag grants eligibility, not the slot.
+  const articles = [...stock(), article("s9", "sport", "2026-07-24", { homepageLead: true })];
+  assert.equal(selectHomepage(articles, 3).hero[0].slug, "n1");
+});
+
+test("with nothing eligible at all the newest story leads anyway", () => {
+  // A front page with no lead is a worse failure than a sport story leading.
+  const thin = [article("s0", "sport", "2026-08-03"), article("t0", "tech", "2026-08-02")];
+  const { hero } = selectHomepage(thin, 3);
+  assert.equal(hero[0].slug, "s0");
+  assert.equal(hero.length, 2);
+});
+
+test("an empty store yields an empty hero rather than throwing", () => {
+  const { hero, sections } = selectHomepage([], 3);
+  assert.deepEqual(hero, []);
   assert.deepEqual(sections.news, []);
 });

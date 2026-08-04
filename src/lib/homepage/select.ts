@@ -1,4 +1,5 @@
 import type { Article, Vertical } from "@/lib/types";
+import { isLeadEligible } from "./lead";
 
 export const HERO_COUNT = 4;
 export const DEFAULT_PER_SECTION = 6;
@@ -28,7 +29,17 @@ export function selectHomepage(
 ): HomepageSelection {
   const claimed = new Set<string>();
 
-  const hero = articles.slice(0, HERO_COUNT);
+  // The lead is the newest story ALLOWED to lead, not simply the newest story.
+  // Scanning a newest-first list for the first eligible one is the whole
+  // recency contest: an operator-flagged sport piece leads only while nothing
+  // eligible is newer, then yields on its own — no expiry rule, no pointer to
+  // keep correct. Falling back to articles[0] when nothing is eligible is
+  // deliberate: a paper always has a lead, and a headless front page is a
+  // worse failure than a sport story leading for a day.
+  const lead = articles.find(isLeadEligible) ?? articles[0];
+  const hero = lead
+    ? [lead, ...articles.filter((a) => a.slug !== lead.slug).slice(0, HERO_COUNT - 1)]
+    : [];
   for (const a of hero) claimed.add(a.slug);
 
   const sections = Object.fromEntries(
