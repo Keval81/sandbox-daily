@@ -8,6 +8,7 @@ import { EventConsole, type SortMode } from "./event-console";
 import { DetailPanel, DETAIL_TITLE_ID } from "./detail-panel";
 import { formatStamp } from "./format";
 import { deadSourceLabels, freshnessOf, REVALIDATE_SECONDS } from "@/lib/pulse/freshness";
+import { markerKindOf } from "@/lib/pulse/marker-kind";
 import { categoryKey, eventKey } from "@/lib/pulse/category-key";
 import { useReducedMotion } from "./use-reduced-motion";
 import { ShareButton } from "@/components/signals/share-button";
@@ -116,6 +117,7 @@ export function PulseClient({ snapshot }: PulseClientProps) {
         lon: e.lon,
         color: metaOf(e)?.color ?? FALLBACK_COLOR,
         weight: e.severity,
+        kind: markerKindOf(e),
       })),
     [visible, metaOf]
   );

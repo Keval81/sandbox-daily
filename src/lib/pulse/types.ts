@@ -27,6 +27,9 @@ export interface Marker {
   lon: number;
   color: string;
   weight: number;      // 0..1 — drives spike height and dot radius
+  /** Editorial tier: pins are interactive claims of significance; embers are
+   *  ambient texture with no hover/pick target. See lib/pulse/marker-kind. */
+  kind: "pin" | "ember";
 }
 
 export interface CategoryMeta {

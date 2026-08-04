@@ -248,3 +248,23 @@ test("eventCardsById: url passes through, null when absent", () => {
   assert.equal(cards.get("withUrl")?.url, "https://example.com/a");
   assert.equal(cards.get("noUrl")?.url, null);
 });
+
+test("markersFromSnapshot stamps the editorial kind on every marker", () => {
+  const s = snap([hazards()], [
+    event({ id: "firms:c1", category: "flood", source: "FIRMS" }),
+    event({ id: "gdacs:1", category: "flood", source: "GDACS" }),
+  ]);
+  const byId = new Map(markersFromSnapshot(s, false).map((m) => [m.id, m.kind]));
+  assert.equal(byId.get("firms:c1"), "ember");
+  assert.equal(byId.get("gdacs:1"), "pin");
+});
+
+test("dimmed mode keeps both kinds, dimmed alike", () => {
+  const s = snap([hazards({ live: false })], [
+    event({ id: "firms:c1", category: "flood", source: "FIRMS" }),
+    event({ id: "gdacs:1", category: "flood", source: "GDACS" }),
+  ]);
+  const markers = markersFromSnapshot(s, true);
+  assert.equal(markers.length, 2);
+  assert.deepEqual(markers.map((m) => m.kind).sort(), ["ember", "pin"]);
+});

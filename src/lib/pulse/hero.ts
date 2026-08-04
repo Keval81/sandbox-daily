@@ -1,4 +1,5 @@
 import { freshnessOf } from "./freshness";
+import { markerKindOf } from "./marker-kind";
 import { describeLocation } from "./region";
 import type { Marker, PulseSnapshot } from "./types";
 
@@ -40,6 +41,7 @@ export const markersFromSnapshot = (snapshot: PulseSnapshot, dimmed: boolean): M
     id: e.id, lat: e.lat, lon: e.lon,
     color: dimmed ? DIM_COLOR : byLayer.get(e.layer)?.[e.category]?.color ?? FALLBACK_COLOR,
     weight: dimmed ? e.severity * DIM_WEIGHT : e.severity,
+    kind: markerKindOf(e),
   }));
 };
 
