@@ -78,6 +78,33 @@ test("the source reports live while the feed is fresh, dead once it ages out", a
   assert.equal((await stale.fetch()).sources[0].live, false);
 });
 
+test("a headline older than the freshness window is not plotted even from a fresh file", async () => {
+  const nineDaysAgo = new Date(NOW - 9 * 86_400_000).toISOString();
+  const layer = createNewsLayer(
+    async () =>
+      feed(
+        [
+          radarEvent({ id: "old", latest_seen: nineDaysAgo }),
+          radarEvent({ id: "new", latest_seen: "2026-08-01T09:00:00Z" }),
+        ],
+        "2026-08-01T09:00:00Z"
+      ),
+    () => NOW
+  );
+  const result = await layer.fetch();
+  assert.equal(result.events.length, 1);
+  assert.equal(result.events[0].id, "radar:new");
+});
+
+test("a headline with an unparseable latest_seen is dropped, not plotted as current", async () => {
+  const layer = createNewsLayer(
+    async () => feed([radarEvent({ latest_seen: "not-a-date" })]),
+    () => NOW
+  );
+  const result = await layer.fetch();
+  assert.equal(result.events.length, 0);
+});
+
 test("a feed that cannot be read reports a dead source and no events", async () => {
   const layer = createNewsLayer(
     async () => {

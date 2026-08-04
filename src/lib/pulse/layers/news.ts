@@ -63,6 +63,16 @@ export const createNewsLayer = (
     const spreadCollisions = makeCollisionSpreader();
     let unplottable = 0;
     const events = feed.events.flatMap((e) => {
+      // Per-event freshness, not just the file's: a snapshot regenerated at
+      // deploy time carries whatever the radar accumulated, so a fresh
+      // generated_at can still hold week-old stories. A headline is a report
+      // of a moment, not an ongoing hazard — once it ages past the window it
+      // comes off the globe, exactly as the file-level gate retires the whole
+      // feed. Unparseable dates fail closed: a pin is a claim of recency.
+      const eventAgeMs = nowMs() - Date.parse(e.latest_seen);
+      if (!Number.isFinite(eventAgeMs) || eventAgeMs > NEWS_FRESH_DAYS * 86_400_000) {
+        return [];
+      }
       const hit =
         e.location === "london" ? LONDON : geocodeHeadline(`${e.title} ${e.summary}`);
       if (!hit) {
