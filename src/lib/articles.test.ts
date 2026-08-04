@@ -33,3 +33,45 @@ test("a quoted string in the frontmatter does not read as flagged", async () => 
   const { dir, filename } = await articleFile('homepage_lead: "false"\n');
   assert.equal(parseArticleFile(dir, filename).homepageLead, false);
 });
+
+test("structured sources in the frontmatter parse into a typed list", async () => {
+  const { dir, filename } = await articleFile(
+    "sources:\n" +
+      "  - title: The report\n" +
+      "    url: https://example.com/report\n" +
+      "    publisher: Example Press\n" +
+      "  - title: The interview\n" +
+      "    url: http://example.org/interview\n"
+  );
+  assert.deepEqual(parseArticleFile(dir, filename).sources, [
+    { title: "The report", url: "https://example.com/report", publisher: "Example Press" },
+    { title: "The interview", url: "http://example.org/interview" },
+  ]);
+});
+
+test("a source missing its title or url is dropped, the rest survive", async () => {
+  const { dir, filename } = await articleFile(
+    "sources:\n" +
+      "  - title: No url here\n" +
+      "  - url: https://example.com/no-title\n" +
+      "  - title: Complete\n" +
+      "    url: https://example.com/complete\n"
+  );
+  assert.deepEqual(parseArticleFile(dir, filename).sources, [
+    { title: "Complete", url: "https://example.com/complete" },
+  ]);
+});
+
+test("a source whose url is not http(s) is dropped", async () => {
+  const { dir, filename } = await articleFile(
+    "sources:\n" +
+      "  - title: Sketchy\n" +
+      "    url: 'javascript:alert(1)'\n"
+  );
+  assert.deepEqual(parseArticleFile(dir, filename).sources, []);
+});
+
+test("an article without a sources key carries none", async () => {
+  const { dir, filename } = await articleFile("");
+  assert.equal(parseArticleFile(dir, filename).sources, undefined);
+});

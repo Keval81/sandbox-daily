@@ -5,6 +5,7 @@ import { remark } from "remark";
 import html from "remark-html";
 import {
   type Article,
+  type ArticleSource,
   type ArticleStatus,
   type InlineImage,
   type Vertical,
@@ -48,6 +49,21 @@ export function parseArticleFile(dir: string, filename: string): Article {
         .map((i) => ({ path: i.path as string, concept: i.concept as string }))
     : undefined;
 
+  const sources: ArticleSource[] | undefined = Array.isArray(data.sources)
+    ? (data.sources as Array<{ title?: unknown; url?: unknown; publisher?: unknown }>)
+        .filter(
+          (s) =>
+            typeof s?.title === "string" &&
+            typeof s?.url === "string" &&
+            /^https?:\/\//.test(s.url)
+        )
+        .map((s) => ({
+          title: s.title as string,
+          url: s.url as string,
+          ...(typeof s.publisher === "string" ? { publisher: s.publisher } : {}),
+        }))
+    : undefined;
+
   // Default to "published" so the existing news/tech/sport/features pieces
   // (written before status was introduced) keep showing on the live site.
   const rawStatus = typeof data.status === "string" ? data.status : "published";
@@ -79,6 +95,7 @@ export function parseArticleFile(dir: string, filename: string): Article {
     socialPost: typeof data.social_post === "string" ? data.social_post : undefined,
     originalTitle: typeof data.original_title === "string" ? data.original_title : undefined,
     homepageLead: data.homepage_lead === true,
+    sources,
   };
 }
 

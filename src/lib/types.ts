@@ -28,6 +28,14 @@ export interface InlineImage {
   concept: string;
 }
 
+/** One entry in an article's end-of-piece source list. Only http(s) links
+ *  with both a title and a url survive parsing — nothing is ever invented. */
+export interface ArticleSource {
+  title: string;
+  url: string;
+  publisher?: string;
+}
+
 export interface Article {
   slug: string;
   title: string;
@@ -59,6 +67,9 @@ export interface Article {
   /** Operator opt-in, from frontmatter `homepage_lead: true` — lets a sport or
    *  tech story take the front-page lead. See @/lib/homepage/lead. */
   homepageLead?: boolean;
+  /** Frontmatter `sources:` — rendered as the restrained Sources section at
+   *  the end of the article. Absent on articles published before the field. */
+  sources?: ArticleSource[];
 }
 
 export interface VerticalConfig {

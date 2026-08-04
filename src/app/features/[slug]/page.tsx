@@ -6,6 +6,7 @@ import { verticals } from "@/lib/verticals";
 import { ArticleCard } from "@/components/article-card";
 import { ArticleHeroImage } from "@/components/article-hero-image";
 import { ArticleStandfirst } from "@/components/article-standfirst";
+import { ArticleSources } from "@/components/article-sources";
 import { ArticleSignals } from "@/components/signals/article-signals";
 import { ARTICLE_PROSE_CLASS, injectInlineImages } from "@/lib/article-html";
 
@@ -85,10 +86,13 @@ export default async function FeaturesArticlePage({ params }: Props) {
 
       <section className="bg-cream py-16 px-6">
         <div className="mx-auto max-w-[1440px] grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-12">
-          <article
+          <div className="min-w-0">
+            <article
             className={ARTICLE_PROSE_CLASS}
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
-          />
+              dangerouslySetInnerHTML={{ __html: htmlContent }}
+            />
+            <ArticleSources sources={article.sources} />
+          </div>
           <ArticleSignals slug={article.slug} title={article.title} vertical="features" placement="bottom" />
           <aside className="hidden lg:block">
             <div className="sticky top-24">

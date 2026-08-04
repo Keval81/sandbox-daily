@@ -6,6 +6,7 @@ import { verticals } from "@/lib/verticals";
 import { ArticleCard } from "@/components/article-card";
 import { ArticleHeroImage } from "@/components/article-hero-image";
 import { ArticleStandfirst } from "@/components/article-standfirst";
+import { ArticleSources } from "@/components/article-sources";
 import { ArticleSignals } from "@/components/signals/article-signals";
 
 interface Props {
@@ -76,10 +77,13 @@ export default async function NewsArticlePage({ params }: Props) {
 
       <section className="bg-cream py-16 px-6">
         <div className="mx-auto max-w-[1440px] grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-12">
-          <article
+          <div className="min-w-0">
+            <article
             className="font-body text-body leading-reading text-ink max-w-reading [&>h1]:font-display [&>h1]:text-4xl [&>h1]:font-bold [&>h1]:leading-headline [&>h1]:mt-12 [&>h1]:mb-4 [&>h2]:font-display [&>h2]:text-3xl [&>h2]:font-bold [&>h2]:leading-headline [&>h2]:mt-12 [&>h2]:mb-4 [&>h3]:font-display [&>h3]:text-xl [&>h3]:font-bold [&>h3]:leading-headline [&>h3]:mt-8 [&>h3]:mb-3 [&>p]:mb-6 [&>blockquote]:border-l-4 [&>blockquote]:border-l-orange [&>blockquote]:pl-6 [&>blockquote]:italic [&>blockquote]:font-display [&>blockquote]:text-xl [&>blockquote]:my-8 [&>strong]:font-semibold [&>hr]:border-grey/30 [&>hr]:my-8 [&>p:first-of-type]:first-letter:text-6xl [&>p:first-of-type]:first-letter:font-display [&>p:first-of-type]:first-letter:font-black [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-none"
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
-          />
+              dangerouslySetInnerHTML={{ __html: htmlContent }}
+            />
+            <ArticleSources sources={article.sources} />
+          </div>
           <ArticleSignals slug={article.slug} title={article.title} vertical="news" placement="bottom" />
           <aside className="hidden lg:block">
             <div className="sticky top-24">
