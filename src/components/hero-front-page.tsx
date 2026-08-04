@@ -284,7 +284,6 @@ export function HeroFrontPage({
                     width={1200}
                     height={675}
                     sizes="(max-width: 899px) 100vw, 42vw"
-                    unoptimized
                   />
                   <span className="night-hero-figure-caption font-mono">
                     {verticals[lead.section].label} · FRONT-PAGE ILLUSTRATION
@@ -306,7 +305,6 @@ export function HeroFrontPage({
                         width={480}
                         height={270}
                         sizes="(max-width: 899px) 90vw, 14vw"
-                        unoptimized
                       />
                     </span>
                   )}

@@ -67,7 +67,6 @@ export default async function FeaturesArticlePage({ params }: Props) {
         <ArticleHeroImage
           src={article.heroImage}
           alt={article.heroImageConcept ?? article.title}
-          unoptimized
         />
       )}
 
