@@ -56,6 +56,9 @@ export interface Article {
   socialPost?: string;
   /** The writer's original title, preserved when the editor rewrites `title`. */
   originalTitle?: string;
+  /** Operator opt-in, from frontmatter `homepage_lead: true` — lets a sport or
+   *  tech story take the front-page lead. See @/lib/homepage/lead. */
+  homepageLead?: boolean;
 }
 
 export interface VerticalConfig {
