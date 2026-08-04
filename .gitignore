@@ -47,3 +47,7 @@ next-env.d.ts
 /.claude/
 /.review-discarded/
 /public/images/articles/style-options/
+
+# Hero images download here before being adopted under a content-addressed
+# name; a crashed run can leave one behind and it must never be committed.
+public/images/articles/.staging-*
