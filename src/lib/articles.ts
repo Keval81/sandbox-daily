@@ -25,7 +25,15 @@ function estimateReadTime(wordCount: number): number {
   return Math.ceil(wordCount / 200);
 }
 
-function parseArticleFile(dir: string, filename: string): Article {
+/**
+ * Parses one markdown file into an Article.
+ *
+ * Exported so a test can drive a real file through the same code the site
+ * uses. Hand-built Article objects prove a rule and nothing about whether a
+ * frontmatter key ever reaches it — which is exactly how the sport/sports
+ * category bug and the seven-commit publish loop both got through.
+ */
+export function parseArticleFile(dir: string, filename: string): Article {
   const filePath = path.join(dir, filename);
   const fileContents = fs.readFileSync(filePath, "utf-8");
   const { data, content } = matter(fileContents);
@@ -70,6 +78,7 @@ function parseArticleFile(dir: string, filename: string): Article {
     standfirst: typeof data.standfirst === "string" ? data.standfirst : undefined,
     socialPost: typeof data.social_post === "string" ? data.social_post : undefined,
     originalTitle: typeof data.original_title === "string" ? data.original_title : undefined,
+    homepageLead: data.homepage_lead === true,
   };
 }
 
