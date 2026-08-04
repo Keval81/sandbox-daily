@@ -2,6 +2,7 @@ import type { Marker } from "../types";
 import {
   llToVec, qaxis, qFromUnit, qmat, qmul, qnorm, qslerp, projectVec,
   type Mat3, type Quat, type Vec3,
+  terrainFade,
 } from "./math";
 import {
   loadEarthTextures, TEX_W, TEX_H, CLOUD_W, CLOUD_H,
@@ -94,6 +95,9 @@ export class GlobeEngine {
   private dirY: Float32Array | null = null;
   private dirZ: Float32Array | null = null;
   private sphereDirty = true;
+  /** When the terrain landed, so it can ramp in over the flat stand-in. */
+  private terrainArrivedAt: number | null = null;
+  private revealed = false;
   private lastKey = "";
   private frameNo = 0;
   private cloudDrift = 0;
@@ -144,6 +148,7 @@ export class GlobeEngine {
         if (this.destroyed) return;
         this.textures = t;
         this.sphereDirty = true;
+        this.terrainArrivedAt = performance.now();
         this.canvas.classList.remove("failed");
         this.canvas.classList.add("ready");
       })
@@ -475,10 +480,25 @@ export class GlobeEngine {
     ctx.arc(CX, CY, R * 1.34, 0, 7);
     ctx.fill();
 
+    // A flat-shaded planet, always. The terrain is 440KB and can take fifteen
+    // seconds on a phone; the markers need none of it, so the globe reads as a
+    // globe immediately and the photography ramps in on top when it lands.
+    // Lit from the upper left, matching the terrain's own shading.
+    const lit = ctx.createRadialGradient(CX - R * 0.35, CY - R * 0.35, R * 0.1, CX, CY, R);
+    lit.addColorStop(0, "#2b3f63");
+    lit.addColorStop(0.65, "#1b2942");
+    lit.addColorStop(1, "#101a2c");
+    ctx.fillStyle = lit;
+    ctx.beginPath();
+    ctx.arc(CX, CY, R, 0, 7);
+    ctx.fill();
+
     if (this.textures) {
       if (this.sphereDirty) { this.renderSphere(); this.sphereDirty = false; }
       ctx.imageSmoothingEnabled = true;
+      ctx.globalAlpha = terrainFade(performance.now(), this.terrainArrivedAt);
       ctx.drawImage(this.sphereCanvas, CX - R, CY - R, R * 2, R * 2);
+      ctx.globalAlpha = 1;
     }
 
     this.curM = qmat(this.orient);
@@ -490,6 +510,10 @@ export class GlobeEngine {
     }
     drawable.sort((a, b) => a[1][2] - b[1][2]);
 
+    // Markers are drawn additively, so with no terrain under them the big
+    // blooms accumulate against flat dark and merge into white blobs. Damped
+    // until the terrain lands — still unmistakably pins, just not a smear.
+    const bloom = this.textures ? 1 : 0.55;
     ctx.globalCompositeOperation = "lighter";
     for (const [m, base] of drawable) {
       // The engine knows nothing about hazards: colour and size come off the marker.
@@ -507,7 +531,7 @@ export class GlobeEngine {
       ctx.moveTo(base[0], base[1]);
       ctx.lineTo(tipx, tipy);
       ctx.stroke();
-      const rad = (2.4 + m.weight * 4.5) * (0.7 + base[2] * 0.3);
+      const rad = (2.4 + m.weight * 4.5) * (0.7 + base[2] * 0.3) * bloom;
       const dg = ctx.createRadialGradient(tipx, tipy, 0, tipx, tipy, rad * 3);
       dg.addColorStop(0, col);
       dg.addColorStop(0.3, withAlpha(col, "cc"));
@@ -548,6 +572,18 @@ export class GlobeEngine {
     ctx.globalCompositeOperation = "source-over";
     const drawn = new Set(drawable.map((d) => d[0].id));
     for (const m of this.markers) if (!drawn.has(m.id)) m.sx = null;
+
+    // Revealed on the first frame that has actually been painted, NOT when the
+    // terrain resolves. The pins cost no bytes beyond the snapshot already in
+    // the page, and gating their reveal on 440KB of planet meant a cold phone
+    // sat for fifteen-plus seconds looking at the marker-free poster — which is
+    // a finished-looking render, so it reads as "no events today" rather than
+    // "still loading", and the only way anyone found the pins was refreshing
+    // until the textures came out of cache.
+    if (!this.revealed) {
+      this.revealed = true;
+      this.canvas.classList.add("ready");
+    }
   }
 
   /**

@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   llToVec, qaxis, qnorm, qmul, qmat, qFromUnit, qslerp, projectVec,
+  terrainFade, TERRAIN_FADE_MS,
 } from "./globe-engine/math";
 
 const near = (a: number, b: number, eps = 1e-9) =>
@@ -107,4 +108,27 @@ test("screen Y is inverted, because canvas Y grows downward", () => {
   const m = qmat([0, 0, 0, 1]);
   const [, sy] = projectVec([0, 1, 0], m, 200, 150, 100);
   near(sy, 50); // 150 - 1*100
+});
+
+// --- terrain fade-in -------------------------------------------------------
+// The canvas is revealed on the first drawn frame now, with a flat-shaded
+// sphere standing in until the 440KB of terrain arrives. Swapping the two on
+// one frame pops; this ramps the textured sphere in over the flat one.
+
+test("terrain is fully hidden before it has arrived", () => {
+  assert.equal(terrainFade(1000, null), 0);
+});
+
+test("terrain is fully opaque once the ramp has elapsed", () => {
+  assert.equal(terrainFade(2000, 1000), 1);
+});
+
+test("terrain is half faded in at the midpoint of the ramp", () => {
+  assert.equal(terrainFade(1000 + TERRAIN_FADE_MS / 2, 1000), 0.5);
+});
+
+test("a clock that jumps backwards never produces a negative alpha", () => {
+  // performance.now() is monotonic, but the arrival stamp is set on another
+  // task; a defensive clamp costs nothing and a negative alpha throws.
+  assert.equal(terrainFade(900, 1000), 0);
 });

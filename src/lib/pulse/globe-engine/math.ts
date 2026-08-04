@@ -101,3 +101,21 @@ export const projectVec = (
   const vz = m[6] * v[0] + m[7] * v[1] + m[8] * v[2];
   return [cx + vx * r, cy - vy * r, vz];
 };
+
+/** How long the photographic terrain takes to fade in over the flat stand-in. */
+export const TERRAIN_FADE_MS = 400;
+
+/**
+ * Alpha for the textured sphere, ramping in over the flat-shaded one.
+ *
+ * The canvas is revealed on its first drawn frame rather than when the planet's
+ * 440KB of terrain resolves — the markers need none of those bytes, and waiting
+ * for them left live pins hidden behind a marker-free poster that reads as a
+ * finished globe with no events. The terrain then arrives mid-session, so it
+ * ramps rather than popping.
+ */
+export const terrainFade = (now: number, arrivedAt: number | null): number => {
+  if (arrivedAt === null) return 0;
+  const t = (now - arrivedAt) / TERRAIN_FADE_MS;
+  return t <= 0 ? 0 : t >= 1 ? 1 : t;
+};
