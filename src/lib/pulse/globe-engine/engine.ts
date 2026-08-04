@@ -518,6 +518,32 @@ export class GlobeEngine {
     for (const [m, base] of drawable) {
       // The engine knows nothing about hazards: colour and size come off the marker.
       const col = m.color;
+      if (m.kind === "ember") {
+        // Ambient texture: one soft additive glow at the surface point. No
+        // stem, no white core, no pulse ring — and no hit target: sx stays
+        // null (from setMarkers), so pickAt() and the hover path skip embers
+        // untouched.
+        const rad = (1.2 + m.weight * 2.2) * (0.7 + base[2] * 0.3) * bloom;
+        const eg = ctx.createRadialGradient(base[0], base[1], 0, base[0], base[1], rad * 3);
+        eg.addColorStop(0, withAlpha(col, "66"));
+        eg.addColorStop(1, withAlpha(col, "00"));
+        ctx.fillStyle = eg;
+        ctx.beginPath();
+        ctx.arc(base[0], base[1], rad * 3, 0, 7);
+        ctx.fill();
+        if (this.selected === m.id) {
+          // Selection arrives from the /pulse console list — an ember has no
+          // hover target of its own, but a picked one still shows where it is.
+          ctx.strokeStyle = "#fff";
+          ctx.globalAlpha = 0.9;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(base[0], base[1], rad * 3 + 4, 0, 7);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+        continue;
+      }
       const height = (0.05 + m.weight * 0.26) * R;
       const nx = base[0] - CX, ny = base[1] - CY, nl = Math.hypot(nx, ny) || 1;
       const tipx = base[0] + (nx / nl) * height * (0.4 + base[2] * 0.6);
