@@ -1377,16 +1377,22 @@ body:has(.night-hero) > main#main-content {
   .masthead-ear { display: none; }
   .night-hero-body {
     grid-template-columns: 1fr;
-    /* Visual reorder only (grid-area, not DOM order): the plate ABOVE the
-       lead on a stacked mobile front page, but the lead headline stays
-       first in source/tab order — a keyboard or screen-reader user meets
-       the lead first, same as desktop. */
+    /* The lead story is the first editorial content a phone reader meets;
+       the plate sits between it and the briefs, so the live line's
+       "↓ today's stories" still points at stories. Visual order only
+       (grid-area, not DOM order) — source/tab order stays lead-first. */
     grid-template-areas:
+      "lead"
       "plate"
-      "lead";
+      "briefs";
     row-gap: var(--space-6);
     padding: var(--space-6) 16px;
   }
+  /* The wrapper dissolves so the lead and the briefs can occupy grid rows
+     either side of the plate without duplicating or moving any markup. */
+  .night-hero-lead-col { display: contents; }
+  .night-hero-lead { grid-area: lead; }
+  .night-hero-briefs { grid-area: briefs; }
   .night-hero-plate-col {
     align-items: center;
     border-left: 0;
