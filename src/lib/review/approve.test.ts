@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import matter from "gray-matter";
 
-import { approveArticle, withApprovalLock } from "./approve";
+import { approveArticle, withApprovalLock, normaliseApprovalFields } from "./approve";
 
 const pendingArticle = async (frontmatter = "") => {
   const dir = await mkdtemp(path.join(tmpdir(), "sd-approve-"));
@@ -137,4 +137,76 @@ test("a failed approval releases the lock instead of wedging the slug", async ()
   await assert.rejects(withApprovalLock("sport/a-story", boom), /git exploded/);
 
   assert.equal(await withApprovalLock("sport/a-story", async () => "ok"), "ok");
+});
+
+test("approving with the lead box ticked flags the article", async () => {
+  const file = await pendingArticle();
+
+  await approveArticle(file, { homepage_lead: true });
+
+  assert.equal((await frontmatterOf(file)).homepage_lead, true);
+});
+
+test("approving with the box unticked removes the key rather than writing false", async () => {
+  const file = await pendingArticle("homepage_lead: true\n");
+
+  await approveArticle(file, { homepage_lead: false });
+
+  assert.equal("homepage_lead" in (await frontmatterOf(file)), false);
+});
+
+test("an approval that omits the field leaves an existing flag alone", async () => {
+  const file = await pendingArticle("homepage_lead: true\n");
+
+  await approveArticle(file, { title: "A story" });
+
+  assert.equal((await frontmatterOf(file)).homepage_lead, true);
+});
+
+test("re-approving with the same lead state stages nothing", async () => {
+  // The guard publishArticle relies on: identical bytes, no commit, no build.
+  const file = await pendingArticle();
+  await approveArticle(file, { homepage_lead: true });
+
+  const second = await approveArticle(file, { homepage_lead: true });
+
+  assert.equal(second.changed, false);
+});
+
+test("a non-boolean homepage_lead is treated as not stated", () => {
+  // A malformed payload must never silently clear an operator's flag.
+  const fields = normaliseApprovalFields({ homepage_lead: "true" });
+  assert.equal(fields?.homepage_lead, undefined);
+});
+
+test("normalising nothing gives nothing", () => {
+  assert.equal(normaliseApprovalFields(undefined), undefined);
+});
+
+test("normalising keeps the packaging fields it is given", () => {
+  const fields = normaliseApprovalFields({
+    title: "A headline",
+    standfirst: "A dek",
+    social_post: "A post",
+    homepage_lead: true,
+  });
+  assert.deepEqual(fields, {
+    title: "A headline",
+    standfirst: "A dek",
+    social_post: "A post",
+    homepage_lead: true,
+  });
+});
+
+test("approving one article does not corrupt what a later parse of identical content sees", async () => {
+  // gray-matter caches parse results process-wide, keyed by content, and hands
+  // them back as a SHALLOW copy — so parsed.data IS the cache entry. Mutating
+  // it (or deleting a key from it) rewrites history for every later read of a
+  // byte-identical file.
+  const first = await pendingArticle("homepage_lead: true\n");
+  const second = await pendingArticle("homepage_lead: true\n");
+
+  await approveArticle(first, { homepage_lead: false });
+
+  assert.equal((await frontmatterOf(second)).homepage_lead, true);
 });

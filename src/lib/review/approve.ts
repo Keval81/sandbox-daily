@@ -5,6 +5,9 @@ export interface ApprovalFields {
   title?: string;
   standfirst?: string;
   social_post?: string;
+  /** Front-page lead opt-in. `true` writes the key, `false` clears it, and
+   *  absent leaves whatever the file already says. */
+  homepage_lead?: boolean;
 }
 
 export interface ApproveResult {
@@ -29,20 +32,48 @@ export async function approveArticle(
 ): Promise<ApproveResult> {
   const raw = await readFile(articlePath, "utf-8");
   const parsed = matter(raw);
+  // gray-matter caches parse results process-wide, keyed by the file's content,
+  // and hands them back as a SHALLOW copy — so `parsed.data` is the very object
+  // in that cache. Mutating it edits what every later parse of identical content
+  // sees, including keys deleted here. Work on a copy.
+  const data = { ...parsed.data };
 
-  if (fields?.title && fields.title.trim()) parsed.data.title = fields.title.trim();
-  if (typeof fields?.standfirst === "string") parsed.data.standfirst = fields.standfirst.trim();
-  if (typeof fields?.social_post === "string") parsed.data.social_post = fields.social_post.trim();
-  parsed.data.status = "published";
-  parsed.data.approved_at ??= new Date().toISOString();
+  if (fields?.title && fields.title.trim()) data.title = fields.title.trim();
+  if (typeof fields?.standfirst === "string") data.standfirst = fields.standfirst.trim();
+  if (typeof fields?.social_post === "string") data.social_post = fields.social_post.trim();
+  // Never written as `false`: an approval that changes one line stages a commit
+  // and ships a production build, so the "unticked" case deletes the key and a
+  // repeat approval stays byte-identical.
+  if (fields?.homepage_lead === true) data.homepage_lead = true;
+  else if (fields?.homepage_lead === false) delete data.homepage_lead;
+  data.status = "published";
+  data.approved_at ??= new Date().toISOString();
 
-  const next = matter.stringify(parsed.content, parsed.data);
+  const next = matter.stringify(parsed.content, data);
   const changed = next !== raw;
   if (changed) await writeFile(articlePath, next, "utf-8");
 
   return {
-    title: typeof parsed.data.title === "string" ? parsed.data.title : undefined,
+    title: typeof data.title === "string" ? data.title : undefined,
     changed,
+  };
+}
+
+/**
+ * Narrows an untrusted request body to the fields approval accepts.
+ *
+ * Anything that is not a real boolean becomes "not stated" rather than a
+ * rejection — the field is absent on every news and features approval, and a
+ * malformed value must not clear a flag the operator set.
+ */
+export function normaliseApprovalFields(fields: unknown): ApprovalFields | undefined {
+  if (!fields || typeof fields !== "object") return undefined;
+  const f = fields as Record<string, unknown>;
+  return {
+    title: typeof f.title === "string" ? f.title : undefined,
+    standfirst: typeof f.standfirst === "string" ? f.standfirst : undefined,
+    social_post: typeof f.social_post === "string" ? f.social_post : undefined,
+    homepage_lead: typeof f.homepage_lead === "boolean" ? f.homepage_lead : undefined,
   };
 }
 
