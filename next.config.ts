@@ -11,7 +11,16 @@ const nextConfig: NextConfig = {
   //
   // Dev-only setting: production builds ignore it entirely, and it grants
   // nothing beyond letting this one tailnet host load dev assets.
-  allowedDevOrigins: ["sandboxs-mac-mini.tailcb630f.ts.net"],
+  // Two entries because a Tailscale re-login can silently move this machine to
+  // a different tailnet, changing the hostname pinned here. On 2026-08-10 a
+  // logout was recovered by signing in as the wrong Google account, which put
+  // the mini on tail67e1a1 instead of tailcb630f — Tailscale built a whole new
+  // tailnet rather than refusing. tailcb630f is the live one; tail67e1a1 stays
+  // listed so the same mistake costs one reload, not another debugging session.
+  allowedDevOrigins: [
+    "sandboxs-mac-mini.tailcb630f.ts.net",
+    "sandboxs-mac-mini.tail67e1a1.ts.net",
+  ],
   // Pin Turbopack's workspace root to this project. Without this, a stray
   // package-lock.json in the user's home directory makes Turbopack infer
   // ~/ as the workspace and write build artifacts there — breaking dev
