@@ -37,7 +37,17 @@ function estimateReadTime(wordCount: number): number {
 export function parseArticleFile(dir: string, filename: string): Article {
   const filePath = path.join(dir, filename);
   const fileContents = fs.readFileSync(filePath, "utf-8");
-  const { data, content } = matter(fileContents);
+
+  // The empty options object opts out of gray-matter's process-wide cache, and
+  // that is load-bearing. gray-matter stores the file object BEFORE it parses
+  // the YAML (index.js:47, parse at :50), so a file that throws leaves behind a
+  // cache entry whose `data` was never filled in. Every later parse of that
+  // same content then returns empty frontmatter instead of throwing — which
+  // means a malformed *pending* article comes back with no status and falls
+  // through to the "published" default below, putting an unapproved draft on
+  // the live site. Caching is only ever a win for byte-identical files; there
+  // is no such thing here.
+  const { data, content } = matter(fileContents, {});
 
   const inlineImages: InlineImage[] | undefined = Array.isArray(
     data.inline_images
@@ -99,13 +109,34 @@ export function parseArticleFile(dir: string, filename: string): Article {
   };
 }
 
-function readVerticalDir(vertical: Vertical): Article[] {
-  const dir = path.join(contentDir, vertical);
+/**
+ * Every .md in one directory, minus the ones we cannot read.
+ *
+ * This used to be a bare .map, so a single file whose frontmatter opened on a
+ * YAML indicator ("*", "'") threw out of the whole call and 500'd /review —
+ * three bad articles took the entire operator queue down with them. A file the
+ * parser chokes on now costs us that file and nothing else, named loudly
+ * enough in the log to go and fix.
+ */
+export function parseArticleDir(dir: string): Article[] {
   if (!fs.existsSync(dir)) return [];
-  return fs
-    .readdirSync(dir)
-    .filter((f) => f.endsWith(".md"))
-    .map((filename) => parseArticleFile(dir, filename));
+
+  const articles: Article[] = [];
+  for (const filename of fs.readdirSync(dir).filter((f) => f.endsWith(".md"))) {
+    try {
+      articles.push(parseArticleFile(dir, filename));
+    } catch (err) {
+      console.error(
+        `[articles] unreadable frontmatter, skipping ${path.join(dir, filename)}`,
+        err
+      );
+    }
+  }
+  return articles;
+}
+
+function readVerticalDir(vertical: Vertical): Article[] {
+  return parseArticleDir(path.join(contentDir, vertical));
 }
 
 export function getArticlesByVertical(vertical: Vertical): Article[] {
