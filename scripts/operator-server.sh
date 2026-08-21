@@ -14,16 +14,15 @@
 # `next dev` was not running, the pipeline silently idled with "no leads" and
 # nothing published. Keeping this up means that cannot happen again.
 #
-# bash, not zsh, and the path passed as its own argv element — launchd needs
-# Full Disk Access to read anything under ~/Desktop and only bash has that grant
-# here (see com.sandboxdaily.signals-keepalive for the same trap).
+# bash, not zsh, with the script path passed as its own argv element. This keeps
+# launchd invocation predictable and avoids shell parsing around repository paths.
 
 set -u
 
 # launchd starts with a near-empty PATH; node and npm are Homebrew's.
 export PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-REPO="${HOME}/Desktop/Sandbox Daily/sandbox-daily"
+REPO="${HOME}/Projects/sandbox-daily"
 LOG="${HOME}/Desktop/ssnn-outputs/operator-server.log"
 PORT="${SD_OPERATOR_PORT:-3000}"
 
@@ -42,4 +41,4 @@ printf '%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ') starting operator server on :${P
 # exec, so launchd supervises node itself rather than a wrapper that has already
 # exited — otherwise KeepAlive would restart a shell in a loop while the real
 # server sat orphaned.
-exec npm run dev -- --port "$PORT" >> "$LOG" 2>&1
+exec npm run dev -- --webpack --port "$PORT" >> "$LOG" 2>&1

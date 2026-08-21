@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:lib": "node --import tsx --test \"src/lib/**/*.test.ts\"",
+    "test:operator-server": "node --import tsx --test scripts/operator-server.test.ts",
     "radar:snapshot": "node scripts/radar-snapshot.mjs"
   },
   "dependencies": {
