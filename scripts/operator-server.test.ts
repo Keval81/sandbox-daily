@@ -13,38 +13,119 @@ const reviewUrl = `http://127.0.0.1:${port}/review`;
 const logPath = join(homedir(), "Desktop/ssnn-outputs/operator-server.log");
 const operatorScriptPath = "scripts/operator-server.sh";
 
-const stopProcessGroup = async (process: ChildProcess) => {
-  if (process.pid === undefined || process.exitCode !== null || process.signalCode !== null) {
-    return;
-  }
+type ProcessGroupStatus = "alive" | "gone" | "indeterminate";
 
-  const exit = once(process, "exit");
-
+const getProcessGroupStatus = (processGroupId: number): ProcessGroupStatus => {
   try {
-    globalThis.process.kill(-process.pid, "SIGTERM");
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ESRCH") {
-      throw error;
-    }
-  }
-
-  const exited = await Promise.race([exit.then(() => true), delay(5_000, false)]);
-  if (exited) {
-    return;
-  }
-
-  try {
-    globalThis.process.kill(-process.pid, "SIGKILL");
+    globalThis.process.kill(-processGroupId, 0);
+    return "alive";
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ESRCH") {
-      return;
+      return "gone";
+    }
+
+    if ((error as NodeJS.ErrnoException).code === "EPERM") {
+      return "indeterminate";
     }
 
     throw error;
   }
-
-  await Promise.race([exit, delay(5_000)]);
 };
+
+const signalProcessGroup = (processGroupId: number, signal: NodeJS.Signals) => {
+  try {
+    globalThis.process.kill(-processGroupId, signal);
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ESRCH") {
+      return false;
+    }
+
+    throw error;
+  }
+};
+
+const waitForProcessGroupExit = async (processGroupId: number, timeoutMs: number) => {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    if (getProcessGroupStatus(processGroupId) === "gone") {
+      return true;
+    }
+
+    await delay(25);
+  }
+
+  return getProcessGroupStatus(processGroupId) === "gone";
+};
+
+const forceStopProcessGroup = async (processGroupId: number) => {
+  signalProcessGroup(processGroupId, "SIGKILL");
+
+  assert.equal(
+    await waitForProcessGroupExit(processGroupId, 5_000),
+    true,
+    `Emergency cleanup could not stop process group ${processGroupId}`,
+  );
+};
+
+const stopProcessGroup = async (process: ChildProcess) => {
+  if (process.pid === undefined) {
+    return;
+  }
+
+  const processGroupId = process.pid;
+
+  if (getProcessGroupStatus(processGroupId) === "gone") {
+    return;
+  }
+
+  signalProcessGroup(processGroupId, "SIGTERM");
+  if (await waitForProcessGroupExit(processGroupId, 5_000)) {
+    return;
+  }
+
+  signalProcessGroup(processGroupId, "SIGKILL");
+  if (await waitForProcessGroupExit(processGroupId, 5_000)) {
+    return;
+  }
+
+  throw new Error(`Could not stop process group ${processGroupId} after SIGTERM and SIGKILL`);
+};
+
+test(
+  "operator cleanup removes a detached group after its leader exits",
+  { timeout: 20_000 },
+  async (context) => {
+    const server = spawn("bash", ["-c", "sleep 30 & exit 0"], {
+      detached: true,
+      stdio: "ignore",
+    });
+    const processGroupId = server.pid;
+
+    if (processGroupId === undefined) {
+      throw new Error("Detached process did not receive a PID");
+    }
+
+    context.after(async () => forceStopProcessGroup(processGroupId));
+
+    await once(server, "exit");
+
+    assert.equal(
+      getProcessGroupStatus(processGroupId),
+      "alive",
+      "Expected the descendant to remain alive",
+    );
+
+    await stopProcessGroup(server);
+
+    assert.equal(
+      await waitForProcessGroupExit(processGroupId, 250),
+      true,
+      `Cleanup left detached process group ${processGroupId} alive after its leader exited`,
+    );
+  },
+);
 
 const waitForStatus = async (url: string, timeoutMs: number) => {
   const deadline = Date.now() + timeoutMs;
