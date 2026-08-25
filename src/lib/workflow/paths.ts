@@ -31,7 +31,7 @@ export function buildWorkflowPaths(
   const outputsRoot =
     input.outputsRoot ??
     process.env.SSNN_OUTPUTS_ROOT ??
-    path.join(HOME, "Desktop/ssnn-outputs");
+    path.join(HOME, "Projects/ssnn-outputs");
   const siteRoot = input.siteRoot ?? process.cwd();
 
   return {

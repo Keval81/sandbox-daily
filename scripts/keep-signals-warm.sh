@@ -27,7 +27,7 @@
 set -u
 
 ENDPOINT="https://sandbox-daily.vercel.app/api/signals"
-LOG="${HOME}/Desktop/ssnn-outputs/signals-keepalive.log"
+LOG="${HOME}/Projects/ssnn-outputs/signals-keepalive.log"
 # Three reads, because the docs say "a few requests", not one. Slugs need only
 # be well-formed — an unknown slug still queries the view, and reading nothing
 # is the point: this job must never write a row and inflate a real count.

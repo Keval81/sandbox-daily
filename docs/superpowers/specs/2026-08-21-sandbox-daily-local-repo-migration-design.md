@@ -125,3 +125,47 @@ Repository-wide lint currently has unrelated pre-existing failures in
 - No public-site deployment.
 - No deletion of the iCloud rollback copy or quarantined diagnostic artifacts.
 - No rewriting of historical specs, plans, audits, backups, or chat history.
+
+## Follow-up: the pipeline half (completed 2026-08-24)
+
+The 2026-08-21 migration moved the app repository only. `~/Desktop/ssnn-outputs`
+— the agent pipeline that feeds it — was left inside the iCloud File Provider
+and failed the same way three days later.
+
+Symptom: the event radar's last successful write was 2026-08-20 11:59. The
+launchd loop kept cycling every 180 seconds and every agent died at process
+start with errno `-11`, for roughly 480 cycles, without ever crashing the loop
+or raising an alert.
+
+Cause: identical. Boot disk at 94 percent, `optimize-storage` enabled, and
+5,289 dataless files under `ssnn-outputs`.
+
+Resolution: the same copy, verify, cut over procedure defined above.
+
+- real tree: `/Users/sandboxsansan/Projects/ssnn-outputs`
+- compatibility symlink: `/Users/sandboxsansan/Desktop/ssnn-outputs`
+- rollback backup: `/Users/sandboxsansan/Desktop/ssnn-outputs.rollback-2026-08-24`
+
+Two findings worth carrying forward:
+
+1. `brctl download` does not materialize these files. It returns exit 0 and
+   leaves the dataless count unchanged. Reading the file is what materializes
+   it. A 16-way parallel read cleared 3,556 evictions in under ten minutes,
+   against roughly 50 per minute for a serial `rsync`.
+2. A single copy pass is not sufficient. The first `rsync` silently omitted
+   four files under `articles/.processed/`, because the File Provider continues
+   to mutate the source tree while it reconciles. Run the copy twice and
+   compare the full path sets before cutting over.
+
+Active path updates beyond those listed above: six launchd property lists, four
+scripts in the pipeline tree, every agent's `src/config.ts`, and the app repo's
+`src/lib/radar/paths.ts`, `src/lib/workflow/paths.ts`,
+`src/lib/revision/paths.ts`, `scripts/radar-snapshot.mjs`,
+`scripts/operator-server.sh`, `scripts/keep-signals-warm.sh` and
+`scripts/operator-server.test.ts`.
+
+Historical absolute paths recorded in `image-agent/image-state.json`,
+`archive/*.archive.json` and `spotlight-references/*/manifest.json` were left
+unchanged. Both compatibility symlinks keep them resolving.
+
+**Status: migration complete.**

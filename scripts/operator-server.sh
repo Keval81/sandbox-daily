@@ -3,7 +3,7 @@
 # exist.
 #
 # Those surfaces cannot be deployed. /admin/radar writes research-leads/ into
-# ~/Desktop/ssnn-outputs (the ONLY thing that feeds the research agent), and
+# ~/Projects/ssnn-outputs (the ONLY thing that feeds the research agent), and
 # /review drives the reviser agent — both need this machine's filesystem and its
 # Claude CLI. So the pipeline's controls live here and are reached privately
 # over Tailscale, while Vercel serves the public paper with the operator
@@ -23,7 +23,7 @@ set -u
 export PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 REPO="${HOME}/Projects/sandbox-daily"
-LOG="${HOME}/Desktop/ssnn-outputs/operator-server.log"
+LOG="${HOME}/Projects/ssnn-outputs/operator-server.log"
 PORT="${SD_OPERATOR_PORT:-3000}"
 
 # The flag that makes the operator surfaces exist at all. Set here as well as in

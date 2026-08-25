@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const OUTPUTS = process.env.SSNN_OUTPUTS_ROOT ?? path.join(process.env.HOME ?? "", "Desktop/ssnn-outputs");
+const OUTPUTS = process.env.SSNN_OUTPUTS_ROOT ?? path.join(process.env.HOME ?? "", "Projects/ssnn-outputs");
 const LIVE = path.join(OUTPUTS, "event-radar/events.json");
 const SNAPSHOT = path.join(ROOT, "src/lib/radar/events.snapshot.json");
 

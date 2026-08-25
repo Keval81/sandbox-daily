@@ -10,7 +10,7 @@ import { setTimeout as delay } from "node:timers/promises";
 const port = 3101;
 const radarUrl = `http://127.0.0.1:${port}/admin/radar`;
 const reviewUrl = `http://127.0.0.1:${port}/review`;
-const logPath = join(homedir(), "Desktop/ssnn-outputs/operator-server.log");
+const logPath = join(homedir(), "Projects/ssnn-outputs/operator-server.log");
 const operatorScriptPath = "scripts/operator-server.sh";
 
 type ProcessGroupStatus = "alive" | "gone" | "indeterminate";
